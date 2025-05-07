@@ -1,0 +1,132 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id              Int         @id @default(autoincrement())
+  tipo            String
+  login           String      @unique
+  email           String      @unique
+  senha           String
+  nome            String
+  sobrenome       String
+  sexo            String
+  data_nascimento DateTime
+  foto_base64     String?
+  telefone        String?
+  endereco        String?
+  documento       String?
+  tester          Boolean
+
+  pesquisador     Pesquisador?
+  voluntario      Voluntario?
+
+  mensagensEnviadas Mensagem[] @relation("MensagemAutor")
+  mensagensRecebidas Mensagem[] @relation("MensagemLeitor")
+}
+
+model Pesquisador {
+  id         Int      @id @default(autoincrement())
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId  Int
+
+  estudos    Estudo[]
+  buscas     Busca[]
+}
+
+model Voluntario {
+  id         Int      @id @default(autoincrement())
+  usuario    Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId  Int
+  distancia  Float
+
+  respostas  Resposta[]
+}
+
+model Estudo {
+  id             Int         @id @default(autoincrement())
+  nome           String
+  pesquisador    Pesquisador @relation(fields: [pesquisadorId], references: [id])
+  pesquisadorId  Int
+
+  formularios    Formulario[]
+}
+
+model Formulario {
+  id                        Int         @id @default(autoincrement())
+  estudo                    Estudo      @relation(fields: [estudoId], references: [id])
+  estudoId                  Int
+  titulo                    String
+  texto_para_resposta_livre String?
+  conclusao_id              Int?
+
+  questoes                  Questao[]
+}
+
+model Questao {
+  id            Int        @id @default(autoincrement())
+  formulario    Formulario @relation(fields: [formularioId], references: [id])
+  formularioId  Int
+  texto         String
+  tipo          String
+  opcoes        Json
+  configuracao  Json
+  obrigatorio   Boolean
+
+  respostas     Resposta[]
+}
+
+model Busca {
+  id             Int         @id @default(autoincrement())
+  nome           String
+  pesquisador    Pesquisador @relation(fields: [pesquisadorId], references: [id])
+  pesquisadorId  Int
+
+  criterios      Criterio[]
+  anuncios       Anuncio[]
+  respostas      Resposta[]
+}
+
+model Criterio {
+  id         Int     @id @default(autoincrement())
+  busca      Busca   @relation(fields: [buscaId], references: [id])
+  buscaId    Int
+  texto      String
+}
+
+model Anuncio {
+  id             Int     @id @default(autoincrement())
+  mensagem       String
+  data_expiracao DateTime
+  busca          Busca   @relation(fields: [buscaId], references: [id])
+  buscaId        Int
+}
+
+model Resposta {
+  id            Int       @id @default(autoincrement())
+  voluntario    Voluntario @relation(fields: [voluntarioId], references: [id])
+  voluntarioId  Int
+  busca         Busca      @relation(fields: [buscaId], references: [id])
+  buscaId       Int
+  questao       Questao    @relation(fields: [questaoId], references: [id])
+  questaoId     Int
+  conteudo      String
+  marcado       Boolean
+  tag           String?
+}
+
+model Mensagem {
+  id             Int      @id @default(autoincrement())
+  autor          Usuario  @relation("MensagemAutor", fields: [autorId], references: [id])
+  autorId        Int
+  leitor         Usuario  @relation("MensagemLeitor", fields: [leitorId], references: [id])
+  leitorId       Int
+  conteudo       String
+  data_envio     DateTime
+  data_leitura   DateTime?
+}
