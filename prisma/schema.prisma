@@ -33,7 +33,7 @@ model Usuario {
 model Pesquisador {
   id         Int      @id @default(autoincrement())
   usuario    Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId  Int
+  usuarioId  Int      @unique
 
   estudos    Estudo[]
   buscas     Busca[]
@@ -42,7 +42,7 @@ model Pesquisador {
 model Voluntario {
   id         Int      @id @default(autoincrement())
   usuario    Usuario  @relation(fields: [usuarioId], references: [id])
-  usuarioId  Int
+  usuarioId  Int      @unique
   distancia  Float
 
   respostas  Resposta[]

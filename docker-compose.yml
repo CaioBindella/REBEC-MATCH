@@ -1,0 +1,18 @@
+services:
+  postgres:
+    image: postgres:latest
+    container_name: rebecmatch_db
+    environment:
+      POSTGRES_DB: rebecmatch
+      POSTGRES_USER: rebecmatch_user
+      POSTGRES_PASSWORD: rebecmatch_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./rebecmatch.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rebecmatch_user -d rebecmatch"]
+
+volumes:
+  postgres_data:
