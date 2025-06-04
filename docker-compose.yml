@@ -17,6 +17,8 @@ services:
 
   rest-service:
     build: ./rest-service
+    env_file:
+      - .env
     container_name: rest-service
     ports:
       - "3001:3001"
@@ -24,9 +26,12 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PORT: 3001
 
   chat-service:
     build: ./chat-service
+    env_file:
+      - .env
     container_name: chat-service
     ports:
       - "3002:3002"
@@ -34,6 +39,7 @@ services:
       - postgres
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
+      PORT: 3002
 
   nginx:
     image: nginx:latest
