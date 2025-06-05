@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   postgres:
     image: postgres:15
@@ -14,6 +12,8 @@ services:
       - ./db/rmatch.sql:/docker-entrypoint-initdb.d/rmatch.sql
     ports:
       - "5432:5432"
+    networks:
+      - monitoring
 
   rest-service:
     build: ./rest-service
@@ -27,6 +27,8 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: 3001
+    networks:
+      - monitoring
 
   chat-service:
     build: ./chat-service
@@ -40,6 +42,8 @@ services:
     environment:
       DATABASE_URL: postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
       PORT: 3002
+    networks:
+      - monitoring
 
   nginx:
     image: nginx:latest
@@ -51,6 +55,67 @@ services:
     depends_on:
       - rest-service
       - chat-service
+    networks:
+      - monitoring
+
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    ports:
+      - "9113:9113"
+    command:
+      - "-nginx.scrape-uri=http://nginx-proxy/stub_status"
+    depends_on:
+      - nginx
+    networks:
+      - monitoring
+
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: postgres-exporter
+    ports:
+      - "9187:9187"
+    environment:
+      DATA_SOURCE_NAME: "postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?sslmode=disable"
+    depends_on:
+      - postgres
+    networks:
+      - monitoring
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+    networks:
+      - monitoring
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    networks:
+          - monitoring
+
+  node-exporter:
+    image: prom/node-exporter
+    container_name: node-exporter
+    ports:
+      - "9100:9100"
+    networks:
+      - monitoring
 
 volumes:
   pgdata:
+  grafana-storage:
+
+networks:
+  monitoring:
+    driver: bridge
