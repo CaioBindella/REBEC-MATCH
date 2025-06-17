@@ -1,0 +1,11 @@
+{
+    "translation": {
+        "welcome": "Welcome to Rebec Match!",
+        "description": "Rebec Match is a platform designed to help you find the perfect match for your needs.",
+        "search_placeholder": "Search for matches...",
+        "no_results": "No results found. Please try a different search.",
+        "loading": "Loading...",
+        "error": "An error occurred. Please try again later.",
+        "contact_support": "If you need assistance, please contact support."
+    }
+}
