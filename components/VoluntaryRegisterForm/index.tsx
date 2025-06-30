@@ -4,9 +4,9 @@ import {
 } from 'react-native';
 import { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 import { Picker } from '@react-native-picker/picker';
+import { useRouter } from 'expo-router';
 
 // Define o formato dos dados do formulário baseado na estrutura JSON
 type FormData = {
@@ -45,6 +45,7 @@ const schema = Yup.object().shape({
 export default function RegisterForm() {
   const [aceitoTermos, setAceitoTermos] = useState(false);
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({});
+  const router = useRouter();
 
   // Função para lidar com o envio do formulário
   const onSubmit = (data: FormData) => {
@@ -245,6 +246,16 @@ export default function RegisterForm() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
         <Text style={styles.buttonText}>Cadastrar</Text>
       </TouchableOpacity>
+      
+      <View style={{ marginTop: 20, alignItems: 'center', justifyContent: 'center' }}>
+        <Text style={styles.termosText}>Já tem uma conta? 
+          <TouchableOpacity 
+            onPress={() => router.push("/pages/LoginPage")}
+            >
+            <Text style={{ color: '#166865', fontWeight: 'bold', textDecorationLine: 'underline' }}> Acesse</Text>
+            </TouchableOpacity>
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -252,7 +263,7 @@ export default function RegisterForm() {
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    paddingTop: 40,
+    paddingTop: 20,
     backgroundColor: '#fff',
     paddingBottom: 60,
   },

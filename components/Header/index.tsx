@@ -21,9 +21,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     backgroundColor: '#fff',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    padding: 20,
     alignItems: 'center',
     flexDirection: 'row',
+    borderBottomWidth: 0.5,
   },
   logo: {
     width: 140, // Defina a largura desejada
