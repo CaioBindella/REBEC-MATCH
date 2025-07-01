@@ -34,7 +34,7 @@ export default function HomeScreen() {
         <InitialButton 
           text="Entre como Voluntário" 
           color='#15715A'
-          onPress={() => useRouter().push('/pages/VoluntaryRegisterPage')}
+          onPress={() => useRouter().push('/(auth)/voluntaryRegister')}
          />
 
       </View>

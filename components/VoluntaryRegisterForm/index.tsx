@@ -250,7 +250,7 @@ export default function RegisterForm() {
       <View style={{ marginTop: 20, alignItems: 'center', justifyContent: 'center' }}>
         <Text style={styles.termosText}>Já tem uma conta? 
           <TouchableOpacity 
-            onPress={() => router.push("/pages/LoginPage")}
+            onPress={() => router.push("/(auth)/login")}
             >
             <Text style={{ color: '#166865', fontWeight: 'bold', textDecorationLine: 'underline' }}> Acesse</Text>
             </TouchableOpacity>

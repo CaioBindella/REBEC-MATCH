@@ -1,4 +1,5 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
+import { useRouter } from 'expo-router'; // Importando o expo-router para navegação
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup'; // 1. Importar o yupResolver
 import * as Yup from 'yup';
@@ -29,6 +30,7 @@ export default function LoginCredentials() {
   const onSubmit = (data: UserData) => {
     console.log(data);
     Alert.alert('Sucesso!', `Usuário: ${data.login}`);
+    useRouter().push('/(protected)/home/index'); // Navegando para a página protegida após o login
   };
 
   return (
