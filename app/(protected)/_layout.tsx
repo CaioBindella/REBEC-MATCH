@@ -1,12 +1,17 @@
-import { Redirect, Stack} from "expo-router";
-import { useEffect } from "react";
-
-const isLoggedIn = false;
+import { Redirect, Stack } from "expo-router";
+import { Alert } from "react-native";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ProtectedLayout() {
-  
-  if(!isLoggedIn) {
-    // Redirect to the login page if not logged in
+  const { isAuthenticated, isReady } = useAuth();
+
+  if (!isReady) {
+    // Se o estado de autenticação ainda não estiver carregado, não renderiza nada
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    Alert.alert("Não foi possível acessar a página!","Você precisa estar logado para acessar esta página.");
     return <Redirect href="/(auth)/login" />;
   }
 

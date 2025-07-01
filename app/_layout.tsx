@@ -3,6 +3,9 @@ import { Stack } from 'expo-router';
 import 'react-native-reanimated';
 import { ActivityIndicator, View } from 'react-native';
 
+// Provider
+import { AuthProvider } from '@/context/AuthContext';
+
 
 export default function RootLayout() {
 
@@ -19,11 +22,13 @@ export default function RootLayout() {
   }
 
   return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" />
-        <Stack.Screen name="(auth)/login" />
-        <Stack.Screen name="(auth)/voluntaryRegister" />
-        <Stack.Screen name="(protected)" />
-      </Stack>
+      <AuthProvider>
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="firstpage" />
+          <Stack.Screen name="(auth)/login" />
+          <Stack.Screen name="(auth)/voluntaryRegister" />
+          <Stack.Screen name="(protected)" />
+        </Stack>
+      </AuthProvider>
   );
 }

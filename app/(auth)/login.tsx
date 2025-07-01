@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 
 // Components
 import Header from '@/components/Header';
-import LoginForm from '@/components/LoginCredentials'; // Seu componente de formulário
+import LoginForm from '@/components/LoginCredentials'; 
 
 export default function LoginPage() {
   return (
@@ -17,7 +17,6 @@ export default function LoginPage() {
         <Stack.Screen options={{ headerShown: false }} />
         <Header />
 
-        {/* 3. Contêiner de conteúdo para centralização */}
         <View style={styles.content}>
           <LoginForm />
         </View>
@@ -26,17 +25,17 @@ export default function LoginPage() {
   );
 }
 
-// 4. StyleSheet para organização e performance
+
 const styles = StyleSheet.create({
   safeArea: {
-    flex: 1, // Faz com que o SafeAreaView ocupe toda a tela
-    backgroundColor: '#fff', // Define uma cor de fundo para a tela inteira
+    flex: 1, 
+    backgroundColor: '#fff', 
   },
   container: {
-    flex: 1, // Garante que o container principal também ocupe todo o espaço disponível
+    flex: 1, 
   },
   content: {
-    flex: 1, // Faz esta View ocupar todo o espaço restante após o Header
-    justifyContent: 'center', // Centraliza o filho (LoginForm) verticalmente nesse espaço
+    flex: 1, 
+    justifyContent: 'center', 
   },
 });

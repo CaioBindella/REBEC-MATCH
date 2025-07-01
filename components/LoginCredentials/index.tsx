@@ -4,6 +4,9 @@ import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup'; // 1. Importar o yupResolver
 import * as Yup from 'yup';
 
+// Context
+import { useAuth } from '@/context/AuthContext'; // Importando o contexto de autenticação
+
 // Definindo o tipo dos dados do formulário
 type UserData = {
   login: string;
@@ -17,6 +20,8 @@ const schema = Yup.object().shape({
 });
 
 export default function LoginCredentials() {
+  const { logIn } = useAuth(); // Hook para acessar o contexto de autenticação, se necessário
+
   // 3. Conectar o schema ao useForm usando o resolver e o tipo correto
   const { control, handleSubmit, formState: { errors } } = useForm<UserData>({
     resolver: yupResolver(schema),
@@ -30,7 +35,7 @@ export default function LoginCredentials() {
   const onSubmit = (data: UserData) => {
     console.log(data);
     Alert.alert('Sucesso!', `Usuário: ${data.login}`);
-    useRouter().push('/(protected)/home/index'); // Navegando para a página protegida após o login
+    logIn(); // Chama a função de login do contexto
   };
 
   return (
