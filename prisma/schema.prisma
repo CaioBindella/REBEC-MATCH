@@ -1,0 +1,159 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  id              Int           @id @default(autoincrement())
+  nome            String        @db.VarChar(50)
+  sobrenome       String        @db.VarChar(50)
+  login           String        @unique @db.VarChar(50)
+  email           String        @unique @db.VarChar(100)
+  senha           String
+  tipo            TipoUsuario   @default(USER)
+  tipo_especifico TipoEspecifico
+  sexo            Sexo
+  data_nascimento DateTime
+  telefone        String        @db.VarChar(25)
+  endereco        String        @db.VarChar(255)
+  documento       String        @db.VarChar(25)
+  tester          Boolean       @default(false)
+  pesquisador     Pesquisador[]
+  voluntario      Voluntario[]
+
+  @@map("Usuario")
+}
+
+model Pesquisador {
+  id           Int      @id @default(autoincrement())
+  usuario      Usuario  @relation(fields: [usuarioId], references: [id])
+  usuarioId    Int      @unique
+  nomeFicticio String
+  estudos      Estudo[]
+  buscas       Busca[]
+
+  @@map("Pesquisador")
+}
+
+model Voluntario {
+  id           Int        @id @default(autoincrement())
+  usuario      Usuario    @relation(fields: [usuarioId], references: [id])
+  usuarioId    Int        @unique
+  distancia    Float
+  nomeFicticio String
+  respostas    Resposta[]
+
+  @@map("Voluntario")
+}
+
+model Estudo {
+  id                 Int          @id @default(autoincrement())
+  titulo             String
+  pesquisador        Pesquisador  @relation(fields: [pesquisadorId], references: [id])
+  pesquisadorId      Int
+  codigoRegistro     String
+  status             String
+  dataInicio         DateTime
+  dataFim            DateTime
+  informacoesGerais  String
+  formularios        Formulario[]
+
+  @@map("Estudo")
+}
+
+model Formulario {
+  id                      Int       @id @default(autoincrement())
+  estudo                  Estudo    @relation(fields: [estudoId], references: [id])
+  estudoId                Int
+  titulo                  String
+  texto_para_resposta_livre String
+  data_criacao            DateTime
+  questoes                Questao[]
+
+  @@map("Formulario")
+}
+
+model Questao {
+  id           Int         @id @default(autoincrement())
+  formulario   Formulario  @relation(fields: [formularioId], references: [id])
+  formularioId Int
+  texto        String
+  tipo         TipoQuestao
+  opcoes       Json?
+  obrigatorio  Boolean     @default(false)
+  respostas    Resposta[]
+
+  @@map("Questao")
+}
+
+model Resposta {
+  id           Int        @id @default(autoincrement())
+  voluntario   Voluntario @relation(fields: [voluntarioId], references: [id])
+  voluntarioId Int
+  busca        Busca      @relation(fields: [busca_id], references: [id])
+  busca_id     Int
+  questao      Questao    @relation(fields: [questaoId], references: [id])
+  questaoId    Int
+  conteudo     String
+  marcado      Boolean
+
+  @@map("Resposta")
+}
+
+model Busca {
+  id            Int         @id @default(autoincrement())
+  nome          String
+  pesquisador   Pesquisador @relation(fields: [pesquisadorId], references: [id])
+  pesquisadorId Int
+  respostas     Resposta[]
+  criterios     Criterio[]
+  anuncios      Anuncio[]
+
+  @@map("Busca")
+}
+
+model Criterio {
+  id      Int    @id @default(autoincrement())
+  busca   Busca  @relation(fields: [buscaId], references: [id])
+  buscaId Int
+  texto   String
+
+  @@map("Criterio")
+}
+
+model Anuncio {
+  id             Int      @id @default(autoincrement())
+  mensagem       String
+  data_expiracao DateTime
+  busca          Busca    @relation(fields: [buscaId], references: [id])
+  buscaId        Int
+
+  @@map("Anuncio")
+}
+
+enum TipoUsuario {
+  ADMIN
+  USER
+}
+
+enum TipoEspecifico {
+  PESQUISADOR
+  VOLUNTARIO
+}
+
+enum Sexo {
+  MASCULINO
+  FEMININO
+}
+
+enum TipoQuestao {
+  texto
+  opcoes
+}
