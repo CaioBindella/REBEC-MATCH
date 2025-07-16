@@ -1,14 +1,42 @@
 import { prisma } from '../../shared/config/prisma';
 import { CreateEstudoDto } from './DTOs/estudo.dto';
+import { Prisma } from '@prisma/client';
 
 export class EstudoService {
   async create(data: CreateEstudoDto) {
-    const pesquisadorExists = await prisma.pesquisador.findUnique({ where: { id: data.pesquisadorId } });
-    if (!pesquisadorExists) {
-      throw new Error('Pesquisador não encontrado.');
+  try {
+    // Tenta criar o estudo diretamente. Apenas uma chamada ao banco.
+    const novoEstudo = await prisma.estudo.create({
+      data: data,
+    });
+    return novoEstudo;
+
+  } catch (error) {
+    // Verifica se o erro é um erro conhecido do Prisma
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+
+      // P2002: Erro de violação de constraint ÚNICA (ex: título duplicado)
+      if (error.code === 'P2002') {
+        // O campo 'target' no erro do Prisma nos diz qual constraint falhou
+        const target = (error.meta?.target as string[]) || [];
+        if (target.includes('titulo')) {
+          throw new Error('Já existe um estudo com este título.');
+        }
+      }
+
+      // P2003: Erro de violação de chave estrangeira (ex: pesquisadorId não existe)
+      if (error.code === 'P2003') {
+        const target = (error.meta?.field_name as string) || '';
+        if (target.includes('pesquisadorId')) {
+           throw new Error('Pesquisador não encontrado.');
+        }
+      }
     }
-    return prisma.estudo.create({ data });
+    // Se não for um erro conhecido do Prisma, ou for um erro inesperado,
+    // apenas relance o erro original.
+    throw error;
   }
+}
 
   async findAll() {
     return prisma.estudo.findMany();

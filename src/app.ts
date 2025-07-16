@@ -21,6 +21,16 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Apenas em Produção, descomente a linha abaixo para habilitar o CORS
+// Configuração do CORS
+// Permite requisições de um domínio específico
+// const corsOptions = {
+//   credentials: true,
+//   origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+// };
+
+// app.use(cors(corsOptions));
+
 // Rota principal
 app.get('/', (req, res) => {
   res.status(200).json({ message: 'API do Rebec Match está rodando!' });

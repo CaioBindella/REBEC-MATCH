@@ -55,7 +55,7 @@ model Voluntario {
 
 model Estudo {
   id                 Int          @id @default(autoincrement())
-  titulo             String
+  titulo             String       @unique
   pesquisador        Pesquisador  @relation(fields: [pesquisadorId], references: [id])
   pesquisadorId      Int
   codigoRegistro     String
