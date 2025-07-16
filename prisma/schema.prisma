@@ -25,10 +25,10 @@ model Usuario {
   endereco        String        @db.VarChar(255)
   documento       String        @db.VarChar(25)
   tester          Boolean       @default(false)
-  pesquisador     Pesquisador[]
-  voluntario      Voluntario[]
+  pesquisador     Pesquisador?
+  voluntario      Voluntario?
 
-  @@map("Usuario")
+  @@map("usuario")
 }
 
 model Pesquisador {
@@ -39,7 +39,7 @@ model Pesquisador {
   estudos      Estudo[]
   buscas       Busca[]
 
-  @@map("Pesquisador")
+  @@map("pesquisador")
 }
 
 model Voluntario {
@@ -50,7 +50,7 @@ model Voluntario {
   nomeFicticio String
   respostas    Resposta[]
 
-  @@map("Voluntario")
+  @@map("voluntario")
 }
 
 model Estudo {
@@ -65,7 +65,7 @@ model Estudo {
   informacoesGerais  String
   formularios        Formulario[]
 
-  @@map("Estudo")
+  @@map("estudo")
 }
 
 model Formulario {
@@ -77,7 +77,7 @@ model Formulario {
   data_criacao            DateTime
   questoes                Questao[]
 
-  @@map("Formulario")
+  @@map("formulario")
 }
 
 model Questao {
@@ -90,7 +90,7 @@ model Questao {
   obrigatorio  Boolean     @default(false)
   respostas    Resposta[]
 
-  @@map("Questao")
+  @@map("questao")
 }
 
 model Resposta {
@@ -104,7 +104,7 @@ model Resposta {
   conteudo     String
   marcado      Boolean
 
-  @@map("Resposta")
+  @@map("resposta")
 }
 
 model Busca {
@@ -116,7 +116,7 @@ model Busca {
   criterios     Criterio[]
   anuncios      Anuncio[]
 
-  @@map("Busca")
+  @@map("busca")
 }
 
 model Criterio {
@@ -125,7 +125,7 @@ model Criterio {
   buscaId Int
   texto   String
 
-  @@map("Criterio")
+  @@map("criterio")
 }
 
 model Anuncio {
@@ -135,7 +135,7 @@ model Anuncio {
   busca          Busca    @relation(fields: [buscaId], references: [id])
   buscaId        Int
 
-  @@map("Anuncio")
+  @@map("anuncio")
 }
 
 enum TipoUsuario {
