@@ -1,41 +1,61 @@
 import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router'; // Importando o expo-router para navegação
+import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup'; // 1. Importar o yupResolver
+import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 
 // Context
-import { useAuth } from '@/context/AuthContext'; // Importando o contexto de autenticação
+import { useAuth } from '@/context/AuthContext';
 
-// Definindo o tipo dos dados do formulário
-type UserData = {
+// Tipos
+type FormData = {
   login: string;
   senha: string;
 };
 
-// 2. Schema de validação com nomes corretos e mensagens de erro
+type User = {
+    id: string;
+    name: string;
+    userType: 'VOLUNTARIO' | 'PESQUISADOR';
+};
+
 const schema = Yup.object().shape({
   login: Yup.string().required('O campo Usuário é obrigatório'),
   senha: Yup.string().required('O campo Senha é obrigatório'),
 });
 
 export default function LoginCredentials() {
-  const { logIn } = useAuth(); // Hook para acessar o contexto de autenticação, se necessário
+  const { logIn } = useAuth();
 
-  // 3. Conectar o schema ao useForm usando o resolver e o tipo correto
-  const { control, handleSubmit, formState: { errors } } = useForm<UserData>({
+  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema),
-    defaultValues: { // É uma boa prática definir os valores padrão
+    defaultValues: {
         login: '',
         senha: '',
     }
   });
 
-  // 4. Criar a função que será chamada no envio do formulário
-  const onSubmit = (data: UserData) => {
-    console.log(data);
-    Alert.alert('Sucesso!', `Usuário: ${data.login}`);
-    logIn(); // Chama a função de login do contexto
+  // --- FUNÇÃO 1: Para o formulário real ---
+  // Esta função recebe os dados do formulário e faria a chamada para a API.
+  const handleFormSubmit = (data: FormData) => {
+    console.log('Enviando para a API:', data);
+    //
+    // AQUI VOCÊ FARIA A CHAMADA PARA A API REAL
+    // Ex: const user = await api.login(data.login, data.senha);
+    // logIn(user);
+    //
+    Alert.alert('Login Real', 'Funcionalidade de API a ser implementada.');
+  };
+
+  // --- FUNÇÃO 2: Para os botões de desenvolvimento ---
+  // Esta função cria um usuário mock e faz o login direto.
+  const handleDevLogin = (userType: 'VOLUNTARIO' | 'PESQUISADOR') => {
+    const devUser: User = {
+      id: userType === 'VOLUNTARIO' ? 'vol-dev-01' : 'pesq-dev-02',
+      name: userType === 'VOLUNTARIO' ? 'Dev Voluntário' : 'Dev Pesquisador',
+      userType: userType,
+    };
+    logIn(devUser);
   };
 
   return (
@@ -43,13 +63,14 @@ export default function LoginCredentials() {
       <View style={styles.content}>
         <Text style={styles.title}>Acessar conta</Text>
 
+        {/* --- Formulário Real --- */}
         <Text style={styles.label}>Usuário</Text>
         <Controller
           control={control}
-          name="login" // Nome do campo correto
+          name="login"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              style={[styles.input, errors.login && styles.inputError]} // Estilo de erro
+              style={[styles.input, errors.login && styles.inputError]}
               placeholder="Digite seu nome de usuário"
               onBlur={onBlur}
               onChangeText={onChange}
@@ -57,43 +78,60 @@ export default function LoginCredentials() {
             />
           )}
         />
-        {/* Exibição da mensagem de erro específica para o campo 'login' */}
         {errors.login && <Text style={styles.errorText}>{errors.login.message}</Text>}
 
         <Text style={styles.label}>Senha</Text>
         <Controller
           control={control}
-          name="senha" // 6. Corrigido o nome do campo de "Senha" para "senha" (minúsculo)
+          name="senha"
           render={({ field: { onChange, onBlur, value } }) => (
             <TextInput
-              style={[styles.input, errors.senha && styles.inputError]} // Estilo de erro
+              style={[styles.input, errors.senha && styles.inputError]}
               placeholder="Digite sua senha"
               onBlur={onBlur}
               onChangeText={onChange}
               value={value}
-              secureTextEntry // Importante para campos de senha
+              secureTextEntry
             />
           )}
         />
-        {/* Exibição da mensagem de erro específica para o campo 'senha' */}
         {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
       </View>
 
-      {/* 7. Adicionar um botão para submeter o formulário */}
-      <TouchableOpacity style={styles.button} onPress={handleSubmit(onSubmit)}>
+      {/* Botão de "Entrar" para o formulário real, agora conectado à função correta */}
+      <TouchableOpacity style={styles.button} onPress={handleSubmit(handleFormSubmit)}>
         <Text style={styles.buttonText}>Entrar</Text>
       </TouchableOpacity>
+
+      {/* Botões de desenvolvimento, conectados à função de dev */}
+      {__DEV__ && (
+            <View style={styles.devLoginContainer}>
+                <Text style={styles.devLoginTitle}>Acesso Rápido (Dev)</Text>
+                <TouchableOpacity
+                    style={[styles.devButton, { backgroundColor: '#007bff' }]}
+                    onPress={() => handleDevLogin('VOLUNTARIO')}
+                >
+                    <Text style={styles.buttonText}>Logar como Voluntário</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.devButton, { backgroundColor: '#28a745' }]}
+                    onPress={() => handleDevLogin('PESQUISADOR')}
+                >
+                    <Text style={styles.buttonText}>Logar como Pesquisador</Text>
+                </TouchableOpacity>
+            </View>
+        )}
     </View>
   );
 }
 
-// Estilos com pequenas melhorias
+// Seus estilos permanecem os mesmos
 const styles = StyleSheet.create({
   container: {
     padding: 20,
     backgroundColor: '#fff',
     flex: 1,
-    justifyContent: 'space-evenly', // Distribui o espaço entre os elementos
+    justifyContent: 'space-evenly',
   },
   content: {
     flex: 1,
@@ -117,11 +155,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 12,
     fontSize: 16,
-    marginBottom: 5, // Reduzido para o erro ficar mais próximo
+    marginBottom: 5,
     backgroundColor: '#fff',
   },
   inputError: {
-    borderColor: 'red', // Adiciona uma borda vermelha em caso de erro
+    borderColor: 'red',
   },
   button: {
     backgroundColor: '#166865',
@@ -140,4 +178,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 5,
   },
+  devLoginContainer: {
+        marginTop: 30,
+        paddingTop: 20,
+        borderTopWidth: 1,
+        borderColor: '#eee',
+        alignItems: 'center',
+    },
+    devLoginTitle: {
+        fontSize: 16,
+        color: 'gray',
+        marginBottom: 10,
+    },
+    devButton: {
+        width: '100%',
+        padding: 15,
+        borderRadius: 50,
+        alignItems: 'center',
+        marginTop: 10,
+    },
 });

@@ -5,7 +5,7 @@ import { ActivityIndicator, View } from 'react-native';
 
 // Provider
 import { AuthProvider } from '@/context/AuthContext';
-
+import { MenuProvider } from 'react-native-popup-menu'
 
 export default function RootLayout() {
 
@@ -22,13 +22,15 @@ export default function RootLayout() {
   }
 
   return (
-      <AuthProvider>
-        <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="firstpage" />
-          <Stack.Screen name="(auth)/login" />
-          <Stack.Screen name="(auth)/voluntaryRegister" />
-          <Stack.Screen name="(protected)" />
-        </Stack>
-      </AuthProvider>
+      <MenuProvider>
+        <AuthProvider>
+          <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="firstpage" />
+            <Stack.Screen name="(auth)/login" />
+            <Stack.Screen name="(auth)/voluntaryRegister" />
+            <Stack.Screen name="(protected)" />
+          </Stack>
+        </AuthProvider>
+      </MenuProvider>
   );
 }
