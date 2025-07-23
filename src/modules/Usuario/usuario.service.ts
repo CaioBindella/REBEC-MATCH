@@ -3,7 +3,7 @@ import { CreateUsuarioDto, LoginUsuarioDto } from './DTOs/usuario.dto';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET;
+const JWT_SECRET: any = process.env.JWT_SECRET;
 
 export class UsuarioService {
   async create(data: CreateUsuarioDto) {

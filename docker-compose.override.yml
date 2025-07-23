@@ -1,0 +1,29 @@
+services:
+  app_test:
+    build: .
+    command: npm run dev
+    container_name: minha-app-test
+    depends_on:
+      - db_test
+    ports:
+      - "3334:3333"
+    environment:
+      - DATABASE_URL=postgresql://docker:docker@db_test:5432/minha_app_test?schema=public
+      - NODE_ENV=test
+    volumes:
+      - .:/app
+
+  db_test:
+    image: postgres:13-alpine
+    container_name: postgres-test
+    ports:
+      - "5433:5432"
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASSWORD=docker
+      - POSTGRES_DB=minha_app_test
+    volumes:
+      - pg_test_data:/var/lib/postgresql/data
+
+volumes:
+  pg_test_data:

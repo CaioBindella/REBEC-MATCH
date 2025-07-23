@@ -13,7 +13,7 @@ COPY . .
 
 # 5. Copia o script de inicialização e dá permissão de execução
 COPY docker-entrypoint.sh .
-RUN chmod +x docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
 
 # 6. Define o script como o ponto de entrada
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
