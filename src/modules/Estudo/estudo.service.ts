@@ -4,39 +4,32 @@ import { Prisma } from '@prisma/client';
 
 export class EstudoService {
   async create(data: CreateEstudoDto) {
-  try {
-    // Tenta criar o estudo diretamente. Apenas uma chamada ao banco.
-    const novoEstudo = await prisma.estudo.create({
-      data: data,
-    });
-    return novoEstudo;
+    try {
+      const novoEstudo = await prisma.estudo.create({
+        data: data,
+      });
+      return novoEstudo;
 
-  } catch (error) {
-    // Verifica se o erro é um erro conhecido do Prisma
-    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    } catch (error) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError) {
 
-      // P2002: Erro de violação de constraint ÚNICA (ex: título duplicado)
-      if (error.code === 'P2002') {
-        // O campo 'target' no erro do Prisma nos diz qual constraint falhou
-        const target = (error.meta?.target as string[]) || [];
-        if (target.includes('titulo')) {
-          throw new Error('Já existe um estudo com este título.');
+        if (error.code === 'P2002') {
+          const target = (error.meta?.target as string[]) || [];
+          if (target.includes('titulo')) {
+            throw new Error('Já existe um estudo com este título.');
+          }
+        }
+        // P2003: Erro de violação de chave estrangeira (pesquisadorId não existe)
+        // Como o modelo Estudo só tem uma FK, um erro P2003 aqui significa
+        // que o pesquisador não foi encontrado. Esta verificação é mais robusta.
+        if (error.code === 'P2003') {
+          throw new Error('Pesquisador não encontrado.');
         }
       }
-
-      // P2003: Erro de violação de chave estrangeira (ex: pesquisadorId não existe)
-      if (error.code === 'P2003') {
-        const target = (error.meta?.field_name as string) || '';
-        if (target.includes('pesquisadorId')) {
-           throw new Error('Pesquisador não encontrado.');
-        }
-      }
+      // Se não for um erro conhecido que tratamos, relance o erro original.
+      throw error;
     }
-    // Se não for um erro conhecido do Prisma, ou for um erro inesperado,
-    // apenas relance o erro original.
-    throw error;
   }
-}
 
   async findAll() {
     return prisma.estudo.findMany();

@@ -6,9 +6,14 @@ const formularioService = new FormularioService();
 
 export class FormularioController {
   async create(req: Request, res: Response) {
-    const data = createFormularioSchema.parse(req.body);
-    const formulario = await formularioService.create(data);
-    res.status(201).json(formulario);
+    try {
+      const data = createFormularioSchema.parse(req.body);
+      const formulario = await formularioService.create(data);
+      res.status(201).json(formulario);
+    } 
+    catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   }
 
   async findAll(req: Request, res: Response) {

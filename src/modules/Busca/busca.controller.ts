@@ -6,9 +6,13 @@ const buscaService = new BuscaService();
 
 export class BuscaController {
   async create(req: Request, res: Response) {
-    const data = createBuscaSchema.parse(req.body);
-    const busca = await buscaService.create(data);
-    res.status(201).json(busca);
+    try {
+      const data = createBuscaSchema.parse(req.body);
+      const busca = await buscaService.create(data);
+      res.status(201).json(busca);
+    } catch (error: any) {
+      res.status(400).json({message: error.message })
+    }
   }
 
   async findAll(req: Request, res: Response) {

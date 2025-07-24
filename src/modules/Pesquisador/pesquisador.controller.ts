@@ -6,9 +6,13 @@ const pesquisadorService = new PesquisadorService();
 
 export class PesquisadorController {
   async create(req: Request, res: Response) {
-    const data = createPesquisadorSchema.parse(req.body);
-    const pesquisador = await pesquisadorService.create(data);
-    res.status(201).json(pesquisador);
+    try { // <-- Adicione o try
+      const data = createPesquisadorSchema.parse(req.body);
+      const pesquisador = await pesquisadorService.create(data);
+      res.status(201).json(pesquisador);
+    } catch (error: any) { // <-- Adicione o catch
+      res.status(400).json({ message: error.message });
+    }
   }
 
   async findAll(req: Request, res: Response) {

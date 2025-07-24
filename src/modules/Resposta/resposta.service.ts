@@ -3,7 +3,25 @@ import { CreateRespostaDto } from './DTOs/resposta.dto';
 
 export class RespostaService {
   async create(data: CreateRespostaDto) {
-    // Adicionar validações de existência se necessário (voluntario, busca, questao)
+    // Valida a existência de todas as chaves estrangeiras de uma só vez
+    const [voluntario, busca, questao] = await Promise.all([
+      prisma.voluntario.findUnique({ where: { id: data.voluntarioId } }),
+      prisma.busca.findUnique({ where: { id: data.busca_id } }),
+      prisma.questao.findUnique({ where: { id: data.questaoId } }),
+    ]);
+
+    // Lança erros específicos se alguma entidade não for encontrada
+    if (!voluntario) {
+      throw new Error('Voluntário não encontrado.');
+    }
+    if (!busca) {
+      throw new Error('Busca não encontrada.');
+    }
+    if (!questao) {
+      throw new Error('Questão não encontrada.');
+    }
+
+    // Se tudo existir, cria a resposta
     return prisma.resposta.create({ data });
   }
 

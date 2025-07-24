@@ -6,9 +6,14 @@ const estudoService = new EstudoService();
 
 export class EstudoController {
   async create(req: Request, res: Response) {
-    const data = createEstudoSchema.parse(req.body);
-    const estudo = await estudoService.create(data);
-    res.status(201).json(estudo);
+    try{ // adicionar na dev
+      const data = createEstudoSchema.parse(req.body);
+      const estudo = await estudoService.create(data);
+      res.status(201).json(estudo);
+    }
+    catch(error: any){
+      res.status(400).json({ message: error.message });
+    }
   }
 
   async findAll(req: Request, res: Response) {

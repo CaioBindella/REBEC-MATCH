@@ -6,7 +6,7 @@ const usuarioService = new UsuarioService();
 
 export class UsuarioController {
   async create(req: Request, res: Response) {
-    try { // <--- Adicione o try
+    try { // Adicionar o try-catch na arquitetura
       const data = createUsuarioSchema.parse(req.body);
       const usuario = await usuarioService.create(data);
       res.status(201).json(usuario);

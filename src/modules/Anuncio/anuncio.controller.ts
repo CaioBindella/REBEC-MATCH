@@ -6,9 +6,13 @@ const anuncioService = new AnuncioService();
 
 export class AnuncioController {
   async create(req: Request, res: Response) {
-    const data = createAnuncioSchema.parse(req.body);
-    const anuncio = await anuncioService.create(data);
-    res.status(201).json(anuncio);
+    try {
+      const data = createAnuncioSchema.parse(req.body);
+      const anuncio = await anuncioService.create(data);
+      res.status(201).json(anuncio);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message })
+    }
   }
 
   async findAll(req: Request, res: Response) {

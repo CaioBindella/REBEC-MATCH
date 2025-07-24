@@ -6,9 +6,13 @@ const respostaService = new RespostaService();
 
 export class RespostaController {
   async create(req: Request, res: Response) {
-    const data = createRespostaSchema.parse(req.body);
-    const resposta = await respostaService.create(data);
-    res.status(201).json(resposta);
+    try {
+      const data = createRespostaSchema.parse(req.body);
+      const resposta = await respostaService.create(data);
+      res.status(201).json(resposta);
+    } catch (error: any) {
+      res.status(400).json({ message: error.mensage })
+    }
   }
 
   async findAll(req: Request, res: Response) {

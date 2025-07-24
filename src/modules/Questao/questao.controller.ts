@@ -6,9 +6,13 @@ const questaoService = new QuestaoService();
 
 export class QuestaoController {
   async create(req: Request, res: Response) {
-    const data = createQuestaoSchema.parse(req.body);
-    const questao = await questaoService.create(data);
-    res.status(201).json(questao);
+    try {
+      const data = createQuestaoSchema.parse(req.body);
+      const questao = await questaoService.create(data);
+      res.status(201).json(questao);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   }
 
   async findAll(req: Request, res: Response) {

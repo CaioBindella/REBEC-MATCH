@@ -6,9 +6,13 @@ const voluntarioService = new VoluntarioService();
 
 export class VoluntarioController {
   async create(req: Request, res: Response) {
-    const data = createVoluntarioSchema.parse(req.body);
-    const voluntario = await voluntarioService.create(data);
-    res.status(201).json(voluntario);
+    try { // Adicionar try catch
+      const data = createVoluntarioSchema.parse(req.body);
+      const voluntario = await voluntarioService.create(data);
+      res.status(201).json(voluntario);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message });
+    }
   }
 
   async findAll(req: Request, res: Response) {

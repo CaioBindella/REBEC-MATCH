@@ -6,9 +6,13 @@ const criterioService = new CriterioService();
 
 export class CriterioController {
   async create(req: Request, res: Response) {
-    const data = createCriterioSchema.parse(req.body);
-    const criterio = await criterioService.create(data);
-    res.status(201).json(criterio);
+    try {
+      const data = createCriterioSchema.parse(req.body);
+      const criterio = await criterioService.create(data);
+      res.status(201).json(criterio);
+    } catch (error: any) {
+      res.status(400).json({ message: error.message })
+    }
   }
 
   async findAll(req: Request, res: Response) {
