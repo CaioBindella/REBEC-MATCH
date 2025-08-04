@@ -1,35 +1,47 @@
 package com.rebecmatchapi.rebecmatch_api.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
+    @Autowired
+    SecurityFilter securityFilter;
+
     @Bean
-    public PasswordEncoder passwordEncoder(){
-        return new BCryptPasswordEncoder();
+    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+        return httpSecurity
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll() // Deixe o registo de utilizador público
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+                .build();
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http
-                // Passo 1: Desativa a proteção CSRF, que não é necessária para uma API REST stateless.
-                .csrf(AbstractHttpConfigurer::disable)
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
 
-                // Passo 2: Define as regras de autorização para os seus endpoints.
-                .authorizeHttpRequests(authorize -> authorize
-                        // Por agora, permite todas as requisições ("/**") sem autenticação.
-                        // Isto é útil para testar os seus controllers sem se preocupar com segurança.
-                        .requestMatchers("/**").permitAll()
-                );
-        return http.build();
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 }

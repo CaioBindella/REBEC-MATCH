@@ -5,13 +5,18 @@ import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoUsuario;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.OffsetDateTime;
+import java.util.Collection;
+import java.util.List;
 
 @Data
 @Entity
 @Table(name = "usuario")
-public class Usuario {
+public class Usuario implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
@@ -64,5 +69,39 @@ public class Usuario {
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Voluntario voluntario;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() {
+        if(this.tipo == TipoUsuario.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
+        else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+    }
+    @Override
+    public String getPassword() {
+        return senha;
+    }
+    @Override
+    public String getUsername() {
+        return login;
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 
 }
