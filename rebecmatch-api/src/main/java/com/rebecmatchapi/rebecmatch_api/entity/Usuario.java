@@ -5,6 +5,8 @@ import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoUsuario;
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -65,9 +67,13 @@ public class Usuario implements UserDetails {
 
     // Lado inverso da relação 1-para-1
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude // Evita recursão infinita no toString do Lombok
+    @EqualsAndHashCode.Exclude // Evita recursão infinita no equals/hashCode do Lombok
     private Pesquisador pesquisador;
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @ToString.Exclude // Evita recursão infinita no toString do Lombok
+    @EqualsAndHashCode.Exclude // Evita recursão infinita no equals/hashCode do Lombok
     private Voluntario voluntario;
 
     @Override

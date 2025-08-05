@@ -1,19 +1,37 @@
 package com.rebecmatchapi.rebecmatch_api.entity;
 
-import jakarta.persistence.Entity;
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.Data;
 
+import java.time.OffsetDateTime;
+import java.util.List;
+
+/**
+ * Entidade que representa um Formulário, que pertence a um Estudo.
+ */
 @Data
 @Entity
 @Table(name = "formulario")
 public class Formulario {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer Id;
+    private Integer id;
 
-    @ManyToOne
-    @JoinColumn(name = "estudo_id") // ou o nome da coluna correspondente
+    // Relação N-para-1 com Estudo. Vários formulários podem pertencer a um estudo.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estudo_id", nullable = false)
     private Estudo estudo;
+
+    @Column(nullable = false)
+    private String titulo;
+
+    @Column(name = "texto_para_resposta_livre", columnDefinition = "TEXT")
+    private String textoParaRespostaLivre;
+
+    @Column(name = "data_criacao", nullable = false)
+    private OffsetDateTime dataCriacao = OffsetDateTime.now();
+
+    // Relação 1-para-N com Questao. Um formulário pode ter várias questões.
+    @OneToMany(mappedBy = "formulario", cascade = CascadeType.ALL)
+    private List<Questao> questoes;
 }

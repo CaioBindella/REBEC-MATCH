@@ -17,6 +17,7 @@ public class Estudo {
     @Column(unique = true, nullable = false)
     private String titulo;
 
+    // Relação N-para-1 com Pesquisador. Vários estudos podem pertencer a um pesquisador.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pesquisador_id", nullable = false)
     private Pesquisador pesquisador;
@@ -35,6 +36,7 @@ public class Estudo {
     @Column(name = "informacoes_gerais", columnDefinition = "TEXT")
     private String informacoesGerais;
 
+    // Relação 1-para-N com Formulario. Um estudo pode ter vários formulários.
     @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
     private List<Formulario> formularios;
 }

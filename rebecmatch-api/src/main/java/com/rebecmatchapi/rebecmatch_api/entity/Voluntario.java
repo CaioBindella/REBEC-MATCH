@@ -3,6 +3,8 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 @Entity
 @Table(name = "voluntario")
@@ -20,6 +22,6 @@ public class Voluntario {
     @Column(name = "nome_ficticio")
     private String nomeFicticio;
 
-//    @OneToMany(mappedBy = "voluntario")
-//    private List<Resposta> respostas;
+    @OneToMany(mappedBy = "voluntario")
+    private List<Resposta> respostas;
 }

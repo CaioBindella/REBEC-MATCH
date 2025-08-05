@@ -15,7 +15,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 @Configuration
-@EnableWebSecurity
+@EnableWebSecurity // Ativa a configuração de segurança web do Spring
 public class SecurityConfig {
 
     @Autowired
@@ -24,22 +24,36 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         return httpSecurity
+                // Desativa a proteção CSRF, pois a autenticação via token já protege contra este ataque em APIs stateless.
                 .csrf(csrf -> csrf.disable())
+                // Configura a gestão de sessão para ser "stateless", ou seja, o servidor não guarda estado do utilizador. Cada requisição é independente.
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Define as regras de autorização para as requisições HTTP.
                 .authorizeHttpRequests(authorize -> authorize
+                        // Permite que qualquer pessoa faça uma requisição POST para o endpoint de login.
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll() // Deixe o registo de utilizador público
+                        // Permite que qualquer pessoa faça uma requisição POST para criar um novo utilizador (registo).
+                        .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
+                        // Para qualquer outra requisição, o utilizador precisa de estar autenticado.
                         .anyRequest().authenticated()
                 )
+                // Adiciona o nosso filtro de JWT para ser executado antes do filtro padrão de autenticação do Spring.
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }
 
+    /**
+     * Expõe o AuthenticationManager do Spring como um Bean para que possa ser injetado
+     * no nosso AuthenticationController para processar o login.
+     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-
+    /**
+     * Expõe o BCryptPasswordEncoder como um Bean. Esta é a implementação escolhida
+     * para encriptar e verificar as senhas.
+     */
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();

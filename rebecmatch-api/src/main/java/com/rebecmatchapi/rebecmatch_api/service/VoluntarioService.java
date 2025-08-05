@@ -44,7 +44,7 @@ public class VoluntarioService {
 
     public Voluntario getById(Integer id){
         return voluntarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado.") );
+                .orElseThrow(() -> new RuntimeException("Voluntário não encontrado.") );
     }
 
     public List<Voluntario> listAll() {
