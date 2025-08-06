@@ -37,10 +37,10 @@ public class PesquisadorController {
         return dto;
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity<Pesquisador> getByID(@PathVariable Integer id){
+    @GetMapping("/{id}")
+    public ResponseEntity<PesquisadorResponseDTO> getPesquisadorById(@PathVariable Integer id) {
         Pesquisador pesquisador = pesquisadorService.getById(id);
-        return ResponseEntity.ok(pesquisador);
+        return ResponseEntity.ok(toResponseDTO(pesquisador));
     }
 
     @GetMapping
@@ -67,6 +67,7 @@ public class PesquisadorController {
     }
 
     private UsuarioResponseDTO toUsuarioResponseDTO(Usuario usuario) {
+        if (usuario == null) return null;
         UsuarioResponseDTO dto = new UsuarioResponseDTO();
         dto.setId(usuario.getId());
         dto.setNome(usuario.getNome());
@@ -76,10 +77,6 @@ public class PesquisadorController {
         dto.setTipo(usuario.getTipo());
         dto.setTipoEspecifico(usuario.getTipoEspecifico());
         dto.setSexo(usuario.getSexo());
-        dto.setDataNascimento(usuario.getDataNascimento());
-        dto.setTelefone(usuario.getTelefone());
-        dto.setEndereco(usuario.getEndereco());
-        dto.setDocumento(usuario.getDocumento());
         dto.setTester(usuario.isTester());
         return dto;
     }

@@ -5,8 +5,6 @@ import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoUsuario;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
-
 @Data
 public class UsuarioResponseDTO {
     private Integer id;
@@ -17,9 +15,5 @@ public class UsuarioResponseDTO {
     private TipoUsuario tipo;
     private TipoEspecifico tipoEspecifico;
     private Sexo sexo;
-    private OffsetDateTime dataNascimento;
-    private String telefone;
-    private String endereco;
-    private String documento;
     private boolean tester;
 }

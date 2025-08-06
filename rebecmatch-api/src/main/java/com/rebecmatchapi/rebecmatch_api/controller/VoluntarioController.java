@@ -79,10 +79,6 @@ public class VoluntarioController {
         dto.setTipo(usuario.getTipo());
         dto.setTipoEspecifico(usuario.getTipoEspecifico());
         dto.setSexo(usuario.getSexo());
-        dto.setDataNascimento(usuario.getDataNascimento());
-        dto.setTelefone(usuario.getTelefone());
-        dto.setEndereco(usuario.getEndereco());
-        dto.setDocumento(usuario.getDocumento());
         dto.setTester(usuario.isTester());
         return dto;
     }
