@@ -67,7 +67,7 @@ CREATE TABLE questao (
     id INT AUTO_INCREMENT PRIMARY KEY,
     formulario_id INT NOT NULL,
     texto TEXT NOT NULL,
-    tipo ENUM('texto', 'opcoes') NOT NULL,
+    tipo ENUM('TEXTO', 'OPCOES') NOT NULL,
     opcoes JSON,
     obrigatorio BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_questao_formulario FOREIGN KEY(formulario_id) REFERENCES formulario(id)

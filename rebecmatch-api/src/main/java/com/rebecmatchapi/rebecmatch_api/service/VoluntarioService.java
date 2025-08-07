@@ -4,6 +4,8 @@ import com.rebecmatchapi.rebecmatch_api.dto.Voluntario.VoluntarioCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Voluntario.VoluntarioUpdateDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import com.rebecmatchapi.rebecmatch_api.entity.Voluntario;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
+import com.rebecmatchapi.rebecmatch_api.exception.BusinessException;
 import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,16 @@ public class VoluntarioService {
                 .orElseThrow(
                         () -> new RuntimeException("Usuario com ID" + dto.getUsuarioId() + "não encontrado.")
                 );
+        // Garante que o usuário já não tem um perfil associado.
+        if (usuario.getPesquisador() != null || usuario.getVoluntario() != null) {
+            throw new BusinessException("Usuário com ID " + usuario.getId() + " já possui um perfil de pesquisador ou voluntário associado.");
+        }
+
+        // Garante que o usuário foi criado como VOLUNTARIO.
+        if (usuario.getTipoEspecifico() != TipoEspecifico.VOLUNTARIO) {
+            throw new BusinessException("Não é possível criar um perfil de voluntário para um usuário que não é do tipo VOLUNTARIO.");
+        }
+
         Voluntario novoVoluntario = new Voluntario();
 
         novoVoluntario.setDistancia(dto.getDistancia());
