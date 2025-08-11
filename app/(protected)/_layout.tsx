@@ -22,6 +22,7 @@ export default function ProtectedLayout() {
   return (
     <Stack>
       <Stack.Screen name="home/page" options={{ headerShown: false }} />
+      <Stack.Screen name="available-research/page" options={{ headerShown: false }} />
     </Stack>
   );
 }

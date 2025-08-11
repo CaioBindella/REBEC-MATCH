@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-// Importe o InfoCard que você já tem
 import InfoCard from '@/components/InfoCard';
 
 // Este componente é apenas o conteúdo específico do voluntário.
@@ -16,15 +15,15 @@ export default function VolunteerDashboard() {
       <InfoCard
         imageSource={require('@/assets/images/CardPesquisasDisponiveis.png')}
         title="Ver pesquisas disponíveis"
-        description="Lorem ipsum dolor sit amet pretium consectetur adipiscing elit. Lorem consectetur adipiscing elit."
+        description="Encontre estudos clínicos e pesquisas científicas perto de si. A sua participação voluntária é fundamental para o avanço da ciência e o desenvolvimento de novos tratamentos."
         buttonText="Veja detalhes"
-        linkTo="/available-research"
+        linkTo="/available-research/page"
       />
 
       <InfoCard
         imageSource={require('@/assets/images/CardPesquisasAndamento.png')}
         title="Pesquisas em Andamento"
-        description="Lorem ipsum dolor sit amet pretium consectetur adipiscing elit. Lorem consectetur adipiscing elit."
+        description="Acompanhe os estudos que estão em progresso. Aceda aos seus formulários, responda a questionários e contribua ativamente para o avanço da investigação científica."
         buttonText="Veja detalhes"
         linkTo="/ongoing-research"
       />
