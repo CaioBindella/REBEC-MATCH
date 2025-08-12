@@ -22,10 +22,10 @@ export default function VolunteerDashboard() {
 
       <InfoCard
         imageSource={require('@/assets/images/CardPesquisasAndamento.png')}
-        title="Pesquisas em Andamento"
-        description="Acompanhe os estudos que estão em progresso. Aceda aos seus formulários, responda a questionários e contribua ativamente para o avanço da investigação científica."
-        buttonText="Veja detalhes"
-        linkTo="/ongoing-research"
+        title="Meus Estudos"
+        description="Acesse a área dedicada aos estudos para os quais você foi selecionado. Acompanhe o progresso e comunique-se diretamente com os pesquisadores através do chat."
+        buttonText="Acompanhar"
+        linkTo="/my-studies/page"
       />
     </View>
   );

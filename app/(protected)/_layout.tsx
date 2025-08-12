@@ -23,6 +23,8 @@ export default function ProtectedLayout() {
     <Stack>
       <Stack.Screen name="home/page" options={{ headerShown: false }} />
       <Stack.Screen name="available-research/page" options={{ headerShown: false }} />
+      <Stack.Screen name="my-studies/page" options={{ headerShown: false }} />
+      <Stack.Screen name="chat" options={{ headerShown: false }} />
     </Stack>
   );
 }

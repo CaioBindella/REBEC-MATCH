@@ -34,7 +34,7 @@ const mockStudies = [
     id: 1,
     titulo: "Estudo sobre Eficácia de Novo Medicamento para Enxaqueca",
     informacoesGerais: "Este estudo visa avaliar a redução na frequência de crises de enxaqueca em pacientes que utilizam o novo composto experimental X.",
-    status: 'Em Andamento',
+    status: 'EM_ANDAMENTO',
     busca: {
       id: 1,
       anuncio: {
@@ -51,7 +51,7 @@ const mockStudies = [
     id: 2,
     titulo: "Pesquisa sobre Qualidade do Sono e Uso de Dispositivos Eletrônicos",
     informacoesGerais: "Análise da correlação entre o tempo de uso de telas antes de dormir e a qualidade do sono em adultos.",
-    status: 'Em Andamento',
+    status: 'RECRUTANDO',
     busca: {
       id: 2,
       anuncio: {

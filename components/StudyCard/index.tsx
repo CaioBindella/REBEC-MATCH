@@ -1,73 +1,44 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
-interface StudyCardProps {
-  study: {
-    id: number;
-    titulo: string;
-    informacoesGerais: string;
-    status: 'Recrutando' | 'Em Andamento';
-    busca?: {
-      anuncio?: {
-        mensagem: string;
-      };
-      criterios?: {
-        texto: string;
-      }[];
-    };
-  };
+// Interface para os dados do estudo que o card da lista precisa
+export interface StudySummary {
+  id: number;
+  titulo: string;
+  informacoesGerais: string;
+  status: string; // 'EM_ANDAMENTO', 'RECRUTANDO', etc.
 }
 
-export function StudyCard({ study }: StudyCardProps) {
-  const description = study.busca?.anuncio?.mensagem || study.informacoesGerais;
-  const criteria = study.busca?.criterios || [];
+interface StudyCardProps {
+  study: StudySummary;
+  onPress: () => void; // Função para navegar
+}
 
-  const statusInfo = {
-    'Recrutando': {
-      text: 'Recrutando',
-      style: styles.tagRecruiting,
-      textStyle: styles.tagTextRecruiting,
-    },
-    'Em Andamento': {
-      text: 'Em Andamento',
-      style: styles.tagOngoing,
-      textStyle: styles.tagTextOngoing,
-    },
+export function StudyCard({ study, onPress }: StudyCardProps) {
+  const statusMap = {
+    EM_ANDAMENTO: { text: 'Em Andamento', style: styles.tagOngoing, textStyle: styles.tagTextOngoing },
+    RECRUTANDO: { text: 'Recrutando', style: styles.tagRecruiting, textStyle: styles.tagTextRecruiting },
+    DEFAULT: { text: 'Verificar', style: styles.tagDefault, textStyle: styles.tagTextDefault },
   };
+
+  const statusInfo = statusMap[study.status as keyof typeof statusMap] || statusMap.DEFAULT;
   
-  const currentStatusInfo = statusInfo[study.status];
+  const briefDescription = study.informacoesGerais.length > 100
+    ? `${study.informacoesGerais.substring(0, 100)}...`
+    : study.informacoesGerais;
 
   return (
     <View style={styles.cardContainer}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.cardTitle}>{study.titulo}</Text>
-        {currentStatusInfo && (
-          <View style={[styles.tagBase, currentStatusInfo.style]}>
-            <Text style={currentStatusInfo.textStyle}>
-              {currentStatusInfo.text}
-            </Text>
-          </View>
-        )}
-      </View>
+      <Text style={styles.cardTitle}>{study.titulo}</Text>
       
-      <Text style={styles.cardDescription}>{description}</Text>
+      <View style={[styles.tagBase, statusInfo.style]}>
+        <Text style={statusInfo.textStyle}>{statusInfo.text}</Text>
+      </View>
 
-      {criteria.length > 0 && (
-        <View style={styles.criteriaSection}>
-          <Text style={styles.criteriaTitle}>Critérios para participação:</Text>
-          {criteria.map((criterio, index) => (
-            <View key={index} style={styles.criteriaItem}>
-              <Text style={styles.criteriaText}>• {criterio.texto}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <TouchableOpacity
-        style={styles.participateButton}
-        onPress={() => alert('Navegar para detalhes do estudo ' + study.id)}
-      >
-        <Text style={styles.buttonText}>Quero Participar</Text>
+      <Text style={styles.cardDescription}>{briefDescription}</Text>
+      
+      <TouchableOpacity style={styles.participateButton} onPress={onPress}>
+        <Text style={styles.buttonText}>Ver Detalhes</Text>
       </TouchableOpacity>
     </View>
   );
@@ -79,74 +50,42 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 16,
-    elevation: 3,
+    elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  headerContainer: {
-    marginBottom: 8,
+    shadowRadius: 5,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#212529',
     marginBottom: 8,
   },
   tagBase: {
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-    borderRadius: 12,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: 15,
     alignSelf: 'flex-start',
+    marginBottom: 12,
   },
-  tagRecruiting: {
-    backgroundColor: '#E0F5EB',
-  },
-  tagTextRecruiting: {
-    color: '#15715A',
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
-  tagOngoing: {
-    backgroundColor: '#DCEEFF', // Fundo azul claro
-  },
-  tagTextOngoing: {
-    color: '#15715A', // Texto azul escuro
-    fontWeight: 'bold',
-    fontSize: 12,
-  },
+  tagRecruiting: { backgroundColor: '#E0F5EB' },
+  tagTextRecruiting: { color: '#15715A', fontWeight: 'bold', fontSize: 12 },
+  tagOngoing: { backgroundColor: '#DCEEFF' },
+  tagTextOngoing: { color: '#004A7F', fontWeight: 'bold', fontSize: 12 },
+  tagDefault: { backgroundColor: '#E9ECEF' },
+  tagTextDefault: { color: '#495057', fontWeight: 'bold', fontSize: 12 },
   cardDescription: {
     fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
-    marginBottom: 16,
-  },
-  criteriaSection: {
-    marginBottom: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingTop: 16,
-  },
-  criteriaTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#444',
-    marginBottom: 8,
-  },
-  criteriaItem: {
-    marginBottom: 4,
-  },
-  criteriaText: {
-    fontSize: 14,
     color: '#555',
+    lineHeight: 21,
+    marginBottom: 16,
   },
   participateButton: {
     backgroundColor: '#15715A',
-    padding: 12,
+    paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
-    justifyContent: 'center',
   },
   buttonText: {
     color: '#ffffff',

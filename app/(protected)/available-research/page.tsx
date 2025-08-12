@@ -1,27 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, FlatList, SafeAreaView } from 'react-native';
-import { Stack } from 'expo-router';
-import { StudyCard } from '@/components/StudyCard'; 
-import { getAvailableStudies } from '@/services/api/apiClient';
+import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, View, Text } from 'react-native';
+import { useRouter, Stack } from 'expo-router';
 import Header from '@/components/Header';
-
-// Definindo a interface para o tipo de dado de um estudo
-interface Study {
-  id: number;
-  titulo: string;
-  informacoesGerais: string;
-  busca?: {
-    anuncio?: {
-      mensagem: string;
-    };
-    criterios?: {
-      texto: string;
-    }[];
-  };
-}
+import { StudyCard, StudySummary } from '@/components/StudyCard';
+import { getAvailableStudies } from '@/services/api/apiClient'; // Importando sua função da API
 
 export default function AvailableStudiesScreen() {
-  const [studies, setStudies] = useState<Study[]>([]);
+  const router = useRouter();
+  const [studies, setStudies] = useState<StudySummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,55 +15,51 @@ export default function AvailableStudiesScreen() {
     async function loadStudies() {
       try {
         setLoading(true);
-        setError(null);
+        console.log('Simulando chamada à API para buscar estudos...');
         const response = await getAvailableStudies();
+        console.log('Dados simulados retornados.');
         setStudies(response);
       } catch (err) {
-        setError('Não foi possível carregar as pesquisas. Tente novamente mais tarde.');
+        setError('Não foi possível carregar as pesquisas.');
         console.error(err);
       } finally {
         setLoading(false);
       }
     }
-
     loadStudies();
   }, []);
 
+  const handleNavigateToDetails = (id: number) => {
+    // Navega para a tela de detalhes, usando a estrutura de pastas correta
+    router.push({
+      pathname: "/available-research/[id]",
+      params: { id: id },
+    });
+  };
+
   if (loading) {
-    return (
-      <View style={styles.centeredContainer}>
-        <ActivityIndicator size="large" color="#004A7F" />
-      </View>
-    );
+    return <View style={styles.centeredContainer}><ActivityIndicator size="large" color="#15715A" /></View>;
   }
 
   if (error) {
-    return (
-      <View style={styles.centeredContainer}>
-        <Text style={styles.errorText}>{error}</Text>
-      </View>
-    );
+    return <View style={styles.centeredContainer}><Text style={styles.errorText}>{error}</Text></View>;
   }
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* O Stack.Screen pode ser movido para o _layout.tsx se preferir */}
+      <Stack.Screen options={{ title: 'Pesquisas Disponíveis' }} />
       <Header />
-      <Stack.Screen
-        options={{
-          title: 'Pesquisas Disponíveis',
-          headerStyle: { backgroundColor: '#f0f2f5' },
-          headerTintColor: '#212529',
-          headerTitleStyle: {
-            fontWeight: 'bold',
-          },
-        }}
-      />
       <FlatList
         data={studies}
         keyExtractor={(item) => String(item.id)}
-        renderItem={({ item }) => <StudyCard study={item} />}
+        renderItem={({ item }) => (
+          <StudyCard
+            study={item}
+            onPress={() => handleNavigateToDetails(item.id)}
+          />
+        )}
         contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
   );
@@ -88,19 +70,16 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f0f2f5',
   },
+  listContent: {
+    padding: 16,
+  },
   centeredContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f0f2f5',
-    padding: 20,
   },
   errorText: {
     fontSize: 16,
     color: '#555',
-    textAlign: 'center',
-  },
-  listContent: {
-    padding: 16,
   },
 });
