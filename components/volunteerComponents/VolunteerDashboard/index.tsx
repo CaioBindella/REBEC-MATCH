@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
-import InfoCard from '@/components/InfoCard';
+import InfoCard from '@/components/reusable/InfoCard';
 
 // Este componente é apenas o conteúdo específico do voluntário.
 // O Header e o SafeAreaView ficam na página principal (home/page.tsx).

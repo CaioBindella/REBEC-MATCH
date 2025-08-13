@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, View, Text, FlatList, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import { SelectedStudyCard, SelectedStudy } from '@/components/SelectedStudyCard';
-import Header from '@/components/Header';
+import { SelectedStudy, SelectedStudyCard } from '@/components/volunteerComponents/SelectedStudyCard';
+import Header from '@/components/reusable/Header';
+import { Stack, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 // Simulação de dados que viriam da sua API
 const mockSelectedStudies: SelectedStudy[] = [

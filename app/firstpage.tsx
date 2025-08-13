@@ -2,7 +2,7 @@ import { Text, View, StyleSheet, ImageBackground, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 
 //Components
-import { InitialButton } from '@/components/InitialButton';
+import { InitialButton } from '@/components/reusable/InitialButton';
 
 export default function HomeScreen() {
   return (

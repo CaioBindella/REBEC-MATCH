@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; // Importando ícones
-import VolunteerCard from '@/components/VolunteerCard'; // Importando nosso card
+import VolunteerCard from '@/components/volunteerComponents/VolunteerCard'; // Importando nosso card
 
 // Dados mock para simular a lista de voluntários
 const mockVolunteers = [
@@ -11,7 +11,7 @@ const mockVolunteers = [
   { id: 'VOL02378MT', location: 'Mato Grosso', description: 'Lorem ipsum dolor sit amet pretium consectetur adipiscing elit.', tags: ['Tag', 'Tag', 'Tag', 'Tag'] },
 ];
 
-const ResearcherDashboard = () => {
+const ResearcherCandidates = () => {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.profileTag}>
@@ -117,4 +117,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ResearcherDashboard;
+export default ResearcherCandidates;

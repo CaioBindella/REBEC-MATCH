@@ -1,9 +1,9 @@
-import { View, StyleSheet, SafeAreaView, KeyboardAvoidingView, Platform } from 'react-native';
 import { Stack } from 'expo-router';
+import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, View } from 'react-native';
 
 // Components
-import Header from '@/components/Header';
-import LoginForm from '@/components/LoginCredentials'; 
+import LoginForm from '@/components/reusable/LoginCredentials';
+import Header from '@/components/reusable/Header';
 
 export default function LoginPage() {
   return (

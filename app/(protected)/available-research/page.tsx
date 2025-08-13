@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { SafeAreaView, FlatList, StyleSheet, ActivityIndicator, View, Text } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
-import Header from '@/components/Header';
-import { StudyCard, StudySummary } from '@/components/StudyCard';
+import Header from '@/components/reusable/Header';
+import { StudyCard, StudySummary } from '@/components/volunteerComponents/StudyCard';
 import { getAvailableStudies } from '@/services/api/apiClient'; // Importando sua função da API
+import { Stack, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 
 export default function AvailableStudiesScreen() {
   const router = useRouter();

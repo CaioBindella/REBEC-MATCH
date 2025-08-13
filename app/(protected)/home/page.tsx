@@ -1,15 +1,15 @@
-import React from 'react';
-import { ScrollView, StyleSheet, View, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Stack } from 'expo-router';
+import React from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 // Context
 import { useAuth } from '@/context/AuthContext';
 
 // Components
-import Header from "@/components/Header";
-import VolunteerDashboard from '@/components/VolunteerDashboard';
-import ResearcherDashboard from '@/components/ResearcherDashboard';
+import ResearcherDashboard from '@/components/researcherComponents/ResearcherDashboard';
+import Header from "@/components/reusable/Header";
+import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
 export default function HomePage() {
   // 1. Pega os dados do usuário do nosso contexto
