@@ -36,7 +36,7 @@ export default function Header() {
           </MenuTrigger>
           
           <MenuOptions customStyles={optionsStyles}>
-            <MenuOption onSelect={() => alert('Abrir Perfil')}>
+            <MenuOption onSelect={() => router.push('/profile/page')}>
               <Text style={styles.menuOptionText}>Meu Perfil</Text>
             </MenuOption>
             <View style={styles.divider} />

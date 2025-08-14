@@ -33,6 +33,9 @@ export default function ManageStudiesPage() {
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
       <View style={styles.content}>
+        <View style={styles.profileTag}>
+          <Text style={styles.profileTagText}>Perfil Pesquisador</Text>
+        </View>
         <Text style={styles.pageTitle}>Gerenciar Meus Estudos</Text>
         {studies.length > 0 ? (
           <FlatList
@@ -71,4 +74,16 @@ const styles = StyleSheet.create({
   emptyText: { fontSize: 16, color: '#6c757d', textAlign: 'center', marginBottom: 20 },
   createButton: { backgroundColor: '#15715A', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 },
   createButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
+  profileTag: {
+    backgroundColor: '#E0F2F1', // Um verde claro
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start', // Alinha à esquerda
+    marginBottom: 16,
+  },
+  profileTagText: {
+    color: '#166865', // Verde escuro do seu tema
+    fontWeight: '500',
+  },
 });

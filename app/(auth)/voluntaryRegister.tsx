@@ -8,7 +8,7 @@ export default function RegisterPage() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <Header/>
+      {/* <Header/> */}
       <RegisterForm />
     </>
   );

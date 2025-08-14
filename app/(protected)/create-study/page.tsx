@@ -84,6 +84,9 @@ export default function CreateStudyPage() {
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
       <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <View style={styles.profileTag}>
+          <Text style={styles.profileTagText}>Perfil Pesquisador</Text>
+        </View>
         <Text style={styles.pageTitle}>Registrar Novo Estudo</Text>
 
         <InputField
@@ -191,5 +194,17 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  profileTag: {
+    backgroundColor: '#E0F2F1', // Um verde claro
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignSelf: 'flex-start', // Alinha à esquerda
+    marginBottom: 16,
+  },
+  profileTagText: {
+    color: '#166865', // Verde escuro do seu tema
+    fontWeight: '500',
   },
 });

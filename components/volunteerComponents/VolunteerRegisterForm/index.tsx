@@ -56,7 +56,7 @@ export default function RegisterForm() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.header}>Cadastro</Text>
+      <Text style={styles.header}>Cadastro de Voluntário</Text>
 
       {/* Nome */}
       <Text style={styles.label}>Nome</Text>

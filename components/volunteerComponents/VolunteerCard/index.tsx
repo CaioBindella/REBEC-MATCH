@@ -1,62 +1,51 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
+// Interface atualizada para as props do card
 interface VolunteerCardProps {
   id: string;
   location: string;
   description: string;
-  tags: string[];
+  studyApplied: string; // Nome do estudo ao qual se candidatou
+  onAnalyze: () => void; // Função para o botão "Analisar"
 }
 
-const VolunteerCard: React.FC<VolunteerCardProps> = ({ id, location, description, tags }) => {
+export default function VolunteerCard({ id, location, description, studyApplied, onAnalyze }: VolunteerCardProps) {
   return (
     <View style={styles.cardContainer}>
       <View style={styles.header}>
-        <View style={styles.imagePlaceholder} />
-        <View style={styles.headerText}>
-          <Text style={styles.volunteerId}>{id}</Text>
-          <Text style={styles.location}>{location}</Text>
-        </View>
+        <Text style={styles.volunteerId}>{id}</Text>
+        <Text style={styles.location}>{location}</Text>
       </View>
       <Text style={styles.description}>{description}</Text>
-      <View style={styles.tagsContainer}>
-        {tags.map((tag, index) => (
-          <View key={index} style={styles.tag}>
-            <Text style={styles.tagText}>{tag}</Text>
-          </View>
-        ))}
+      
+      {/* Tag para o estudo */}
+      <View style={styles.studyTag}>
+        <Text style={styles.studyTagText}>Candidato para: {studyApplied}</Text>
       </View>
+
+      {/* Botão para analisar o perfil */}
+      <TouchableOpacity style={styles.analyzeButton} onPress={onAnalyze}>
+        <Text style={styles.analyzeButtonText}>Analisar Perfil</Text>
+      </TouchableOpacity>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   cardContainer: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 20,
+    padding: 16,
     marginBottom: 16,
-    // Sombra
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderWidth: 1,
+    borderColor: '#e9ecef',
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  imagePlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: 10,
-    backgroundColor: '#e9ecef',
-    marginRight: 16,
-  },
-  headerText: {
-    flex: 1,
+    marginBottom: 8,
   },
   volunteerId: {
     fontSize: 18,
@@ -73,21 +62,28 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     marginBottom: 16,
   },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
+  studyTag: {
+    backgroundColor: '#E0F2F1',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    alignSelf: 'flex-start',
+    marginBottom: 16,
   },
-  tag: {
-    backgroundColor: '#e9ecef',
-    borderRadius: 16,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-  },
-  tagText: {
+  studyTagText: {
+    color: '#166865',
+    fontWeight: '500',
     fontSize: 12,
-    color: '#495057',
+  },
+  analyzeButton: {
+    backgroundColor: '#15715A',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  analyzeButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
 });
-
-export default VolunteerCard;
