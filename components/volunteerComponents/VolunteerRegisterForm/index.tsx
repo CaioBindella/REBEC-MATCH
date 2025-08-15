@@ -190,7 +190,7 @@ export default function RegisterForm() {
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
             style={styles.input}
-            placeholder="(XX) XXXXX-XXXX"
+            placeholder="DDD (XX) XXXXX-XXXX"
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}
@@ -218,7 +218,7 @@ export default function RegisterForm() {
       {errors.endereco && <Text style={styles.errorText}>{errors.endereco.message}</Text>}
 
       {/* Documento */}
-      <Text style={styles.label}>Documento (CPF/CNPJ)</Text>
+      <Text style={styles.label}>Documento (CPF)</Text>
       <Controller
         control={control}
         name="documento"

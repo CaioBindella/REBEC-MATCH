@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 
 const mockStudyDetails = {
   '1': {
@@ -21,6 +21,8 @@ const mockStudyDetails = {
 };
 
 export default function StudyDetailScreen() {
+  const router = useRouter();
+
   const { id } = useLocalSearchParams<{ id: string }>(); 
   
   const study = mockStudyDetails[id as keyof typeof mockStudyDetails]; 
@@ -51,7 +53,9 @@ export default function StudyDetailScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.formButton}>
+        <TouchableOpacity 
+          style={styles.formButton}
+          onPress={() => router.push('/volunteer-form-study/page')}>
           <Text style={styles.formButtonText}>Preencher Formulário</Text>
         </TouchableOpacity>
       </View>
