@@ -1,10 +1,34 @@
 import { Text, View, StyleSheet, ImageBackground, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Href } from 'expo-router';
+import { useState } from 'react';
 
 //Components
 import { InitialButton } from '@/components/reusable/InitialButton';
+import { TermsModal } from '@/components/reusable/TermsModal';
 
 export default function HomeScreen() {
+
+  const router = useRouter();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [navigationPath, setNavigationPath] = useState('');
+
+   const handlePress = (path: string) => {
+    setNavigationPath(path);
+    setModalVisible(true);
+  };
+
+  const handleAccept = () => {
+    setModalVisible(false);
+    if (navigationPath) {
+      router.push(navigationPath as Href);
+    }
+  };
+
+  const handleClose = () => {
+    setModalVisible(false);
+    setNavigationPath('');
+  };
+
   return (
     <ImageBackground
       source={require('../assets/images/BackgroundLogin.png')}
@@ -25,17 +49,24 @@ export default function HomeScreen() {
         </Text>
 
         <InitialButton 
-          text="Entre como Pesquisador" 
+          text="Crie sua conta" 
           color='#166865'
+          onPress={() => handlePress('/(auth)/voluntaryRegister')}
         />
 
         <Text style={styles.text}>- - - - - - - ou - - - - - - -</Text>
 
         <InitialButton 
-          text="Entre como Voluntário" 
+          text="Fazer login" 
           color='#15715A'
-          onPress={() => useRouter().push('/(auth)/voluntaryRegister')}
+          onPress={() => handlePress('/(auth)/login')}
          />
+
+         <TermsModal
+          visible={modalVisible}
+          onClose={handleClose}
+          onAccept={handleAccept}
+        />
 
       </View>
     </ImageBackground>

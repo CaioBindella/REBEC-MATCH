@@ -27,7 +27,7 @@ export default function VolunteerDetailsPage() {
             <Stack.Screen options={{ headerShown: false }} />
             <Header />
             <ScrollView contentContainerStyle={styles.content}>
-                <Text style={styles.title}>Perfil do Voluntário</Text>
+                <Text style={styles.title}>Respostas do Voluntário</Text>
                 <Text style={styles.volunteerId}>{volunteer.id}</Text>
 
                 {/* <View style={styles.section}>
@@ -50,7 +50,7 @@ export default function VolunteerDetailsPage() {
 
                 <View style={styles.actions}>
                     <TouchableOpacity style={[styles.actionButton, styles.approveButton]}>
-                        <Text style={styles.actionButtonText}>Aprovar Candidatura</Text>
+                        <Text style={styles.actionButtonText}>Convidar</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={[styles.actionButton, styles.rejectButton]}>
                         <Text style={styles.actionButtonText}>Rejeitar</Text>

@@ -8,14 +8,6 @@ export interface LoginCredentials {
 
 // Tipagem para a resposta da API que você mostrou
 export interface LoginResponse {
-  user: {
-    id: number;
-    tipo: string;
-    login: string;
-    email: string;
-    nome: string;
-    // Adicione os outros campos do usuário se precisar deles
-  };
   token: string;
 }
 

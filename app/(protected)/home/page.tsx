@@ -1,4 +1,3 @@
-import { Stack } from 'expo-router';
 import React from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -12,10 +11,8 @@ import Header from "@/components/reusable/Header";
 import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
 export default function HomePage() {
-  // 1. Pega os dados do usuário do nosso contexto
   const { user, isReady } = useAuth();
 
-  // Enquanto o contexto carrega o usuário, mostramos uma tela de loading
   if (!isReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -26,9 +23,7 @@ export default function HomePage() {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <Stack.Screen options={{ headerShown: false }} />
       <Header />
-
       <ScrollView contentContainerStyle={styles.container}>
         {user?.userType === 'VOLUNTARIO' && <VolunteerDashboard />}
         {user?.userType === 'PESQUISADOR' && <ResearcherDashboard />}

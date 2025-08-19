@@ -1,41 +1,113 @@
-import { Stack } from 'expo-router';
-import { KeyboardAvoidingView, Platform, SafeAreaView, StyleSheet, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { useAuth } from '@/context/AuthContext';
+import { LoginCredentials } from '@/services/userService';
 
-// Components
-import LoginForm from '@/components/reusable/LoginCredentials';
-import Header from '@/components/reusable/Header';
+export default function LoginForm() {
+  // Obtendo a função de login do contexto de autenticação
+  const { logIn } = useAuth();
 
-export default function LoginPage() {
+  // Criando estados para gerir as credenciais, erros e o estado de carregamento
+  const [credentials, setCredentials] = useState<LoginCredentials>({ login: '', senha: '' });
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogin = async () => {
+    // Validação simples para evitar chamadas à API desnecessárias
+    if (!credentials.login || !credentials.senha) {
+      Alert.alert('Atenção', 'Por favor, preencha os campos de login e senha.');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Chamando a função logIn com as credenciais do estado
+      await logIn(credentials);
+      // A navegação para a página principal ocorrerá dentro da função logIn do AuthContext
+    } catch (error: any) {
+      // Se a API retornar um erro, mostre-o ao utilizador
+      Alert.alert('Erro de Login', error.message || 'Não foi possível entrar. Verifique as suas credenciais.');
+    } finally {
+      // Independentemente do resultado, pare o carregamento
+      setIsLoading(false);
+    }
+  };
+
   return (
-    // 1. SafeAreaView: Garante que o conteúdo não fique sob a barra de status ou o "notch" em iPhones.
-    <SafeAreaView style={styles.safeArea}>
-      {/* 2. KeyboardAvoidingView: Empurra o conteúdo para cima quando o teclado abre. */}
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-      >
-        <Stack.Screen options={{ headerShown: false }} />
-        <Header />
+    <View style={styles.container}>
+      <Text style={styles.title}>Acessar Conta</Text>
+      
+      <TextInput
+        style={styles.input}
+        placeholder="Login"
+        placeholderTextColor="#888"
+        value={credentials.login}
+        onChangeText={(text) => setCredentials(prev => ({ ...prev, login: text }))}
+        autoCapitalize="none"
+        keyboardType="email-address"
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Senha"
+        placeholderTextColor="#888"
+        value={credentials.senha}
+        onChangeText={(text) => setCredentials(prev => ({ ...prev, senha: text }))}
+        secureTextEntry
+      />
 
-        <View style={styles.content}>
-          <LoginForm />
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+      <TouchableOpacity 
+        style={styles.button} 
+        onPress={handleLogin} 
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.buttonText}>Entrar</Text>
+        )}
+      </TouchableOpacity>
+    </View>
   );
 }
 
-
 const styles = StyleSheet.create({
-  safeArea: {
-    flex: 1, 
-    backgroundColor: '#fff', 
-  },
   container: {
-    flex: 1, 
+    padding: 20,
   },
-  content: {
-    flex: 1, 
-    justifyContent: 'center', 
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#212529',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  input: {
+    backgroundColor: '#f0f2f5',
+    height: 50,
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+  },
+  button: {
+    backgroundColor: '#15715A',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

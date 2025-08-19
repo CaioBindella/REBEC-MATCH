@@ -1,35 +1,34 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { jwtDecode } from 'jwt-decode'; 
 
-// --- 1. Defina um tipo para o objeto do usuário ---
+import userService, { LoginCredentials } from '@/services/userService';
+import { USER_KEY, TOKEN_KEY } from '@env';
+
 type User = {
-    id: string; // Exemplo de dados do usuário
+    id: string;
     name: string;
-    userType: 'VOLUNTARIO' | 'PESQUISADOR'; // Tipo de usuário
+    userType: 'VOLUNTARIO' | 'PESQUISADOR';
+    nomeFicticio?: string;
 };
 
-// --- 2. Atualize o tipo do estado de autenticação ---
 type AuthState = {
-    user: User | null; // Armazena o objeto do usuário ou nulo
-    logIn: (userData: User) => void; // logIn agora espera receber os dados do usuário
+    user: User | null;
+    logIn: (credentials: LoginCredentials) => Promise<void>;
     logOut: () => void;
     isReady?: boolean;
+    userType?: 'VOLUNTARIO' | 'PESQUISADOR';
 };
 
-// --- 3. Atualize o valor inicial do contexto ---
 export const AuthContext = createContext<AuthState>({
     user: null,
     isReady: false,
-    logIn: () => {},
+    logIn: async () => {},
     logOut: () => {},
 });
 
-// Chave para o AsyncStorage
-const USER_KEY = 'userData';
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    // --- 4. Mude o estado de 'isAuthenticated' para 'user' ---
     const [user, setUser] = useState<User | null>(null);
     const [isReady, setIsReady] = useState(false);
     const router = useRouter();
@@ -48,21 +47,40 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
     }
 
-    // --- 5. Atualize a função logIn para aceitar dados do usuário ---
-    const logIn = (userData: User) => {
-        setUser(userData);
-        storeUserState(userData);
-        // A rota correta geralmente não inclui /page
-        router.replace('/(protected)/home/page'); 
+    const logIn = async (credentials: LoginCredentials) => {
+        try {
+            const response = await userService.login(credentials);
+            const { token } = response;
+
+            await AsyncStorage.setItem(TOKEN_KEY, token);
+
+            const decodedToken: any = jwtDecode(token);
+
+            const userData: User = {
+                id: decodedToken.sub,
+                name: decodedToken.nome,
+                userType: decodedToken.tipoEspecifico,
+                nomeFicticio: decodedToken.nomeFicticio,
+            };
+
+            setUser(userData);
+            await storeUserState(userData);
+            
+            router.replace('/(protected)/home/page');
+
+        } catch (error) {
+            console.error('Falha no login:', error);
+            throw new Error('Login ou senha inválidos.');
+        }
     };
 
-    const logOut = () => {
+    const logOut = async () => {
         setUser(null);
-        storeUserState(null); // Limpa o estado armazenado
+        await storeUserState(null); // Limpa o estado armazenado
+        await AsyncStorage.removeItem(TOKEN_KEY);
         router.replace('/firstpage');
     };
 
-    // --- 6. Atualize o useEffect para carregar o objeto do usuário ---
     useEffect(() => {
         async function loadUserState() {
             try {
@@ -80,9 +98,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         loadUserState();
     }, []);
 
-    // --- 7. Exponha o 'user' no provedor do contexto ---
     return (
-        <AuthContext.Provider value={{ user, isReady, logIn, logOut }}>
+        <AuthContext.Provider value={{ user, isReady, logIn, logOut, userType: user?.userType }}>
             {children}
         </AuthContext.Provider>
     );
