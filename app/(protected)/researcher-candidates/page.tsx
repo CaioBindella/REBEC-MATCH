@@ -22,7 +22,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f2f5',
   },
   content: {
-    padding: 20,
     alignItems: 'center',
   },
 });

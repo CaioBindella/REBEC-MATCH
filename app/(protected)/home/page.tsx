@@ -12,7 +12,7 @@ import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashbo
 
 export default function HomePage() {
   const { user, isReady } = useAuth();
-
+  console.log('User data:', user);
   if (!isReady) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -26,7 +26,7 @@ export default function HomePage() {
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
         {user?.userType === 'VOLUNTARIO' && <VolunteerDashboard />}
-        {user?.userType === 'PESQUISADOR' && <ResearcherDashboard />}
+        {user?.userType === undefined && <ResearcherDashboard />}
       </ScrollView>
     </SafeAreaView>
   );
