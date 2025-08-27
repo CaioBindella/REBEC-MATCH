@@ -17,7 +17,7 @@ export default function VolunteerDashboard() {
         title="Ver pesquisas disponíveis"
         description="Encontre estudos clínicos e pesquisas científicas perto de si. A sua participação voluntária é fundamental para o avanço da ciência e o desenvolvimento de novos tratamentos."
         buttonText="Veja detalhes"
-        linkTo="/available-research/page"
+        linkTo="/volunteer/available-research/page"
       />
 
       <InfoCard
@@ -25,7 +25,7 @@ export default function VolunteerDashboard() {
         title="Meus Estudos"
         description="Acesse a área dedicada aos estudos para os quais você foi selecionado. Acompanhe o progresso e comunique-se diretamente com os pesquisadores através do chat."
         buttonText="Acompanhar"
-        linkTo="/my-studies/page"
+        linkTo="/volunteer/my-studies/page"
       />
     </View>
   );

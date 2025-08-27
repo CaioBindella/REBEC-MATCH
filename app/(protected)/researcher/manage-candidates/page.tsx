@@ -4,7 +4,7 @@ import { Stack } from 'expo-router';
 import Header from '@/components/reusable/Header';
 import ResearcherDashboard from '@/components/researcherComponents/ResearcherCandidates';
 
-export default function ResearcherPage() {
+export default function ManageCandidatesPage() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />

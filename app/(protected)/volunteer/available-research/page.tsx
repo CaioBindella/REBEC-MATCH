@@ -32,7 +32,7 @@ export default function AvailableStudiesScreen() {
   const handleNavigateToDetails = (id: number) => {
     // Navega para a tela de detalhes, usando a estrutura de pastas correta
     router.push({
-      pathname: "/available-research/[id]",
+      pathname: "/volunteer/available-research/[id]",
       params: { id: id },
     });
   };

@@ -2,6 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 
+import Header from '@/components/reusable/Header';
+
 const mockStudyDetails = {
   '1': {
     id: 1,
@@ -33,6 +35,7 @@ export default function StudyDetailScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <Header />
       <Stack.Screen options={{ title: 'Detalhes do Estudo' }} />
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.title}>{study.titulo}</Text>
@@ -55,7 +58,7 @@ export default function StudyDetailScreen() {
       <View style={styles.footer}>
         <TouchableOpacity 
           style={styles.formButton}
-          onPress={() => router.push('/volunteer-form-study/page')}>
+          onPress={() => router.push('/volunteer/form-study/page')}>
           <Text style={styles.formButtonText}>Preencher Formulário</Text>
         </TouchableOpacity>
       </View>

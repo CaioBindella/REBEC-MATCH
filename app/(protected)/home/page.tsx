@@ -25,8 +25,8 @@ export default function HomePage() {
     <SafeAreaView style={styles.safeArea}>
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
-        {user?.userType === 'VOLUNTARIO' && <VolunteerDashboard />}
-        {user?.userType === undefined && <ResearcherDashboard />}
+        {user?.userType === undefined && <VolunteerDashboard />}
+        {user?.userType === 'PESQUISADOR' && <ResearcherDashboard />}
       </ScrollView>
     </SafeAreaView>
   );

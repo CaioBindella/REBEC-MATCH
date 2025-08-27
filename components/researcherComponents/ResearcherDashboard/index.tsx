@@ -28,9 +28,17 @@ export default function ResearcherDashboard() {
 
       <InfoCard
         icon={{ name: 'people-outline', size: 60, color: '#15715A' }}
-        title="Gerenciar Voluntários"
+        title="Gerenciar Candidaturas"
         description="Revise as candidaturas dos voluntários para seus estudos, verifique critérios e gerencie os participantes selecionados."
         buttonText="Ver Candidatos"
+        linkTo="researcher-candidates/page"
+      />
+
+      <InfoCard
+        icon={{ name: 'chatbubble-ellipses-outline', size: 60, color: '#15715A' }}
+        title="Contato com Voluntários"
+        description="Estabeleça comunicação direta com os voluntários inscritos para esclarecer dúvidas, fornecer informações adicionais ou coordenar detalhes do estudo."
+        buttonText="Conversar"
         linkTo="researcher-candidates/page"
       />
     </View>

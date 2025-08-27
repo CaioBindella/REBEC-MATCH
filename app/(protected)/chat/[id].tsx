@@ -10,7 +10,8 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import { useLocalSearchParams, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack, useRouter  } from 'expo-router';
+import { Ionicons, FontAwesome } from '@expo/vector-icons';
 
 // Nossa própria interface de mensagem simples
 interface IMessage {
@@ -41,6 +42,7 @@ const RESEARCHER_USER = { _id: 2, name: 'Pesquisador' };
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const [messages, setMessages] = useState<IMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const flatListRef = useRef<FlatList>(null);
@@ -97,41 +99,73 @@ export default function ChatScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <Stack.Screen options={{ title: 'Chat com Pesquisador' }} />
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        style={styles.container}
-        keyboardVerticalOffset={90} // Ajuste este valor se necessário
-      >
-        <FlatList
-          ref={flatListRef}
-          data={messages}
-          renderItem={renderMessageBubble}
-          keyExtractor={(item) => item._id.toString()}
-          style={styles.messageList}
-          inverted // Começa a lista de baixo para cima!
-        />
+    <> 
+      <Stack.Screen 
+        options={{
+          headerShown: true,
+          headerTitleAlign: 'left',
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: '#0d9371' },
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 10 }}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+          ),
+          headerTitle: () => (
+            <View style={styles.headerTitleContainer}>
+              <FontAwesome name="user-circle" size={32} color="#fff" />
+              <Text style={styles.headerTitleText}>PS243RJ</Text>
+            </View>
+          ),
+        }} 
+      />
 
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={setInputText}
-            placeholder="Digite sua mensagem..."
-            placeholderTextColor="#999"
+      {/* O resto da sua UI continua dentro do SafeAreaView */}
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'padding'}
+          style={styles.container}
+          keyboardVerticalOffset={90}
+        >
+          <FlatList
+            ref={flatListRef}
+            data={messages}
+            renderItem={renderMessageBubble}
+            keyExtractor={(item) => item._id.toString()}
+            style={styles.messageList}
+            inverted
           />
-          <TouchableOpacity style={styles.sendButton} onPress={onSend}>
-            <Text style={styles.sendButtonText}>Enviar</Text>
-          </TouchableOpacity>
-        </View>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+          <View style={styles.inputContainer}>
+            <TextInput
+              style={styles.textInput}
+              value={inputText}
+              onChangeText={setInputText}
+              placeholder="Digite sua mensagem..."
+              placeholderTextColor="#999"
+            />
+            <TouchableOpacity style={styles.sendButton} onPress={onSend}>
+              <Text style={styles.sendButtonText}>Enviar</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: 10,
+  },
+  headerTitleText: {
+    fontSize: 17,
+    fontWeight: '600',
+    marginLeft: 10,
+    color: '#fff',
+  },
   messageList: { paddingHorizontal: 10, flex: 1 },
   inputContainer: {
     flexDirection: 'row',
