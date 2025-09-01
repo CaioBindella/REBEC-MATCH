@@ -2,12 +2,13 @@ package com.rebecmatchapi.rebecmatch_api.dto.Anuncio;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import java.time.OffsetDateTime;
+
+import java.time.LocalDate;
 
 @Data
 public class AnuncioCreateDTO {
     @JsonProperty("busca_id")
     private Integer buscaId;
     private String mensagem;
-    private OffsetDateTime dataExpiracao;
+    private LocalDate dataExpiracao;
 }

@@ -2,9 +2,14 @@ package com.rebecmatchapi.rebecmatch_api.service;
 
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioUpdateDTO;
+import com.rebecmatchapi.rebecmatch_api.entity.Pesquisador;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
+import com.rebecmatchapi.rebecmatch_api.entity.Voluntario;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoUsuario;
+import com.rebecmatchapi.rebecmatch_api.repository.PesquisadorRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
+import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -16,6 +21,9 @@ import java.util.List;
 public class UsuarioService {
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
+    private final PesquisadorRepository pesquisadorRepository;
+    private final VoluntarioRepository voluntarioRepository;
+    private final CepService cepService;
     public Usuario createUser(UsuarioCreateDTO usuarioDTO){
         if (usuarioRepository.findByEmail(usuarioDTO.getEmail()).isPresent()){
             throw new RuntimeException("Email já cdastrado.");
@@ -30,6 +38,7 @@ public class UsuarioService {
         novoUsuario.setSexo(usuarioDTO.getSexo());
         novoUsuario.setDataNascimento(usuarioDTO.getDataNascimento());
         novoUsuario.setTelefone(usuarioDTO.getTelefone());
+        novoUsuario.setCep(usuarioDTO.getCep());
         novoUsuario.setEndereco(usuarioDTO.getEndereco());
         novoUsuario.setDocumento(usuarioDTO.getDocumento());
 
@@ -38,8 +47,47 @@ public class UsuarioService {
         String hashedPassword = passwordEncoder.encode(usuarioDTO.getSenha());
         novoUsuario.setSenha(hashedPassword);
 
-        return usuarioRepository.save(novoUsuario);
+        Usuario usuarioSalvo = usuarioRepository.save(novoUsuario);
+
+        // Cria o perfil (Pesquisador ou Voluntário) automaticamente
+        createProfileForUser(usuarioSalvo);
+
+        return usuarioSalvo;
     }
+
+    /**
+     * Cria um perfil de Pesquisador ou Voluntário para um usuário recém-criado.
+     * O usuário que acabou de ser salvo no banco de dados.
+     */
+    private void createProfileForUser(Usuario usuario) {
+        String nomeFicticio = generateFictionalName(usuario);
+
+        if (usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR) {
+            Pesquisador pesquisador = new Pesquisador();
+            pesquisador.setUsuario(usuario);
+            pesquisador.setNomeFicticio(nomeFicticio);
+            pesquisadorRepository.save(pesquisador);
+        } else if (usuario.getTipoEspecifico() == TipoEspecifico.VOLUNTARIO) {
+            Voluntario voluntario = new Voluntario();
+            voluntario.setUsuario(usuario);
+            voluntario.setNomeFicticio(nomeFicticio);
+            voluntario.setDistancia(0.0); // Valor padrão inicial
+            voluntarioRepository.save(voluntario);
+        }
+    }
+
+    /**
+     * Gera um nome fictício com base no tipo de usuário, ID e CEP.
+     * O usuário para o qual o nome será gerado.
+     * Uma string no formato PREFIXO + ID + SUFIXO_ESTADO (ex: VOL243RJ).
+     */
+    private String generateFictionalName(Usuario usuario) {
+        String prefix = usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR ? "PS" : "VOL";
+        String idPart = String.valueOf(usuario.getId());
+        String suffix = cepService.getStateAbbreviation(usuario.getCep());
+        return prefix + idPart + suffix;
+    }
+
     public Usuario updateUser(Integer id, UsuarioUpdateDTO usuarioDTO){
         Usuario userValid = usuarioRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
@@ -53,6 +101,7 @@ public class UsuarioService {
         userValid.setSexo(usuarioDTO.getSexo());
         userValid.setDataNascimento(usuarioDTO.getDataNascimento());
         userValid.setTelefone(usuarioDTO.getTelefone());
+        userValid.setCep(usuarioDTO.getCep());
         userValid.setEndereco(usuarioDTO.getEndereco());
         userValid.setDocumento(usuarioDTO.getDocumento());
 

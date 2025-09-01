@@ -1,7 +1,8 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Formulario;
 
 import lombok.Data;
-import java.time.OffsetDateTime;
+
+import java.time.LocalDate;
 
 @Data
 public class FormularioResponseDTO {
@@ -9,5 +10,5 @@ public class FormularioResponseDTO {
     private Integer estudoId; // Para simplicidade, retornamos apenas o ID do estudo.
     private String titulo;
     private String textoParaRespostaLivre;
-    private OffsetDateTime dataCriacao;
+    private LocalDate dataCriacao;
 }

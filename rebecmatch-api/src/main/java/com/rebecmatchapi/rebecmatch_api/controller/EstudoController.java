@@ -1,10 +1,12 @@
 package com.rebecmatchapi.rebecmatch_api.controller;
 
+import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Estudo.EstudoCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Estudo.EstudoResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Estudo.EstudoUpdateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Pesquisador.PesquisadorResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioResponseDTO;
+import com.rebecmatchapi.rebecmatch_api.entity.Criterio;
 import com.rebecmatchapi.rebecmatch_api.entity.Estudo;
 import com.rebecmatchapi.rebecmatch_api.entity.Pesquisador;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
@@ -60,13 +62,28 @@ public class EstudoController {
     private EstudoResponseDTO toResponseDTO(Estudo estudo) {
         EstudoResponseDTO dto = new EstudoResponseDTO();
         dto.setId(estudo.getId());
-        dto.setTitulo(estudo.getTitulo());
-        dto.setCodigoRegistro(estudo.getCodigoRegistro());
-        dto.setStatus(estudo.getStatus());
-        dto.setDataInicio(estudo.getDataInicio());
-        dto.setDataFim(estudo.getDataFim());
-        dto.setInformacoesGerais(estudo.getInformacoesGerais());
+        dto.setPublicTitle(estudo.getPublicTitle());
+        dto.setScientificTitle(estudo.getScientificTitle());
+        dto.setRecruitmentStatus(estudo.getRecruitmentStatus());
+        dto.setStudyType(estudo.getStudyType());
+        dto.setPhase(estudo.getPhase());
+        dto.setDateRegistration(estudo.getDateRegistration());
+        dto.setDateEnrolment(estudo.getDateEnrolment());
+        dto.setUrl(estudo.getUrl());
+        dto.setPrimarySponsor(estudo.getPrimarySponsor());
+        dto.setHcFreetext(estudo.getHcFreetext());
+        dto.setIFreetext(estudo.getIFreetext());
+        dto.setApprovalDate(estudo.getApprovalDate());
+        dto.setSecId(estudo.getSecId());
+        dto.setTrialId(estudo.getTrialId());
         dto.setPesquisador(toPesquisadorResponseDTO(estudo.getPesquisador()));
+
+        if (estudo.getCriterios() != null) {
+            dto.setCriterios(estudo.getCriterios().stream()
+                    .map(this::toCriterioResponseDTO)
+                    .collect(Collectors.toList()));
+        }
+
         return dto;
     }
 
@@ -87,10 +104,24 @@ public class EstudoController {
         dto.setSobrenome(usuario.getSobrenome());
         dto.setLogin(usuario.getLogin());
         dto.setEmail(usuario.getEmail());
-        dto.setTipo(usuario.getTipo());
         dto.setTipoEspecifico(usuario.getTipoEspecifico());
         dto.setSexo(usuario.getSexo());
         dto.setTester(usuario.isTester());
+        return dto;
+    }
+
+    private CriterioResponseDTO toCriterioResponseDTO(Criterio criterio) {
+        if (criterio == null) return null;
+        CriterioResponseDTO dto = new CriterioResponseDTO();
+        dto.setId(criterio.getId());
+        dto.setInclusionCriteria(criterio.getInclusionCriteria());
+        dto.setAgeMin(criterio.getAgeMin());
+        dto.setAgeMax(criterio.getAgeMax());
+        dto.setGender(criterio.getGender());
+        dto.setExclusionCriteria(criterio.getExclusionCriteria());
+        if(criterio.getEstudo() != null){
+            dto.setEstudoId(criterio.getEstudo().getId());
+        }
         return dto;
     }
 }

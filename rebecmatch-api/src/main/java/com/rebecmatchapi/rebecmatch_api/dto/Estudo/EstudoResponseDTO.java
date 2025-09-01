@@ -1,19 +1,30 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Estudo;
 
+import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Pesquisador.PesquisadorResponseDTO;
 import lombok.Data;
-import java.time.OffsetDateTime;
+
+import java.time.LocalDate;
+import java.util.List;
 
 @Data
 public class EstudoResponseDTO {
     private Integer id;
-    private String titulo;
-    // Para evitar loops, usamos um DTO de resposta para o pesquisador.
-    // O ideal seria um DTO ainda mais simples, apenas com o ID e nome.
+    private Integer pesquisadorId;
+    private String publicTitle;
     private PesquisadorResponseDTO pesquisador;
-    private String codigoRegistro;
-    private String status;
-    private OffsetDateTime dataInicio;
-    private OffsetDateTime dataFim;
-    private String informacoesGerais;
+    private String scientificTitle;
+    private String recruitmentStatus;
+    private String studyType;
+    private String phase;
+    private LocalDate dateRegistration;
+    private LocalDate dateEnrolment;
+    private String url;
+    private String primarySponsor;
+    private String hcFreetext;
+    private String iFreetext;
+    private String approvalDate;
+    private String secId;
+    private String trialId;
+    private List<CriterioResponseDTO> criterios;
 }

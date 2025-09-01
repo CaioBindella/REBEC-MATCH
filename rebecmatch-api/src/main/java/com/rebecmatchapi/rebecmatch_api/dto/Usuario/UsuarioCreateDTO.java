@@ -4,7 +4,7 @@ import com.rebecmatchapi.rebecmatch_api.entity.enums.Sexo;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 @Data
 public class UsuarioCreateDTO {
@@ -15,8 +15,9 @@ public class UsuarioCreateDTO {
     private String senha;
     private TipoEspecifico tipoEspecifico;
     private Sexo sexo;
-    private OffsetDateTime dataNascimento;
+    private LocalDate dataNascimento;
     private String telefone;
+    private String cep;
     private String endereco;
     private String documento;
 }

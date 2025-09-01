@@ -68,7 +68,7 @@ CREATE TABLE questao (
     formulario_id INT NOT NULL,
     texto TEXT NOT NULL,
     tipo ENUM('TEXTO', 'OPCOES') NOT NULL,
-    opcoes JSON,
+    opcoes TEXT,
     obrigatorio BOOLEAN NOT NULL DEFAULT FALSE,
     CONSTRAINT fk_questao_formulario FOREIGN KEY(formulario_id) REFERENCES formulario(id)
 );

@@ -54,9 +54,13 @@ public class CriterioController {
     private CriterioResponseDTO toResponseDTO(Criterio criterio) {
         CriterioResponseDTO dto = new CriterioResponseDTO();
         dto.setId(criterio.getId());
-        dto.setTexto(criterio.getTexto());
-        if (criterio.getBusca() != null) {
-            dto.setBuscaId(criterio.getBusca().getId());
+        dto.setInclusionCriteria(criterio.getInclusionCriteria());
+        dto.setAgeMin(criterio.getAgeMin());
+        dto.setAgeMax(criterio.getAgeMax());
+        dto.setGender(criterio.getGender());
+        dto.setExclusionCriteria(criterio.getExclusionCriteria());
+        if (criterio.getEstudo() != null) {
+            dto.setEstudoId(criterio.getEstudo().getId());
         }
         return dto;
     }

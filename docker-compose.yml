@@ -1,17 +1,63 @@
-version: '3.8'
-
 services:
-  postgres:
-    image: postgres:16
-    container_name: db-java
-    ports:
-      - "5432:5432"
+  # Serviço 1: O Banco de Dados MySQL
+  db:
+    image: mysql:8.0
+    container_name: rebecmatch-mysql
+    # Variáveis de ambiente para configurar o MySQL
     environment:
-      POSTGRES_DB: rebecmatchapi
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: caiozika
+      MYSQL_ROOT_PASSWORD: rootpassword # Defina uma senha forte aqui
+      MYSQL_DATABASE: rebecmatch-db # O nome do seu banco de dados
+    ports:
+      # Mapeia a porta 3306 do contentor para a 3306 da sua máquina
+      - "3306:3306"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # Volume para persistir os dados do banco de dados
+      - mysql-data:/var/lib/mysql
+      # Monta o nosso ficheiro .sql para inicializar o banco de dados na primeira vez
+      - ./docker-data/mysql:/docker-entrypoint-initdb.d
+    networks:
+      - rebecmatch-net
 
+  # Serviço 2: A sua API Java (Spring Boot)
+  api:
+    build: ./rebecmatch-api  # CORRIGIDO: Agora aponta para a pasta onde o Dockerfile realmente está
+    container_name: rebecmatch-api
+    ports:
+      # Mapeia a porta 8080 do contentor para a 8080 da sua máquina
+      - "8080:8080"
+    # A API depende do banco de dados. Ela só irá iniciar depois que o 'db' estiver pronto.
+    depends_on:
+      - db
+    # Variáveis de ambiente que a sua API irá usar
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/rebecmatch-db
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: rootpassword
+    networks:
+      - rebecmatch-net
+
+  # Serviço 3: O phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: rebecmatch-pma
+    ports:
+      # Mapeia a porta 8081 da sua máquina para a porta 80 do contentor
+      - "8081:80"
+    # O phpMyAdmin também depende do banco de dados
+    depends_on:
+      - db
+    # Variáveis de ambiente para o phpMyAdmin
+    environment:
+      PMA_HOST: db # Diz ao phpMyAdmin para se conectar ao serviço 'db'
+      PMA_PORT: 3306
+    networks:
+      - rebecmatch-net
+
+# Define a rede que os contentores irão usar para comunicar entre si
+networks:
+  rebecmatch-net:
+    driver: bridge
+
+# Define o volume para persistência dos dados do MySQL
 volumes:
-  postgres_data:
+  mysql-data:

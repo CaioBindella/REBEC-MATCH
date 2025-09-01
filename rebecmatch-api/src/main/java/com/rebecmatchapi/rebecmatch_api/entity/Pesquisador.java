@@ -23,7 +23,7 @@ public class Pesquisador {
     @EqualsAndHashCode.Exclude
     private Usuario usuario;
 
-    @Column(name = "nome_ficticio")
+    @Column(name = "nomeFicticio")
     private String nomeFicticio;
 
     // Relação 1-para-N com Estudo. Um pesquisador pode ter vários estudos.

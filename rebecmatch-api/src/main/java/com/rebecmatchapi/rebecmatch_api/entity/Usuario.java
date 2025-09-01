@@ -11,7 +11,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,13 +23,13 @@ public class Usuario implements UserDetails {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String nome;
 
-    @Column(nullable = false, length = 50)
+    @Column(length = 50)
     private String sobrenome;
 
-    @Column(nullable = false, unique = true, length = 50)
+    @Column(unique = true, length = 50)
     private String login;
 
     @Column(nullable = false, unique = true, length = 100)
@@ -38,42 +38,43 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private String senha;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TipoUsuario tipo;
+    // Este campo foi removido da V2 do banco de dados, mas é usado para o Spring Security
+    // A role será definida com base na lógica da aplicação, não persistida diretamente da mesma forma.
+    @Transient // Para não ser mapeado no banco
+    private TipoUsuario tipo = TipoUsuario.USER;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_especifico", nullable = false)
+    @Column(name = "tipoEspecifico")
     private TipoEspecifico tipoEspecifico;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
     private Sexo sexo;
 
-    @Column(name = "data_nascimento", nullable = false)
-    private OffsetDateTime dataNascimento;
+    @Column(name = "data_nascimento")
+    private LocalDate dataNascimento;
 
-    @Column(nullable = false, length = 25)
+    @Column(length = 25)
     private String telefone;
 
-    @Column(nullable = false, length = 255)
+    @Column(length = 8)
+    private String cep;
+
+    @Column(length = 255)
     private String endereco;
 
-    @Column(nullable = false, length = 25)
+    @Column(length = 25)
     private String documento;
 
-    @Column(nullable = false)
     private boolean tester = false;
 
-    // Lado inverso da relação 1-para-1
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude // Evita recursão infinita no toString do Lombok
-    @EqualsAndHashCode.Exclude // Evita recursão infinita no equals/hashCode do Lombok
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Pesquisador pesquisador;
 
     @OneToOne(mappedBy = "usuario", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @ToString.Exclude // Evita recursão infinita no toString do Lombok
-    @EqualsAndHashCode.Exclude // Evita recursão infinita no equals/hashCode do Lombok
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     private Voluntario voluntario;
 
     @Override
@@ -109,5 +110,4 @@ public class Usuario implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
 }

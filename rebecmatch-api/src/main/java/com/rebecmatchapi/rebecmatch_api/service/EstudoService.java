@@ -24,12 +24,20 @@ public class EstudoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pesquisador com ID " + dto.getPesquisadorId() + " não encontrado."));
 
         Estudo novoEstudo = new Estudo();
-        novoEstudo.setTitulo(dto.getTitulo());
-        novoEstudo.setCodigoRegistro(dto.getCodigoRegistro());
-        novoEstudo.setStatus(dto.getStatus());
-        novoEstudo.setDataInicio(dto.getDataInicio());
-        novoEstudo.setDataFim(dto.getDataFim());
-        novoEstudo.setInformacoesGerais(dto.getInformacoesGerais());
+        novoEstudo.setPublicTitle(dto.getPublicTitle());
+        novoEstudo.setScientificTitle(dto.getScientificTitle());
+        novoEstudo.setRecruitmentStatus(dto.getRecruitmentStatus());
+        novoEstudo.setStudyType(dto.getStudyType());
+        novoEstudo.setPhase(dto.getPhase());
+        novoEstudo.setDateRegistration(dto.getDateRegistration());
+        novoEstudo.setDateEnrolment(dto.getDateEnrolment());
+        novoEstudo.setUrl(dto.getUrl());
+        novoEstudo.setPrimarySponsor(dto.getPrimarySponsor());
+        novoEstudo.setHcFreetext(dto.getHcFreetext());
+        novoEstudo.setIFreetext(dto.getIFreetext());
+        novoEstudo.setApprovalDate(dto.getApprovalDate());
+        novoEstudo.setSecId(dto.getSecId());
+        novoEstudo.setTrialId(dto.getTrialId());
         novoEstudo.setPesquisador(pesquisador);
 
         return estudoRepository.save(novoEstudo);
@@ -46,12 +54,21 @@ public class EstudoService {
 
     public Estudo updateEstudo(Integer id, EstudoUpdateDTO dto) {
         Estudo estudoExistente = getEstudoById(id);
-        estudoExistente.setTitulo(dto.getTitulo());
-        estudoExistente.setCodigoRegistro(dto.getCodigoRegistro());
-        estudoExistente.setStatus(dto.getStatus());
-        estudoExistente.setDataInicio(dto.getDataInicio());
-        estudoExistente.setDataFim(dto.getDataFim());
-        estudoExistente.setInformacoesGerais(dto.getInformacoesGerais());
+        estudoExistente.setPublicTitle(dto.getPublicTitle());
+        estudoExistente.setScientificTitle(dto.getScientificTitle());
+        estudoExistente.setRecruitmentStatus(dto.getRecruitmentStatus());
+        estudoExistente.setStudyType(dto.getStudyType());
+        estudoExistente.setPhase(dto.getPhase());
+        estudoExistente.setDateRegistration(dto.getDateRegistration());
+        estudoExistente.setDateEnrolment(dto.getDateEnrolment());
+        estudoExistente.setUrl(dto.getUrl());
+        estudoExistente.setPrimarySponsor(dto.getPrimarySponsor());
+        estudoExistente.setHcFreetext(dto.getHcFreetext());
+        estudoExistente.setIFreetext(dto.getIFreetext());
+        estudoExistente.setApprovalDate(dto.getApprovalDate());
+        estudoExistente.setSecId(dto.getSecId());
+        estudoExistente.setTrialId(dto.getTrialId());
+
         return estudoRepository.save(estudoExistente);
     }
 

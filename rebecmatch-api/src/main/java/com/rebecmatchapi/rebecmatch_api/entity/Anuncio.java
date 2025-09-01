@@ -3,7 +3,7 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 
 @Data
 @Entity
@@ -21,5 +21,5 @@ public class Anuncio {
     private String mensagem;
 
     @Column(name = "data_expiracao", nullable = false)
-    private OffsetDateTime dataExpiracao;
+    private LocalDate dataExpiracao;
 }

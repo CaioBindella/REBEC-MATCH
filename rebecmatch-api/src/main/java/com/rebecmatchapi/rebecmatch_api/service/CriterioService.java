@@ -2,11 +2,11 @@ package com.rebecmatchapi.rebecmatch_api.service;
 
 import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioUpdateDTO;
-import com.rebecmatchapi.rebecmatch_api.entity.Busca;
 import com.rebecmatchapi.rebecmatch_api.entity.Criterio;
+import com.rebecmatchapi.rebecmatch_api.entity.Estudo;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
-import com.rebecmatchapi.rebecmatch_api.repository.BuscaRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.CriterioRepository;
+import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,14 +17,20 @@ import java.util.List;
 public class CriterioService {
 
     private final CriterioRepository criterioRepository;
-    private final BuscaRepository buscaRepository;
+    private final EstudoRepository estudoRepository;
 
     public Criterio createCriterio(CriterioCreateDTO dto) {
-        Busca busca = buscaRepository.findById(dto.getBuscaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Busca com ID " + dto.getBuscaId() + " não encontrada."));
+        Estudo estudo = estudoRepository.findById(dto.getEstudoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estudo com ID " + dto.getEstudoId() + " não encontrado."));
         Criterio novoCriterio = new Criterio();
-        novoCriterio.setTexto(dto.getTexto());
-        novoCriterio.setBusca(busca);
+
+        novoCriterio.setInclusionCriteria(dto.getInclusionCriteria());
+        novoCriterio.setAgeMin(dto.getAgeMin());
+        novoCriterio.setAgeMax(dto.getAgeMax());
+        novoCriterio.setGender(dto.getGender());
+        novoCriterio.setExclusionCriteria(dto.getExclusionCriteria());
+        novoCriterio.setEstudo(estudo);
+
         return criterioRepository.save(novoCriterio);
     }
 
@@ -39,7 +45,13 @@ public class CriterioService {
 
     public Criterio updateCriterio(Integer id, CriterioUpdateDTO dto) {
         Criterio criterioExistente = getCriterioById(id);
-        criterioExistente.setTexto(dto.getTexto());
+
+        criterioExistente.setInclusionCriteria(dto.getInclusionCriteria());
+        criterioExistente.setAgeMin(dto.getAgeMin());
+        criterioExistente.setAgeMax(dto.getAgeMax());
+        criterioExistente.setGender(dto.getGender());
+        criterioExistente.setExclusionCriteria(dto.getExclusionCriteria());
+
         return criterioRepository.save(criterioExistente);
     }
 

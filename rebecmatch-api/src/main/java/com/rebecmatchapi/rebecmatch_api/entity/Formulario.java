@@ -3,7 +3,7 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -29,7 +29,7 @@ public class Formulario {
     private String textoParaRespostaLivre;
 
     @Column(name = "data_criacao", nullable = false)
-    private OffsetDateTime dataCriacao = OffsetDateTime.now();
+    private LocalDate dataCriacao = LocalDate.now();
 
     // Relação 1-para-N com Questao. Um formulário pode ter várias questões.
     @OneToMany(mappedBy = "formulario", cascade = CascadeType.ALL)

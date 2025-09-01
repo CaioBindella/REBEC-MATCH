@@ -2,9 +2,9 @@ package com.rebecmatchapi.rebecmatch_api.dto.Anuncio;
 
 import lombok.Data;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 @Data
 public class AnuncioUpdateDTO {
     private String mensagem;
-    private OffsetDateTime dataExpiracao;
+    private LocalDate dataExpiracao;
 }

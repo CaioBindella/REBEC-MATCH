@@ -5,7 +5,21 @@ import lombok.Data;
 
 @Data
 public class CriterioCreateDTO {
-    @JsonProperty("busca_id")
-    private Integer buscaId;
-    private String texto;
+
+    @JsonProperty("estudo_id")
+    private Integer estudoId;
+
+    @JsonProperty("inclusion_criteria")
+    private String inclusionCriteria;
+
+    @JsonProperty("agemin")
+    private String ageMin;
+
+    @JsonProperty("agemax")
+    private String ageMax;
+
+    private String gender;
+
+    @JsonProperty("exclusion_criteria")
+    private String exclusionCriteria;
 }

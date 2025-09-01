@@ -10,7 +10,7 @@ import com.rebecmatchapi.rebecmatch_api.repository.FormularioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.OffsetDateTime;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -28,7 +28,7 @@ public class FormularioService {
         novoFormulario.setTitulo(dto.getTitulo());
         novoFormulario.setTextoParaRespostaLivre(dto.getTextoParaRespostaLivre());
         novoFormulario.setEstudo(estudo);
-        novoFormulario.setDataCriacao(OffsetDateTime.now());
+        novoFormulario.setDataCriacao(LocalDate.now());
 
         return formularioRepository.save(novoFormulario);
     }

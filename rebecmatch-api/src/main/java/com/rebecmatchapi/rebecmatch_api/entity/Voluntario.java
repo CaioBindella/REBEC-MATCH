@@ -19,7 +19,7 @@ public class Voluntario {
 
     private double distancia;
 
-    @Column(name = "nome_ficticio")
+    @Column(name = "nomeFicticio")
     private String nomeFicticio;
 
     @OneToMany(mappedBy = "voluntario")

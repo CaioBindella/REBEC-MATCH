@@ -1,0 +1,65 @@
+package com.rebecmatchapi.rebecmatch_api.service;
+
+import org.springframework.stereotype.Service;
+
+import java.util.Map;
+import java.util.regex.Pattern;
+
+/**
+ * Serviço de utilidade para manipulação e consulta de informações de CEP.
+ */
+@Service
+public class CepService {
+
+    // Mapeamento simplificado de faixas de CEP para siglas de estados no Brasil.
+    private static final Map<Pattern, String> REGIOES_CEP = Map.ofEntries(
+            Map.entry(Pattern.compile("^[0][1-9][0-9]{3}"), "SP"), // São Paulo
+            Map.entry(Pattern.compile("^[1][0-9]{4}"), "SP"),       // Interior de SP
+            Map.entry(Pattern.compile("^[2][0-8][0-9]{3}"), "RJ"), // Rio de Janeiro
+            Map.entry(Pattern.compile("^[2][9][0-9]{3}"), "ES"),    // Espírito Santo
+            Map.entry(Pattern.compile("^[3][0-9]{4}"), "MG"),       // Minas Gerais
+            Map.entry(Pattern.compile("^[4][0-8][0-9]{3}"), "PR"), // Paraná
+            Map.entry(Pattern.compile("^[4][9][0-9]{3}"), "SC"),    // Santa Catarina
+            Map.entry(Pattern.compile("^[8][8-9][0-9]{3}"), "SC"),  // Santa Catarina
+            Map.entry(Pattern.compile("^[9][0-9]{4}"), "RS"),       // Rio Grande do Sul
+            Map.entry(Pattern.compile("^[7][0-6][0-9]{3}"), "DF"), // Distrito Federal e GO, TO, MT, MS, RO, AC
+            Map.entry(Pattern.compile("^[7][7-9][0-9]{3}"), "BA"), // Bahia
+            Map.entry(Pattern.compile("^[4][9][0-9]{3}"), "SE"),    // Sergipe
+            Map.entry(Pattern.compile("^[5][0-6][0-9]{3}"), "PE"), // Pernambuco
+            Map.entry(Pattern.compile("^[5][7][0-9]{3}"), "AL"),    // Alagoas
+            Map.entry(Pattern.compile("^[5][8][0-9]{3}"), "PB"),    // Paraíba
+            Map.entry(Pattern.compile("^[5][9][0-9]{3}"), "RN"),    // Rio Grande do Norte
+            Map.entry(Pattern.compile("^[6][0-3][0-9]{3}"), "CE"), // Ceará
+            Map.entry(Pattern.compile("^[6][4][0-9]{3}"), "PI"),    // Piauí
+            Map.entry(Pattern.compile("^[6][5][0-9]{3}"), "MA"),    // Maranhão
+            Map.entry(Pattern.compile("^[6][6-7][0-9]{3}"), "PA"), // Pará
+            Map.entry(Pattern.compile("^[6][8][0-9]{3}"), "AP"),    // Amapá
+            Map.entry(Pattern.compile("^[6][9][0-9]{3}"), "AM"),    // Amazonas e RR
+            Map.entry(Pattern.compile("^[7][0-9]{4}"), "GO")        // Goiás
+    );
+
+    /**
+     * Obtém a sigla do estado com base no CEP fornecido.
+     *
+     * @param cep O CEP do usuário.
+     * @return A sigla do estado (ex: "RJ", "SP") ou "BR" se não for encontrado.
+     */
+    public String getStateAbbreviation(String cep) {
+        if (cep == null || cep.isBlank()) {
+            return "BR"; // Retorna um valor padrão se o CEP for nulo ou vazio
+        }
+        String cepNumerico = cep.replaceAll("\\D", ""); // Remove caracteres não numéricos
+        if (cepNumerico.length() < 5) {
+            return "BR"; // CEP inválido
+        }
+        String cepPrefix = cepNumerico.substring(0, 5);
+
+        for (Map.Entry<Pattern, String> entry : REGIOES_CEP.entrySet()) {
+            if (entry.getKey().matcher(cepPrefix).matches()) {
+                return entry.getValue();
+            }
+        }
+
+        return "BR"; // Retorna padrão se nenhuma região corresponder
+    }
+}

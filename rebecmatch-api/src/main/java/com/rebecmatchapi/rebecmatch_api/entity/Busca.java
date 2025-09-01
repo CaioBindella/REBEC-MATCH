@@ -20,12 +20,15 @@ public class Busca {
     @JoinColumn(name = "pesquisador_id", nullable = false)
     private Pesquisador pesquisador;
 
-    @OneToMany(mappedBy = "busca", cascade = CascadeType.ALL)
-    private List<Criterio> criterios;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "estudo_id", nullable = false)
+    private Estudo estudo;
 
     @OneToMany(mappedBy = "busca", cascade = CascadeType.ALL)
     private List<Anuncio> anuncios;
 
     @OneToMany(mappedBy = "busca", cascade = CascadeType.ALL)
     private List<Resposta> respostas;
+
 }
+
