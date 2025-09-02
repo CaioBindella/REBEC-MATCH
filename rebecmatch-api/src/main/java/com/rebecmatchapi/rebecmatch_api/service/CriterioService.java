@@ -46,6 +46,12 @@ public class CriterioService {
     public Criterio updateCriterio(Integer id, CriterioUpdateDTO dto) {
         Criterio criterioExistente = getCriterioById(id);
 
+        if (dto.getEstudoId() != null) {
+            Estudo novoEstudo = estudoRepository.findById(dto.getEstudoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Novo Estudo com ID " + dto.getEstudoId() + " não encontrado."));
+            criterioExistente.setEstudo(novoEstudo);
+        }
+
         criterioExistente.setInclusionCriteria(dto.getInclusionCriteria());
         criterioExistente.setAgeMin(dto.getAgeMin());
         criterioExistente.setAgeMax(dto.getAgeMax());

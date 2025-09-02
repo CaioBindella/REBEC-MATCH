@@ -66,6 +66,6 @@ public class Estudo {
     @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
     private List<Criterio> criterios;
 
-    @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<Busca> buscas;
 }
