@@ -36,7 +36,7 @@ public class Estudo {
     @Column(name = "date_registration", nullable = false)
     private LocalDate dateRegistration;
 
-    @Column(name = "date_enrolment", nullable = false)
+    @Column(name = "date_enrolment")
     private LocalDate dateEnrolment;
 
     @Column(columnDefinition = "TEXT", nullable = false)
@@ -51,10 +51,10 @@ public class Estudo {
     @Column(name = "i_freetext", nullable = false)
     private String iFreetext;
 
-    @Column(name = "approval_date", nullable = false)
+    @Column(name = "approval_date")
     private String approvalDate;
 
-    @Column(name = "sec_id", nullable = false)
+    @Column(name = "sec_id")
     private String secId;
 
     @Column(name = "trial_id", nullable = false)

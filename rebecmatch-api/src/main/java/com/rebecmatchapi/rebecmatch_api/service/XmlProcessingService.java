@@ -21,6 +21,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -55,12 +56,11 @@ public class XmlProcessingService {
 
             if (trialsWrapper != null && trialsWrapper.getTrials() != null) {
                 for (Trial trial : trialsWrapper.getTrials()) {
-                    // Verifica se o estudo já existe pelo trial_id antes de processar
-                    if (!estudoRepository.existsByTrialId(trial.getTrialId())) {
-                        logger.info("New trial found: {}. Processing...", trial.getTrialId());
+                    if (trial.getMain() != null && !estudoRepository.existsByTrialId(trial.getMain().getTrialId())) {
+                        logger.info("New trial found: {}. Processing...", trial.getMain().getTrialId());
                         saveNewTrial(trial);
                     } else {
-                        logger.info("Trial with ID {} already exists. Skipping.", trial.getTrialId());
+                        logger.info("Trial with ID {} already exists or has no main data. Skipping.", trial.getTrialId());
                     }
                 }
             }
@@ -71,46 +71,42 @@ public class XmlProcessingService {
     }
 
     private void saveNewTrial(Trial trial) {
-        // 1. Criar ou encontrar o Pesquisador (Usuário)
+        // 1. Criar ou encontrar o Pesquisador
         Pesquisador pesquisador = createOrFindPesquisador(trial.getScientificContact());
         if (pesquisador == null) {
-            logger.warn("Could not create or find researcher for trial {}. Skipping trial.", trial.getTrialId());
+            logger.warn("Could not create or find researcher for trial {}. Skipping trial.", trial.getMain().getTrialId());
             return;
         }
 
         // 2. Criar o Estudo
         Estudo novoEstudo = new Estudo();
-        novoEstudo.setTrialId(trial.getTrialId());
-        novoEstudo.setPublicTitle(trial.getPublicTitle());
-        novoEstudo.setScientificTitle(trial.getScientificTitle());
-        novoEstudo.setRecruitmentStatus(trial.getRecruitmentStatus());
-        novoEstudo.setStudyType(trial.getStudyType());
-        novoEstudo.setPhase(trial.getPhase());
-        novoEstudo.setUrl(trial.getUrl());
-        novoEstudo.setPrimarySponsor(trial.getPrimarySponsor());
-        novoEstudo.setHcFreeText(trial.getHcFreeText());
-        novoEstudo.setIFreeText(trial.getIFreeText());
+        novoEstudo.setTrialId(trial.getMain().getTrialId());
+        novoEstudo.setPublicTitle(trial.getMain().getPublicTitle());
+        novoEstudo.setScientificTitle(trial.getMain().getScientificTitle());
+        novoEstudo.setRecruitmentStatus(trial.getMain().getRecruitmentStatus());
+        novoEstudo.setStudyType(trial.getMain().getStudyType());
+        novoEstudo.setPhase(trial.getMain().getPhase());
+        novoEstudo.setUrl(trial.getMain().getUrl());
+        novoEstudo.setPrimarySponsor(trial.getMain().getPrimarySponsor());
+        novoEstudo.setHcFreetext(trial.getMain().getHcFreeText());
+        novoEstudo.setIFreetext(trial.getMain().getIFreeText());
         novoEstudo.setPesquisador(pesquisador);
 
-        // Formatar datas
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        if (trial.getDateRegistration() != null && !trial.getDateRegistration().isEmpty()) {
-            novoEstudo.setDateRegistration(LocalDate.parse(trial.getDateRegistration(), formatter));
+        if (trial.getMain().getDateRegistration() != null && !trial.getMain().getDateRegistration().isEmpty()) {
+            novoEstudo.setDateRegistration(LocalDate.parse(trial.getMain().getDateRegistration(), formatter));
         }
-        if (trial.getDateEnrolment() != null && !trial.getDateEnrolment().isEmpty()) {
-            novoEstudo.setDateEnrolment(LocalDate.parse(trial.getDateEnrolment(), formatter));
+        if (trial.getMain().getDateEnrolment() != null && !trial.getMain().getDateEnrolment().isEmpty()) {
+            novoEstudo.setDateEnrolment(LocalDate.parse(trial.getMain().getDateEnrolment(), formatter));
         }
 
-        // Verifica se a lista de ethicsReviews não é nula nem vazia antes de aceder
         if (trial.getEthicsReviews() != null && !trial.getEthicsReviews().isEmpty()) {
             novoEstudo.setApprovalDate(trial.getEthicsReviews().get(0).getApprovalDate());
         }
 
-        // Verifica se a lista de secondaryIds não é nula nem vazia antes de aceder
         if (trial.getSecondaryIds() != null && !trial.getSecondaryIds().isEmpty()) {
             novoEstudo.setSecId(trial.getSecondaryIds().get(0).getSecId());
         }
-
 
         // 3. Criar o Critério
         if (trial.getCriteria() != null) {
@@ -120,8 +116,8 @@ public class XmlProcessingService {
             criterio.setAgeMax(trial.getCriteria().getAgeMax());
             criterio.setGender(trial.getCriteria().getGender());
             criterio.setExclusionCriteria(trial.getCriteria().getExclusionCriteria());
-            criterio.setEstudo(novoEstudo); // Associa o critério ao estudo
-            novoEstudo.setCriterios(criterio); // Associa o critério ao estudo
+            criterio.setEstudo(novoEstudo);
+            novoEstudo.setCriterios(List.of(criterio));
         }
 
         estudoRepository.save(novoEstudo);
@@ -138,24 +134,19 @@ public class XmlProcessingService {
         if (usuarioExistente.isPresent()) {
             return usuarioExistente.get().getPesquisador();
         } else {
-            // Cria um novo usuário e pesquisador
             Usuario novoUsuario = new Usuario();
             novoUsuario.setNome(contact.getFirstname());
             novoUsuario.setSobrenome(contact.getLastname());
             novoUsuario.setEmail(contact.getEmail());
-            novoUsuario.setLogin(contact.getEmail()); // Usando email como login
+            novoUsuario.setLogin(contact.getEmail());
             novoUsuario.setTelefone(contact.getTelephone());
             novoUsuario.setTipoEspecifico(TipoEspecifico.PESQUISADOR);
-            novoUsuario.setSenha(passwordEncoder.encode(contact.getEmail())); // Senha padrão = email
+            novoUsuario.setSenha(passwordEncoder.encode(contact.getEmail()));
             novoUsuario.setCep(contact.getZip());
-
-            String endereco = String.format("%s, %s", contact.getAddress(), contact.getCity());
-            novoUsuario.setEndereco(endereco);
+            novoUsuario.setEndereco(String.format("%s, %s", contact.getAddress(), contact.getCity()));
 
             Usuario savedUsuario = usuarioRepository.save(novoUsuario);
 
-            // A criação do pesquisador já acontece automaticamente no UsuarioService,
-            // mas aqui precisamos garantir que ele seja criado se não existir.
             Pesquisador pesquisador = new Pesquisador();
             pesquisador.setUsuario(savedUsuario);
             pesquisador.setNomeFicticio(generateFictionalName(savedUsuario));
@@ -171,4 +162,3 @@ public class XmlProcessingService {
         return prefix + idPart + suffix;
     }
 }
-

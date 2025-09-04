@@ -78,13 +78,13 @@ CREATE TABLE `estudo` (
                           `study_type` varchar(255) NOT NULL,
                           `phase` varchar(255) NOT NULL,
                           `date_registration` date NOT NULL,
-                          `date_enrolment` date NOT NULL,
+                          `date_enrolment` date DEFAULT NULL,
                           `url` text NOT NULL,
                           `primary_sponsor` varchar(255) NOT NULL,
                           `hc_freetext` varchar(255) NOT NULL,
                           `i_freetext` varchar(255) NOT NULL,
-                          `approval_date` varchar(255) NOT NULL,
-                          `sec_id` varchar(255) NOT NULL,
+                          `approval_date` varchar(255) DEFAULT NULL,
+                          `sec_id` varchar(255) DEFAULT NULL,
                           `trial_id` varchar(255) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 

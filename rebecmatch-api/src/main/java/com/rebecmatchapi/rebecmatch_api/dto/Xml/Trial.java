@@ -20,67 +20,88 @@ public class Trial {
     @JacksonXmlProperty(localName = "criteria")
     private Criteria criteria;
 
-    @JacksonXmlProperty(localName = "ethics_reviews")
-    @JacksonXmlElementWrapper(useWrapping = false)
+    @JacksonXmlElementWrapper(localName = "ethics_reviews")
+    @JacksonXmlProperty(localName = "ethics_review")
     private List<EthicsReview> ethicsReviews;
 
-    @JacksonXmlProperty(localName = "secondary_id")
     @JacksonXmlElementWrapper(localName = "secondary_ids")
+    @JacksonXmlProperty(localName = "secondary_id")
     private List<SecondaryId> secondaryIds;
 
+    // Métodos de conveniência para aceder facilmente aos dados aninhados
+    public String getTrialId() {
+        return main != null ? main.getTrialId() : null;
+    }
+
+    public Contact getScientificContact() {
+        return contacts != null ? contacts.getScientificContact() : null;
+    }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Main {
         @JacksonXmlProperty(localName = "trial_id")
         private String trialId;
-        @JacksonXmlProperty(localName = "date_registration")
-        private String dateRegistration;
-        @JacksonXmlProperty(localName = "primary_sponsor")
-        private String primarySponsor;
         @JacksonXmlProperty(localName = "public_title")
         private String publicTitle;
         @JacksonXmlProperty(localName = "scientific_title")
         private String scientificTitle;
-        @JacksonXmlProperty(localName = "date_enrolment")
-        private String dateEnrolment;
         @JacksonXmlProperty(localName = "recruitment_status")
         private String recruitmentStatus;
-        private String url;
         @JacksonXmlProperty(localName = "study_type")
         private String studyType;
+        @JacksonXmlProperty(localName = "phase")
         private String phase;
+        @JacksonXmlProperty(localName = "url")
+        private String url;
+        @JacksonXmlProperty(localName = "primary_sponsor")
+        private String primarySponsor;
         @JacksonXmlProperty(localName = "hc_freetext")
-        private String hcFreetext;
+        private String hcFreeText;
         @JacksonXmlProperty(localName = "i_freetext")
-        private String iFreetext;
+        private String iFreeText;
+        @JacksonXmlProperty(localName = "date_registration")
+        private String dateRegistration;
+        @JacksonXmlProperty(localName = "date_enrolment")
+        private String dateEnrolment;
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Contacts {
-        @JacksonXmlProperty(localName = "contact")
         @JacksonXmlElementWrapper(useWrapping = false)
-        private List<Contact> contacts;
+        @JacksonXmlProperty(localName = "contact")
+        private List<Contact> contactList;
 
         public Contact getScientificContact() {
-            return contacts.stream()
+            if (contactList == null) {
+                return null;
+            }
+            return contactList.stream()
                     .filter(c -> "scientific".equalsIgnoreCase(c.getType()))
                     .findFirst()
-                    .orElse(contacts.isEmpty() ? null : contacts.get(0));
+                    .orElse(null);
         }
     }
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Contact {
+        @JacksonXmlProperty(localName = "type")
         private String type;
+        @JacksonXmlProperty(localName = "firstname")
         private String firstname;
+        @JacksonXmlProperty(localName = "lastname")
         private String lastname;
+        @JacksonXmlProperty(localName = "address")
         private String address;
+        @JacksonXmlProperty(localName = "city")
         private String city;
+        @JacksonXmlProperty(localName = "zip")
         private String zip;
+        @JacksonXmlProperty(localName = "telephone")
         private String telephone;
+        @JacksonXmlProperty(localName = "email")
         private String email;
     }
 
@@ -93,6 +114,7 @@ public class Trial {
         private String ageMin;
         @JacksonXmlProperty(localName = "agemax")
         private String ageMax;
+        @JacksonXmlProperty(localName = "gender")
         private String gender;
         @JacksonXmlProperty(localName = "exclusion_criteria")
         private String exclusionCriteria;
@@ -110,13 +132,5 @@ public class Trial {
     public static class SecondaryId {
         @JacksonXmlProperty(localName = "sec_id")
         private String secId;
-    }
-
-    @Data
-    @JsonIgnoreProperties(ignoreUnknown = true)
-    public static class Trials {
-        @JacksonXmlElementWrapper(useWrapping = false)
-        @JacksonXmlProperty(localName = "trial")
-        private List<Trial> trials;
     }
 }

@@ -2,6 +2,7 @@ package com.rebecmatchapi.rebecmatch_api.service;
 
 import org.springframework.stereotype.Service;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -11,32 +12,32 @@ import java.util.regex.Pattern;
 @Service
 public class CepService {
 
-    // Mapeamento simplificado de faixas de CEP para siglas de estados no Brasil.
-    private static final Map<Pattern, String> REGIOES_CEP = Map.ofEntries(
-            Map.entry(Pattern.compile("^[0][1-9][0-9]{3}"), "SP"), // São Paulo
-            Map.entry(Pattern.compile("^[1][0-9]{4}"), "SP"),       // Interior de SP
-            Map.entry(Pattern.compile("^[2][0-8][0-9]{3}"), "RJ"), // Rio de Janeiro
-            Map.entry(Pattern.compile("^[2][9][0-9]{3}"), "ES"),    // Espírito Santo
-            Map.entry(Pattern.compile("^[3][0-9]{4}"), "MG"),       // Minas Gerais
-            Map.entry(Pattern.compile("^[4][0-8][0-9]{3}"), "PR"), // Paraná
-            Map.entry(Pattern.compile("^[4][9][0-9]{3}"), "SC"),    // Santa Catarina
-            Map.entry(Pattern.compile("^[8][8-9][0-9]{3}"), "SC"),  // Santa Catarina
-            Map.entry(Pattern.compile("^[9][0-9]{4}"), "RS"),       // Rio Grande do Sul
-            Map.entry(Pattern.compile("^[7][0-6][0-9]{3}"), "DF"), // Distrito Federal e GO, TO, MT, MS, RO, AC
-            Map.entry(Pattern.compile("^[7][7-9][0-9]{3}"), "BA"), // Bahia
-            Map.entry(Pattern.compile("^[4][9][0-9]{3}"), "SE"),    // Sergipe
-            Map.entry(Pattern.compile("^[5][0-6][0-9]{3}"), "PE"), // Pernambuco
-            Map.entry(Pattern.compile("^[5][7][0-9]{3}"), "AL"),    // Alagoas
-            Map.entry(Pattern.compile("^[5][8][0-9]{3}"), "PB"),    // Paraíba
-            Map.entry(Pattern.compile("^[5][9][0-9]{3}"), "RN"),    // Rio Grande do Norte
-            Map.entry(Pattern.compile("^[6][0-3][0-9]{3}"), "CE"), // Ceará
-            Map.entry(Pattern.compile("^[6][4][0-9]{3}"), "PI"),    // Piauí
-            Map.entry(Pattern.compile("^[6][5][0-9]{3}"), "MA"),    // Maranhão
-            Map.entry(Pattern.compile("^[6][6-7][0-9]{3}"), "PA"), // Pará
-            Map.entry(Pattern.compile("^[6][8][0-9]{3}"), "AP"),    // Amapá
-            Map.entry(Pattern.compile("^[6][9][0-9]{3}"), "AM"),    // Amazonas e RR
-            Map.entry(Pattern.compile("^[7][0-9]{4}"), "GO")        // Goiás
-    );
+    // Usamos LinkedHashMap para garantir a ordem de verificação.
+    private static final Map<Pattern, String> REGIOES_CEP = new LinkedHashMap<>();
+
+    static {
+        REGIOES_CEP.put(Pattern.compile("^([0][1-9][0-9]{3}|[1][0-9]{4})"), "SP"); // São Paulo
+        REGIOES_CEP.put(Pattern.compile("^[2][0-8][0-9]{3}"), "RJ"); // Rio de Janeiro
+        REGIOES_CEP.put(Pattern.compile("^[2][9][0-9]{3}"), "ES"); // Espírito Santo
+        REGIOES_CEP.put(Pattern.compile("^[3][0-9]{4}"), "MG"); // Minas Gerais
+        REGIOES_CEP.put(Pattern.compile("^[4][0-8][0-9]{3}"), "PR"); // Paraná
+        REGIOES_CEP.put(Pattern.compile("^[4][9][0-9]{3}"), "SE"); // Sergipe
+        REGIOES_CEP.put(Pattern.compile("^[5][0-6][0-9]{3}"), "PE"); // Pernambuco
+        REGIOES_CEP.put(Pattern.compile("^[5][7][0-9]{3}"), "AL"); // Alagoas
+        REGIOES_CEP.put(Pattern.compile("^[5][8][0-9]{3}"), "PB"); // Paraíba
+        REGIOES_CEP.put(Pattern.compile("^[5][9][0-9]{3}"), "RN"); // Rio Grande do Norte
+        REGIOES_CEP.put(Pattern.compile("^[6][0-3][0-9]{3}"), "CE"); // Ceará
+        REGIOES_CEP.put(Pattern.compile("^[6][4][0-9]{3}"), "PI"); // Piauí
+        REGIOES_CEP.put(Pattern.compile("^[6][5][0-9]{3}"), "MA"); // Maranhão
+        REGIOES_CEP.put(Pattern.compile("^[6][6][0-9]{3}"), "PA"); // Pará
+        REGIOES_CEP.put(Pattern.compile("^[6][8][0-9]{3}"), "AP"); // Amapá
+        REGIOES_CEP.put(Pattern.compile("^[6][9][0-9]{3}"), "AM"); // Amazonas e RR
+        REGIOES_CEP.put(Pattern.compile("^[7][0-6][0-9]{3}"), "DF"); // Distrito Federal, GO, TO, MT, MS, RO, AC
+        REGIOES_CEP.put(Pattern.compile("^[7][7-9][0-9]{3}"), "BA"); // Bahia
+        REGIOES_CEP.put(Pattern.compile("^[8][0-7][0-9]{3}"), "PR"); // Paraná
+        REGIOES_CEP.put(Pattern.compile("^[8][8-9][0-9]{3}"), "SC"); // Santa Catarina
+        REGIOES_CEP.put(Pattern.compile("^[9][0-9]{4}"), "RS"); // Rio Grande do Sul
+    }
 
     /**
      * Obtém a sigla do estado com base no CEP fornecido.
