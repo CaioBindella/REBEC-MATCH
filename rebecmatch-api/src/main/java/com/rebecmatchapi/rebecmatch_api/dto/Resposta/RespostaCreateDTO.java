@@ -7,8 +7,6 @@ import lombok.Data;
 public class RespostaCreateDTO {
     @JsonProperty("voluntario_id")
     private Integer voluntarioId;
-    @JsonProperty("busca_id")
-    private Integer buscaId;
     @JsonProperty("questao_id")
     private Integer questaoId;
     private String conteudo;

@@ -16,10 +16,6 @@ public class Resposta {
     private Voluntario voluntario;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "busca_id", nullable = false)
-    private Busca busca;
-
-    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "questao_id", nullable = false)
     private Questao questao;
 

@@ -2,9 +2,12 @@ package com.rebecmatchapi.rebecmatch_api.service;
 
 import com.rebecmatchapi.rebecmatch_api.dto.Match.*;
 import com.rebecmatchapi.rebecmatch_api.entity.*;
+import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
+import com.rebecmatchapi.rebecmatch_api.repository.MatchResultRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.RespostaRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -18,6 +21,7 @@ public class MatchService {
     private final EstudoRepository estudoRepository;
     private final VoluntarioRepository voluntarioRepository;
     private final RespostaRepository respostaRepository;
+    private final MatchResultRepository matchResultRepository;
 
     /**
      * Coleta e estrutura todos os dados necessários para o processo de match.
@@ -28,6 +32,31 @@ public class MatchService {
         List<VoluntarioParaMatchDTO> voluntarios = getVoluntariosParaMatch();
 
         return new MatchDataDTO(estudos, voluntarios);
+    }
+
+    @Transactional
+    public MatchResult saveMatchResult(MatchResultCreateDTO dto) {
+        Voluntario voluntario = voluntarioRepository.findById(dto.getVoluntarioId())
+                .orElseThrow(() -> new ResourceNotFoundException("Voluntário com ID " + dto.getVoluntarioId() + " não encontrado."));
+
+        Estudo estudo = estudoRepository.findById(dto.getEstudoId())
+                .orElseThrow(() -> new ResourceNotFoundException("Estudo com ID " + dto.getEstudoId() + " não encontrado."));
+
+        MatchResult newMatch = new MatchResult();
+        newMatch.setVoluntario(voluntario);
+        newMatch.setEstudo(estudo);
+        newMatch.setCriteriosAtendidos(dto.getCriteriosAtendidos());
+
+        return matchResultRepository.save(newMatch);
+    }
+
+    public List<MatchResult> getAllMatchResults() {
+        return matchResultRepository.findAll();
+    }
+
+    public MatchResult getMatchResultById(Integer id) {
+        return matchResultRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Match com ID " + id + " não encontrado."));
     }
 
     private List<EstudoParaMatchDTO> getEstudosParaMatch() {

@@ -30,7 +30,4 @@ public class Pesquisador {
     @OneToMany(mappedBy = "pesquisador", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Estudo> estudos;
 
-    // Relação 1-para-N com Busca. Um pesquisador pode ter várias buscas.
-    @OneToMany(mappedBy = "pesquisador", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<Busca> buscas;
 }

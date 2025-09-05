@@ -22,33 +22,6 @@ SET time_zone = "+00:00";
 --
 
 -- --------------------------------------------------------
-
---
--- Estrutura da tabela `anuncio`
---
-
-CREATE TABLE `anuncio` (
-                           `id` int(11) NOT NULL,
-                           `mensagem` varchar(255) DEFAULT NULL,
-                           `data_expiracao` date DEFAULT NULL,
-                           `busca_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura da tabela `busca`
---
-
-CREATE TABLE `busca` (
-                         `id` int(11) NOT NULL,
-                         `nome` varchar(255) DEFAULT NULL,
-                         `pesquisador_id` int(11) NOT NULL,
-                         `estudo_id` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
-
--- --------------------------------------------------------
-
 --
 -- Estrutura da tabela `criterio`
 --
@@ -82,7 +55,7 @@ CREATE TABLE `estudo` (
                           `url` text NOT NULL,
                           `primary_sponsor` varchar(255) NOT NULL,
                           `hc_freetext` varchar(255) NOT NULL,
-                          `i_freetext` varchar(255) NOT NULL,
+                          `i_freetext` MEDIUMTEXT NOT NULL,
                           `approval_date` varchar(255) DEFAULT NULL,
                           `sec_id` varchar(255) DEFAULT NULL,
                           `trial_id` varchar(255) NOT NULL
@@ -153,7 +126,6 @@ CREATE TABLE `questao` (
 CREATE TABLE `resposta` (
                             `id` int(11) NOT NULL,
                             `voluntario_id` int(11) NOT NULL,
-                            `busca_id` int(11) NOT NULL,
                             `questao_id` int(11) NOT NULL,
                             `conteudo` varchar(255) DEFAULT NULL,
                             `marcado` tinyint(1) DEFAULT NULL
@@ -198,22 +170,6 @@ CREATE TABLE `voluntario` (
 --
 -- Índices para tabelas despejadas
 --
-
---
--- Índices para tabela `anuncio`
---
-ALTER TABLE `anuncio`
-    ADD PRIMARY KEY (`id`),
-  ADD KEY `busca_id` (`busca_id`);
-
---
--- Índices para tabela `busca`
---
-ALTER TABLE `busca`
-    ADD PRIMARY KEY (`id`),
-  ADD KEY `pesquisador_id` (`pesquisador_id`),
-  ADD KEY `estudo_id` (`estudo_id`);
-
 --
 -- Índices para tabela `criterio`
 --
@@ -263,7 +219,6 @@ ALTER TABLE `questao`
 ALTER TABLE `resposta`
     ADD PRIMARY KEY (`id`),
   ADD KEY `voluntario_id` (`voluntario_id`),
-  ADD KEY `busca_id` (`busca_id`),
   ADD KEY `questao_id` (`questao_id`);
 
 --
@@ -285,17 +240,6 @@ ALTER TABLE `voluntario`
 -- AUTO_INCREMENT de tabelas despejadas
 --
 
---
--- AUTO_INCREMENT de tabela `anuncio`
---
-ALTER TABLE `anuncio`
-    MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `busca`
---
-ALTER TABLE `busca`
-    MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `criterio`
@@ -356,19 +300,6 @@ ALTER TABLE `voluntario`
 --
 
 --
--- Limitadores para a tabela `anuncio`
---
-ALTER TABLE `anuncio`
-    ADD CONSTRAINT `anuncio_ibfk_1` FOREIGN KEY (`busca_id`) REFERENCES `busca` (`id`);
-
---
--- Limitadores para a tabela `busca`
---
-ALTER TABLE `busca`
-    ADD CONSTRAINT `busca_ibfk_1` FOREIGN KEY (`pesquisador_id`) REFERENCES `pesquisador` (`id`),
-  ADD CONSTRAINT `fk_busca_estudo` FOREIGN KEY (`estudo_id`) REFERENCES `estudo` (`id`) ON UPDATE CASCADE;
-
---
 -- Limitadores para a tabela `criterio`
 --
 ALTER TABLE `criterio`
@@ -410,7 +341,6 @@ ALTER TABLE `questao`
 --
 ALTER TABLE `resposta`
     ADD CONSTRAINT `resposta_ibfk_1` FOREIGN KEY (`voluntario_id`) REFERENCES `voluntario` (`id`),
-  ADD CONSTRAINT `resposta_ibfk_2` FOREIGN KEY (`busca_id`) REFERENCES `busca` (`id`),
   ADD CONSTRAINT `resposta_ibfk_3` FOREIGN KEY (`questao_id`) REFERENCES `questao` (`id`);
 
 --
@@ -418,6 +348,18 @@ ALTER TABLE `resposta`
 --
 ALTER TABLE `voluntario`
     ADD CONSTRAINT `voluntario_ibfk_1` FOREIGN KEY (`usuario_id`) REFERENCES `usuario` (`id`) ON DELETE CASCADE;
+
+-- Criar a nova tabela para armazenar os resultados dos matches
+CREATE TABLE `match_result` (
+                                `id` INT AUTO_INCREMENT PRIMARY KEY,
+                                `voluntario_id` INT NOT NULL,
+                                `estudo_id` INT NOT NULL,
+                                `criterios_atendidos` INT NOT NULL,
+                                `data_match` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                                CONSTRAINT `fk_match_voluntario` FOREIGN KEY (`voluntario_id`) REFERENCES `voluntario` (`id`) ON DELETE CASCADE,
+                                CONSTRAINT `fk_match_estudo` FOREIGN KEY (`estudo_id`) REFERENCES `estudo` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

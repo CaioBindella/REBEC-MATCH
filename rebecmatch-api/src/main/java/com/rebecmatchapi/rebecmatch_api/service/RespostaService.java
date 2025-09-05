@@ -2,12 +2,17 @@ package com.rebecmatchapi.rebecmatch_api.service;
 
 import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostaUpdateDTO;
-import com.rebecmatchapi.rebecmatch_api.entity.*;
+import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostasBatchCreateDTO;
+import com.rebecmatchapi.rebecmatch_api.entity.Questao;
+import com.rebecmatchapi.rebecmatch_api.entity.Resposta;
+import com.rebecmatchapi.rebecmatch_api.entity.Voluntario;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.*;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -16,14 +21,12 @@ public class RespostaService {
 
     private final RespostaRepository respostaRepository;
     private final VoluntarioRepository voluntarioRepository;
-    private final BuscaRepository buscaRepository;
     private final QuestaoRepository questaoRepository;
+    private final FormularioRepository formularioRepository;
 
     public Resposta createResposta(RespostaCreateDTO dto) {
         Voluntario voluntario = voluntarioRepository.findById(dto.getVoluntarioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Voluntário com ID " + dto.getVoluntarioId() + " não encontrado."));
-        Busca busca = buscaRepository.findById(dto.getBuscaId())
-                .orElseThrow(() -> new ResourceNotFoundException("Busca com ID " + dto.getBuscaId() + " não encontrada."));
         Questao questao = questaoRepository.findById(dto.getQuestaoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Questão com ID " + dto.getQuestaoId() + " não encontrada."));
 
@@ -31,7 +34,6 @@ public class RespostaService {
         novaResposta.setConteudo(dto.getConteudo());
         novaResposta.setMarcado(dto.isMarcado());
         novaResposta.setVoluntario(voluntario);
-        novaResposta.setBusca(busca);
         novaResposta.setQuestao(questao);
 
         return respostaRepository.save(novaResposta);
@@ -58,5 +60,31 @@ public class RespostaService {
             throw new ResourceNotFoundException("Resposta com ID " + id + " não encontrada para exclusão.");
         }
         respostaRepository.deleteById(id);
+    }
+
+    // Método para salvar respostas em lote
+    @Transactional
+    public void createRespostasEmLote(RespostasBatchCreateDTO dto) {
+        Voluntario voluntario = voluntarioRepository.findById(dto.getVoluntarioId())
+                .orElseThrow(() -> new ResourceNotFoundException("Voluntário com ID " + dto.getVoluntarioId() + " não encontrado."));
+
+        // Opcional: Validar se o formulário existe
+        formularioRepository.findById(dto.getFormularioId())
+                .orElseThrow(() -> new ResourceNotFoundException("Formulário com ID " + dto.getFormularioId() + " não encontrado."));
+
+
+        List<Resposta> novasRespostas = new ArrayList<>();
+        for (RespostasBatchCreateDTO.RespostaIndividualDTO respostaDto : dto.getRespostas()) {
+            Questao questao = questaoRepository.findById(respostaDto.getQuestaoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Questão com ID " + respostaDto.getQuestaoId() + " não encontrada."));
+
+            Resposta novaResposta = new Resposta();
+            novaResposta.setConteudo(respostaDto.getConteudo());
+            novaResposta.setMarcado(respostaDto.isMarcado());
+            novaResposta.setVoluntario(voluntario);
+            novaResposta.setQuestao(questao);
+            novasRespostas.add(novaResposta);
+        }
+        respostaRepository.saveAll(novasRespostas);
     }
 }

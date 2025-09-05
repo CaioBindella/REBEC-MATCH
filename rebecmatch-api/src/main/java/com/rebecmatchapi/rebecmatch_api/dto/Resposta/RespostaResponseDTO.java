@@ -5,7 +5,6 @@ import lombok.Data;
 public class RespostaResponseDTO {
     private Integer id;
     private Integer voluntarioId;
-    private Integer buscaId;
     private Integer questaoId;
     private String conteudo;
     private boolean marcado;

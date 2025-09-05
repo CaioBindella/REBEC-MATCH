@@ -3,6 +3,7 @@ package com.rebecmatchapi.rebecmatch_api.controller;
 import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostaResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostaUpdateDTO;
+import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostasBatchCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Resposta;
 import com.rebecmatchapi.rebecmatch_api.service.RespostaService;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,12 @@ public class RespostaController {
     public ResponseEntity<RespostaResponseDTO> createResposta(@RequestBody RespostaCreateDTO dto) {
         Resposta novaResposta = respostaService.createResposta(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDTO(novaResposta));
+    }
+
+    @PostMapping("/batch")
+    public ResponseEntity<Void> createRespostasEmLote(@RequestBody RespostasBatchCreateDTO dto) {
+        respostaService.createRespostasEmLote(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
     @GetMapping("/{id}")
@@ -58,9 +65,6 @@ public class RespostaController {
         dto.setMarcado(resposta.isMarcado());
         if (resposta.getVoluntario() != null) {
             dto.setVoluntarioId(resposta.getVoluntario().getId());
-        }
-        if (resposta.getBusca() != null) {
-            dto.setBuscaId(resposta.getBusca().getId());
         }
         if (resposta.getQuestao() != null) {
             dto.setQuestaoId(resposta.getQuestao().getId());
