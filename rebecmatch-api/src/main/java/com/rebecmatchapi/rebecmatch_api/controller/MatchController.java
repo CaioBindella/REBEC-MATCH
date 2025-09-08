@@ -25,6 +25,17 @@ public class MatchController {
         return ResponseEntity.ok(matchData);
     }
 
+    @PostMapping("/AImatch")
+    public ResponseEntity<List<MatchResultResponseDTO>> gerarMatchComIAEstruturado(@RequestBody String prompt) {
+        List<MatchResult> savedMatches = matchService.executarMatchComOpenAIEstruturado(prompt);
+
+        List<MatchResultResponseDTO> dtos = savedMatches.stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
+    }
+
     @PostMapping
     public ResponseEntity<MatchResultResponseDTO> saveMatchResult(@RequestBody MatchResultCreateDTO dto) {
         MatchResult savedMatch = matchService.saveMatchResult(dto);
@@ -51,6 +62,7 @@ public class MatchController {
         dto.setId(matchResult.getId());
         dto.setCriteriosAtendidos(matchResult.getCriteriosAtendidos());
         dto.setDataMatch(matchResult.getDataMatch());
+        dto.setJustificativa(matchResult.getJustificativa());
 
         if (matchResult.getVoluntario() != null) {
             dto.setVoluntarioId(matchResult.getVoluntario().getId());

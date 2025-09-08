@@ -12,4 +12,5 @@ public class MatchResultResponseDTO {
     private String estudoPublicTitle;
     private int criteriosAtendidos;
     private LocalDateTime dataMatch;
+    private String justificativa;
 }

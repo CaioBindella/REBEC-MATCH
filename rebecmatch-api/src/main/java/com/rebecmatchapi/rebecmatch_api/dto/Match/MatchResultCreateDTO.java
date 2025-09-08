@@ -14,4 +14,7 @@ public class MatchResultCreateDTO {
 
     @JsonProperty("criterios_atendidos")
     private int criteriosAtendidos;
+
+    @JsonProperty("justificativa")
+    private String justificativa;
 }

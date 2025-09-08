@@ -25,6 +25,9 @@ public class MatchResult {
     @Column(name = "criterios_atendidos", nullable = false)
     private int criteriosAtendidos;
 
+    @Column(name = "justificativa", columnDefinition = "TEXT")
+    private String justificativa;
+
     @CreationTimestamp
     @Column(name = "data_match", nullable = false, updatable = false)
     private LocalDateTime dataMatch;
