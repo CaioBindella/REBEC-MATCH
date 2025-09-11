@@ -1,7 +1,7 @@
 // Baseado no MatchDataDTO.java
 export interface MatchData {
-  estudos: any[];      // Defina tipos mais específicos se souber a estrutura
-  voluntarios: any[]; // Defina tipos mais específicos se souber a estrutura
+  estudos: any[];
+  voluntarios: any[];
 }
 
 // Baseado no MatchResultCreateDTO.java

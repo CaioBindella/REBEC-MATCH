@@ -3,34 +3,85 @@ import OpenAI from 'openai';
 import { config } from '../config/env';
 import { buildOpenAiPrompt } from '../config/prompts';
 import { MatchData, MatchResultCreate, OpenAiResponse } from '../types/api.types';
+import { encode } from 'gpt-3-encoder';
 
-const openai = new OpenAI({
-  apiKey: config.openAiKey,
-});
+const openai = new OpenAI({ apiKey: config.openAiKey });
+
+// Função para dividir um array em chunks (lotes) controlando o número de tokens.
+function chunkJsonByTokens(items: any[], maxTokens = 3000): any[][] {
+  const chunks: any[][] = [];
+  let currentChunk: any[] = [];
+  let currentTokens = 0;
+
+  for (const item of items) {
+    const itemTokens = encode(JSON.stringify(item)).length;
+
+    if (currentTokens + itemTokens > maxTokens && currentChunk.length > 0) {
+      chunks.push(currentChunk);
+      currentChunk = [];
+      currentTokens = 0;
+    }
+
+    currentChunk.push(item);
+    currentTokens += itemTokens;
+  }
+
+  if (currentChunk.length > 0) {
+    chunks.push(currentChunk);
+  }
+
+  return chunks;
+}
 
 class MatchService {
-  
-  // Orquestra todo o fluxo
+
   public async processMatch(userPrompt: string): Promise<MatchResultCreate[]> {
-    // 1. Busca os dados da API Java
     const matchData = await this.fetchDataFromJavaApi();
 
-    // 2. Constrói o prompt e busca os matches na OpenAI
-    const fullPrompt = buildOpenAiPrompt(userPrompt, matchData);
-    const openAiResult = await this.getMatchesFromOpenAI(fullPrompt);
-
-    if (!openAiResult.matches || openAiResult.matches.length === 0) {
-      console.log('Nenhum match retornado pela OpenAI.');
+    if (!matchData?.estudos?.length || !matchData?.voluntarios?.length) {
+      console.log('Dados insuficientes para processar.');
       return [];
     }
 
-    // 3. Salva cada match de volta na API Java
-    await this.saveMatchesToJavaApi(openAiResult.matches);
-    
-    return openAiResult.matches;
+    // Quebra em pedaços menores
+    const volunteerChunks = chunkJsonByTokens(matchData.voluntarios, 2500);
+    const studyChunks = chunkJsonByTokens(matchData.estudos, 2500);
+
+    console.log(
+      `Chunks: ${volunteerChunks.length} de voluntários, ${studyChunks.length} de estudos`
+    );
+
+    const allMatches: MatchResultCreate[] = [];
+
+    // Processa cada combinação de chunks
+    for (let v = 0; v < volunteerChunks.length; v++) {
+      for (let s = 0; s < studyChunks.length; s++) {
+        console.log(
+          `Processando voluntários chunk ${v + 1}/${volunteerChunks.length}, estudos chunk ${s + 1}/${studyChunks.length}`
+        );
+
+        const dataForPrompt = {
+          estudos: studyChunks[s],
+          voluntarios: volunteerChunks[v],
+        };
+
+        const partialPrompt = buildOpenAiPrompt(userPrompt, dataForPrompt);
+        const partialResult = await this.getMatchesFromOpenAI(partialPrompt);
+
+        if (partialResult.matches) {
+          allMatches.push(...partialResult.matches);
+        }
+      }
+    }
+
+    if (allMatches.length > 0) {
+      await this.saveMatchesToJavaApi(allMatches);
+    }
+
+    return allMatches;
   }
 
-  // Método privado para buscar dados da API Java
+  // Busca os dados da API Java. O tipo de retorno MatchData está correto.
   private async fetchDataFromJavaApi(): Promise<MatchData> {
     try {
       console.log('Buscando dados da API Java...');
@@ -45,8 +96,6 @@ class MatchService {
 
   private async getMatchesFromOpenAI(prompt: string): Promise<OpenAiResponse> {
     try {
-      console.log('Enviando requisição para a OpenAI com a biblioteca oficial...');
-      
       const completion = await openai.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
@@ -56,27 +105,27 @@ class MatchService {
       });
 
       const content = completion.choices[0].message.content;
-      console.log('Resposta da OpenAI recebida.');
-      
-      if (!content) {
-        throw new Error('A resposta da OpenAI veio vazia.');
-      }
+      if (!content) return { matches: [] };
 
-      return JSON.parse(content);
+      try {
+        return JSON.parse(content);
+      } catch (err) {
+        console.error('Erro ao parsear JSON da OpenAI:', err);
+        return { matches: [] };
+      }
     } catch (error) {
       console.error('Erro ao chamar a API da OpenAI:', error);
       throw new Error('Falha na comunicação com a OpenAI.');
     }
   }
 
-  // Método privado para salvar os resultados
   private async saveMatchesToJavaApi(matches: MatchResultCreate[]): Promise<void> {
     console.log(`Salvando ${matches.length} matches na API Java...`);
     
     const savePromises = matches.map(match => 
       axios.post(`${config.javaApiBaseUrl}/api/v1/match/save`, match)
     );
-    
+
     try {
       await Promise.all(savePromises);
       console.log('Todos os matches foram salvos com sucesso.');
@@ -88,3 +137,4 @@ class MatchService {
 }
 
 export default new MatchService();
+
