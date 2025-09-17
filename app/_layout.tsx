@@ -25,6 +25,7 @@ export default function RootLayout() {
       <MenuProvider>
         <AuthProvider>
           <Stack screenOptions={{ headerShown: false }}>
+            <Stack.Screen name="index" />
             <Stack.Screen name="firstpage" />
             <Stack.Screen name="(auth)/login" />
             <Stack.Screen name="(auth)/voluntaryRegister" />

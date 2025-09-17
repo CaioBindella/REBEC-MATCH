@@ -4,7 +4,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { jwtDecode } from 'jwt-decode'; 
 
 import userService, { LoginCredentials } from '@/services/userService';
-import { USER_KEY, TOKEN_KEY } from '@env';
+import Constants from 'expo-constants';
+// import { USER_KEY, TOKEN_KEY } from '@env';
+
+const USER_KEY = Constants.expoConfig?.extra?.USER_KEY;
+const TOKEN_KEY = Constants.expoConfig?.extra?.TOKEN_KEY
 
 type User = {
     id: string;

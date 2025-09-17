@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { LoginCredentials } from '@/services/userService';
+import { router } from 'expo-router';
 
 export default function LoginForm() {
   const { logIn } = useAuth();
@@ -22,18 +23,19 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (!credentials.login || !credentials.senha) {
-      Alert.alert('Atenção', 'Por favor, preencha os campos de login e senha.');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      await logIn(credentials);
-    } catch (error: any) {
-      Alert.alert('Erro de Login', error.message || 'Não foi possível entrar. Verifique as suas credenciais.');
-    } finally {
-      setIsLoading(false);
-    }
+    // if (!credentials.login || !credentials.senha) {
+    //   Alert.alert('Atenção', 'Por favor, preencha os campos de login e senha.');
+    //   return;
+    // }
+    // setIsLoading(true);
+    // try {
+    //   await logIn(credentials);
+    // } catch (error: any) {
+    //   Alert.alert('Erro de Login', error.message || 'Não foi possível entrar. Verifique as suas credenciais.');
+    // } finally {
+    //   setIsLoading(false);
+    // }
+    router.replace('/(protected)/home/page');
   };
 
   // Função para lidar com "Esqueci minha senha"
