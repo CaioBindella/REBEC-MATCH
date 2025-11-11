@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  frontend:
+    # 'build: .' informa ao compose para construir a imagem
+    # usando o Dockerfile no diretório atual
+    build: .
+    # Nome da imagem que será criada
+    image: meu-frontend-app
+    # Nome do contêiner
+    container_name: meu-frontend-container
+    # Sempre reiniciar o contêiner se ele parar (ex: após reboot do VPS)
+    restart: always
+    ports:
+      # Mapeia a porta 3000 do contêiner para a porta 3000 do seu VPS
+      # Formato: <porta-do-vps>:<porta-do-contêiner>
+      - "3000:3000"
+    networks:
+      - minha-rede
+
+networks:
+  minha-rede:
+    driver: bridge

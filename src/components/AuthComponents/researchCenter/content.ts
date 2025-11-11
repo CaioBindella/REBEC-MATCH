@@ -1,0 +1,4 @@
+export const descriptionText = `O Registro Brasileiro de Ensaios Clínicos (ReBEC) é a plataforma dedicada a dar visibilidade e transparência aos estudos clínicos realizados no Brasil. Ao cadastrar seu Centro de Pesquisa, você passa a fazer parte de uma rede nacional essencial para o avanço da ciência e da saúde pública.
+
+Esta área é o seu portal exclusivo para gerenciar as informações do seu centro. Aqui, você pode cadastrar sua instituição, detalhar sua infraestrutura, equipe, áreas de atuação e certificações. Manter seus dados atualizados garante que seu centro seja encontrado por patrocinadores, pesquisadores e pela comunidade.
+`;

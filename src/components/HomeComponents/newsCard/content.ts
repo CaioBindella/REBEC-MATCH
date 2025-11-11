@@ -1,0 +1,4 @@
+export const newsContent = {
+  title: "Brasil é o 11º em total de estudos sobre covid-19",
+  paragraph: `Brazil is part of the restricted group of countries that have published the most studies on covid-19 in the general population since the emergence of the disease, in December 2019. There have been 168,946 scientific publications related to the disease worldwide. Of these, 4,029 are signed by researchers working in the country. The number puts Brazilian production in the 11th position in the world ranking of science on the coronavirus, led by countries like Holland, Switzerland and Japan. The information is contained in a survey carried out by the WAP Academic Information Management Agency, at the request of the Dean of Research.`,
+};
