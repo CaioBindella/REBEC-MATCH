@@ -40,11 +40,11 @@ export default function Header() {
               <Text style={styles.menuOptionText}>Meu Perfil</Text>
             </MenuOption>
             <View style={styles.divider} />
-            <MenuOption onSelect={() => alert('Abrir Configurações')}>
+            <MenuOption onSelect={() => router.push('/(protected)/settings/page')}>
               <Text style={styles.menuOptionText}>Configurações</Text>
             </MenuOption>
             <View style={styles.divider} />
-            <MenuOption onSelect={() => alert('Abrir Configurações')}>
+            <MenuOption onSelect={() => router.push('/(protected)/notifications/page')}>
               <Text style={styles.menuOptionText}>Notificações</Text>
             </MenuOption>
             <View style={styles.divider} />

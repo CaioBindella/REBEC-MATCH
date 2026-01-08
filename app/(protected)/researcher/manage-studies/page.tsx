@@ -46,7 +46,7 @@ export default function ManageStudiesPage() {
                 study={item}
                 onEdit={() =>
                   router.push({
-                    pathname: "/manage-studies/edit/[id]",
+                    pathname: "/(protected)/researcher/manage-studies/edit/[id]",
                     params: { id: item.id },
                   })
                 }
@@ -56,7 +56,7 @@ export default function ManageStudiesPage() {
         ) : (
           <View style={styles.centered}>
             <Text style={styles.emptyText}>Você ainda não registrou nenhum estudo.</Text>
-            <TouchableOpacity style={styles.createButton} onPress={() => router.push('/create-study/page')}>
+            <TouchableOpacity style={styles.createButton} onPress={() => router.push('/(protected)/researcher/create-study/page')}>
               <Text style={styles.createButtonText}>Criar Primeiro Estudo</Text>
             </TouchableOpacity>
           </View>

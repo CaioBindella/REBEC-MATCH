@@ -1,5 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  LayoutAnimation, 
+  Platform, 
+  UIManager 
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 
@@ -9,6 +18,14 @@ import * as Sharing from 'expo-sharing';
 
 import VolunteerCard from '@/components/volunteerComponents/VolunteerCard';
 import FilterPicker from '@/components/reusable/FilterPicker';
+
+// Ativar LayoutAnimation no Android
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
 // --- Mock Data ---
 const mockVolunteers = [
@@ -20,7 +37,6 @@ const mockVolunteers = [
 ];
 
 // --- Dados dos filtros ---
-// FIX #2: GARANTA QUE ESTAS CONSTANTES ESTEJAM FORA E ANTES DA FUNÇÃO DO COMPONENTE
 const researcherStudies = [
   { label: 'Estudo sobre Enxaqueca', value: 'Estudo sobre Enxaqueca' },
   { label: 'Avaliação de App de Saúde Mental', value: 'Avaliação de App de Saúde Mental' },
@@ -67,10 +83,16 @@ export default function ResearcherCandidates() {
   const [selectedSex, setSelectedSex] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [selectedEducation, setSelectedEducation] = useState<string | null>(null);
+  
+  // Inicia fechado (false) ou aberto (true) conforme preferir
   const [filtersVisible, setFiltersVisible] = useState(true);
 
+  const toggleFilters = () => {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setFiltersVisible(!filtersVisible);
+  };
+
   const filteredVolunteers = useMemo(() => {
-    // FIX #1: A FUNÇÃO DENTRO DO useMemo PRECISA DE UM 'return'
     return mockVolunteers.filter(volunteer => {
       return (
         (!selectedStudy || volunteer.studyApplied === selectedStudy) &&
@@ -134,24 +156,41 @@ export default function ResearcherCandidates() {
       </View>
 
       <View style={styles.filtersWrapper}>
-        <View style={styles.filterHeader}>
-            <Text style={styles.mainFilterTitle}>Filtrar por:</Text>
-            <TouchableOpacity onPress={() => setFiltersVisible(!filtersVisible)}>
-                <Ionicons 
-                    name={filtersVisible ? 'chevron-up' : 'chevron-down'} 
-                    size={26} 
-                    color="#495057" 
-                />
-            </TouchableOpacity>
-        </View>
+        <TouchableOpacity 
+          style={styles.filterHeader} 
+          onPress={toggleFilters}
+          activeOpacity={0.7}
+        >
+            <View style={styles.filterTitleContainer}>
+                <View style={styles.iconCircle}>
+                    <Ionicons name="options" size={20} color="#15715A" />
+                </View>
+                <Text style={styles.mainFilterTitle}>Filtrar Resultados</Text>
+            </View>
+            <Ionicons 
+                name={filtersVisible ? 'chevron-up' : 'chevron-down'} 
+                size={22} 
+                color="#6c757d" 
+            />
+        </TouchableOpacity>
         
         {filtersVisible && (
-          <View style={styles.filterContainer}>
-            <FilterPicker label="Estudo" value={selectedStudy} onValueChange={(value) => setSelectedStudy(value as string | null)} items={researcherStudies} placeholder={{ label: "Todos os estudos", value: null }} />
-            <FilterPicker label="Região" value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as string | null)} items={regions} placeholder={{ label: "Todas as regiões", value: null }} />
-            <FilterPicker label="Sexo" value={selectedSex} onValueChange={(value) => setSelectedSex(value as string | null)} items={sexes} placeholder={{ label: "Todos os sexos", value: null }} />
-            <FilterPicker label="Gênero" value={selectedGender} onValueChange={(value) => setSelectedGender(value as string | null)} items={genders} placeholder={{ label: "Todos os gêneros", value: null }} />
-            <FilterPicker label="Escolaridade" value={selectedEducation} onValueChange={(value) => setSelectedEducation(value as string | null)} items={educationLevels} placeholder={{ label: "Todos os níveis", value: null }} />
+          <View style={styles.filterContent}>
+            <View style={styles.inputSpacing}>
+                <FilterPicker label="Estudo" value={selectedStudy} onValueChange={(value) => setSelectedStudy(value as string | null)} items={researcherStudies} placeholder={{ label: "Todos os estudos", value: null }} />
+            </View>
+            <View style={styles.inputSpacing}>
+                <FilterPicker label="Região" value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as string | null)} items={regions} placeholder={{ label: "Todas as regiões", value: null }} />
+            </View>
+            <View style={styles.inputSpacing}>
+                <FilterPicker label="Sexo" value={selectedSex} onValueChange={(value) => setSelectedSex(value as string | null)} items={sexes} placeholder={{ label: "Todos os sexos", value: null }} />
+            </View>
+            <View style={styles.inputSpacing}>
+                <FilterPicker label="Gênero" value={selectedGender} onValueChange={(value) => setSelectedGender(value as string | null)} items={genders} placeholder={{ label: "Todos os gêneros", value: null }} />
+            </View>
+            <View style={styles.inputSpacing}>
+                <FilterPicker label="Escolaridade" value={selectedEducation} onValueChange={(value) => setSelectedEducation(value as string | null)} items={educationLevels} placeholder={{ label: "Todos os níveis", value: null }} />
+            </View>
           </View>
         )}
       </View>
@@ -166,20 +205,23 @@ export default function ResearcherCandidates() {
             studyApplied={volunteer.studyApplied}
             onAnalyze={() =>
               router.push({
-                pathname: "/volunteer-details/[id]",
+                pathname: "/(protected)/researcher/volunteer-details/[id]",
                 params: { id: volunteer.id },
               })
             }
           />
         ))
       ) : (
-        <Text style={styles.noResultsText}>Nenhum candidato encontrado com os filtros selecionados.</Text>
+        <View style={styles.emptyState}>
+            <Ionicons name="search-outline" size={48} color="#ccc" />
+            <Text style={styles.noResultsText}>Nenhum candidato encontrado com os filtros selecionados.</Text>
+        </View>
       )}
     </ScrollView>
   );
 }
 
-// --- Estilos (sem alterações) ---
+// --- Estilos Melhorados ---
 const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -194,7 +236,7 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      marginBottom: 24,
+      marginBottom: 20,
     },
     title: {
       fontSize: 28,
@@ -204,40 +246,80 @@ const styles = StyleSheet.create({
     exportButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#e9ecef',
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 8,
+      backgroundColor: '#E0F2F1', // Fundo verde bem claro
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 20,
     },
     exportButtonText: {
       marginLeft: 6,
-      fontSize: 15,
+      fontSize: 14,
       fontWeight: '600',
       color: '#15715A',
     },
+    
+    // Novo Estilo do Card de Filtros
     filtersWrapper: {
       backgroundColor: '#fff',
-      borderRadius: 12,
-      padding: 16,
+      borderRadius: 16,
       marginBottom: 24,
+      // Sombra
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.05,
+      shadowRadius: 10,
+      elevation: 3,
+      overflow: 'hidden', // Importante para o border radius com filhos
+      borderWidth: 1,
+      borderColor: 'rgba(0,0,0,0.03)'
     },
     filterHeader: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
+      padding: 16,
+      backgroundColor: '#fff',
+    },
+    filterTitleContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconCircle: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#F0FDF4', // Verde muito sutil
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 12,
     },
     mainFilterTitle: {
-      fontSize: 18,
+      fontSize: 16,
       fontWeight: '700',
       color: '#343a40',
     },
-    filterContainer: {
-      marginTop: 16,
+    filterContent: {
+      paddingHorizontal: 16,
+      paddingBottom: 20,
+      borderTopWidth: 1,
+      borderTopColor: '#f0f0f0',
+      paddingTop: 16,
+    },
+    inputSpacing: {
+        marginBottom: 12,
+    },
+
+    // Empty State
+    emptyState: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 40,
     },
     noResultsText: {
       textAlign: 'center',
-      marginTop: 30,
+      marginTop: 12,
       fontSize: 16,
       color: '#6c757d',
+      maxWidth: '80%',
     },
-  });
+});

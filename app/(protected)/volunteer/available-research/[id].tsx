@@ -57,9 +57,8 @@ export default function StudyDetailScreen() {
 
       <View style={styles.footer}>
         <TouchableOpacity 
-          style={styles.formButton}
-          onPress={() => router.push('/volunteer/form-study/page')}>
-          <Text style={styles.formButtonText}>Preencher Formulário</Text>
+          style={styles.formButton}>
+          <Text style={styles.formButtonText}>Canditar para o Estudo</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>

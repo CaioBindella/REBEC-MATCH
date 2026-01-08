@@ -6,7 +6,6 @@ import {
   Alert,
   StyleSheet,
   TouchableOpacity,
-  // ✨ FIX: Added missing imports
   View,
   TextInput,
   ActivityIndicator,
@@ -26,13 +25,12 @@ interface StudyData {
 }
 
 interface InputFieldProps extends TextInputProps {
-    label: string;
+  label: string;
 }
 
 const InputField = ({ label, value, ...props }: InputFieldProps) => (
   <View style={styles.inputGroup}>
     <Text style={styles.label}>{label}</Text>
-    {/* The value prop is already part of TextInputProps */}
     <TextInput style={[styles.input, props.multiline && styles.textarea]} value={value} {...props} />
   </View>
 );
@@ -61,7 +59,6 @@ export default function EditStudyPage() {
   }, [id]);
 
   const handleInputChange = (field: keyof StudyData, value: string) => {
-    // We check if formData is not null before updating
     if (formData) {
       setFormData(prev => ({ ...prev!, [field]: value }));
     }
@@ -77,6 +74,9 @@ export default function EditStudyPage() {
     return <ActivityIndicator style={{flex: 1}} size="large" />;
   }
 
+  // Opções de status disponíveis
+  const statusOptions = ['RECRUTANDO', 'EM_ANDAMENTO', 'CONCLUIDO'];
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -89,6 +89,31 @@ export default function EditStudyPage() {
           value={formData.titulo}
           onChangeText={(text) => handleInputChange('titulo', text)}
         />
+
+        {/* --- NOVO SELETOR DE STATUS --- */}
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Status Atual</Text>
+          <View style={styles.statusSelector}>
+            {statusOptions.map((option) => (
+              <TouchableOpacity
+                key={option}
+                style={[
+                  styles.statusButton,
+                  formData.status === option && styles.statusButtonActive
+                ]}
+                onPress={() => handleInputChange('status', option)}
+              >
+                <Text style={[
+                  styles.statusText,
+                  formData.status === option && styles.statusTextActive
+                ]}>
+                  {option.replace('_', ' ')}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
         <InputField
           label="Informações Gerais"
           value={formData.informacoesGerais}
@@ -114,4 +139,33 @@ const styles = StyleSheet.create({
   textarea: { height: 120, textAlignVertical: 'top', paddingTop: 15 },
   submitButton: { backgroundColor: '#15715A', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20 },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  
+  // Estilos para o seletor de status
+  statusSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ced4da',
+  },
+  statusButton: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#eee',
+    backgroundColor: '#fff',
+  },
+  statusButtonActive: {
+    backgroundColor: '#15715A',
+  },
+  statusText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#495057',
+  },
+  statusTextActive: {
+    color: '#fff',
+  },
 });

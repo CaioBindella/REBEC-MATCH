@@ -86,7 +86,6 @@ export default function ProfilePage() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dados da Conta</Text>
-          <InfoRow icon="mail-outline" label="Email" value={usuario.email} />
           <InfoRow icon="at-outline" label="Login" value={usuario.login} />
           <InfoRow icon="person-circle-outline" label="Tipo" value={usuario.tipoEspecifico} />
         </View>

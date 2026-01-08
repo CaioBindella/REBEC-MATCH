@@ -15,7 +15,7 @@ export default function ResearcherDashboard() {
         title="Registrar Novo Estudo"
         description="Cadastre uma nova pesquisa, defina seus objetivos, critérios de inclusão e prepare-se para recrutar voluntários."
         buttonText="Registrar Estudo"
-        linkTo="create-study/page"
+        linkTo="/(protected)/researcher/create-study/page"
       />
 
       <InfoCard
@@ -23,7 +23,7 @@ export default function ResearcherDashboard() {
         title="Gerenciar Meus Estudos"
         description="Visualize e edite os detalhes dos seus estudos já existentes, acompanhe o status e acesse os dados dos participantes."
         buttonText="Gerenciar"
-        linkTo="manage-studies/page"
+        linkTo="/(protected)/researcher/manage-studies/page"
       />
 
       <InfoCard
@@ -31,7 +31,7 @@ export default function ResearcherDashboard() {
         title="Gerenciar Candidaturas"
         description="Revise as candidaturas dos voluntários para seus estudos, verifique critérios e gerencie os participantes selecionados."
         buttonText="Ver Candidatos"
-        linkTo="researcher-candidates/page"
+        linkTo="/(protected)/researcher/manage-candidates/page"
       />
 
       <InfoCard
@@ -39,7 +39,7 @@ export default function ResearcherDashboard() {
         title="Contato com Voluntários"
         description="Estabeleça comunicação direta com os voluntários inscritos para esclarecer dúvidas, fornecer informações adicionais ou coordenar detalhes do estudo."
         buttonText="Conversar"
-        linkTo="researcher-candidates/page"
+        linkTo="/(protected)/researcher/contacts/page"
       />
     </View>
   );
