@@ -64,6 +64,9 @@ public class Trial {
         private String dateRegistration;
         @JacksonXmlProperty(localName = "date_enrolment")
         private String dateEnrolment;
+        @JacksonXmlElementWrapper(localName = "health_condition_code")
+        @JacksonXmlProperty(localName = "hc_code")
+        private List<String> healthConditionCodes;
     }
 
     @Data

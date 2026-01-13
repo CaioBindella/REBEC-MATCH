@@ -18,7 +18,6 @@ public class Criterio {
     @Column(name = "inclusion_criteria", columnDefinition = "TEXT", nullable = false)
     private String inclusionCriteria;
 
-    // Variáveis renomeadas para camelCase
     @Column(name = "agemin", nullable = false, length = 20)
     private String ageMin;
 

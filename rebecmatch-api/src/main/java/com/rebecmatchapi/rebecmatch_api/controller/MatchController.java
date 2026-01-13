@@ -25,18 +25,13 @@ public class MatchController {
         return ResponseEntity.ok(matchData);
     }
 
-    @PostMapping("/AImatch")
-    public ResponseEntity<List<MatchResultResponseDTO>> gerarMatchComIAEstruturado(@RequestBody String prompt) {
-        List<MatchResult> savedMatches = matchService.executarMatchComOpenAIEstruturado(prompt);
-
-        List<MatchResultResponseDTO> dtos = savedMatches.stream()
-                .map(this::toResponseDTO)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(dtos);
+    @GetMapping("/DadosFiltrados")
+    public ResponseEntity<MatchDataDTO> getDadosFiltradosGlobais() {
+        MatchDataDTO dadosFiltrados = matchService.generateGlobalFilteredMatchData();
+        return ResponseEntity.ok(dadosFiltrados);
     }
 
-    @PostMapping
+    @PostMapping("/save")
     public ResponseEntity<MatchResultResponseDTO> saveMatchResult(@RequestBody MatchResultCreateDTO dto) {
         MatchResult savedMatch = matchService.saveMatchResult(dto);
         return ResponseEntity.status(HttpStatus.CREATED).body(toResponseDTO(savedMatch));

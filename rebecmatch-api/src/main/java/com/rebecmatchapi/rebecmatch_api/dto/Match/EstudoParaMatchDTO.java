@@ -6,7 +6,6 @@ import java.util.List;
 @Data
 public class EstudoParaMatchDTO {
     private int id;
-    private String publicTitle;
     private String scientificTitle;
     private List<CriterioParaMatchDTO> criterios;
 }

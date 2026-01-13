@@ -34,7 +34,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         // Permite que qualquer pessoa faça uma requisição POST para criar um novo utilizador (registo).
                         .requestMatchers(HttpMethod.POST, "/api/v1/usuarios").permitAll()
-                        // Para qualquer outra requisição, o utilizador precisa de estar autenticado.
+                        .requestMatchers(HttpMethod.GET, "/api/v1/match/dados").permitAll()// Trocar em produção
+//                        .requestMatchers(HttpMethod.POST, "/api/v1/match/save").permitAll() // Trocar em produção
+//                        .requestMatchers(HttpMethod.GET, "/api/v1/match/DadosFiltrados").permitAll() // Trocar em produção
+                                // Para qualquer outra requisição, o utilizador precisa de estar autenticado.
                         .anyRequest().authenticated()
                 )
                 // Adiciona o nosso filtro de JWT para ser executado antes do filtro padrão de autenticação do Spring.
@@ -42,18 +45,11 @@ public class SecurityConfig {
                 .build();
     }
 
-    /**
-     * Expõe o AuthenticationManager do Spring como um Bean para que possa ser injetado
-     * no nosso AuthenticationController para processar o login.
-     */
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
     }
-    /**
-     * Expõe o BCryptPasswordEncoder como um Bean. Esta é a implementação escolhida
-     * para encriptar e verificar as senhas.
-     */
+
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();

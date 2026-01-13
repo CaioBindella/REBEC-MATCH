@@ -3,11 +3,9 @@ package com.rebecmatchapi.rebecmatch_api.service;
 import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.rebecmatchapi.rebecmatch_api.dto.Xml.Trial;
 import com.rebecmatchapi.rebecmatch_api.dto.Xml.Trials;
-import com.rebecmatchapi.rebecmatch_api.entity.Criterio;
-import com.rebecmatchapi.rebecmatch_api.entity.Estudo;
-import com.rebecmatchapi.rebecmatch_api.entity.Pesquisador;
-import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
+import com.rebecmatchapi.rebecmatch_api.entity.*;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
+import com.rebecmatchapi.rebecmatch_api.repository.DoencaRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.PesquisadorRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
@@ -42,6 +40,9 @@ public class XmlProcessingService {
     private PesquisadorRepository pesquisadorRepository;
 
     @Autowired
+    private DoencaRepository doencaRepository;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     @Autowired
@@ -71,14 +72,14 @@ public class XmlProcessingService {
     }
 
     private void saveNewTrial(Trial trial) {
-        // 1. Criar ou encontrar o Pesquisador
+        // Criar ou encontrar o Pesquisador
         Pesquisador pesquisador = createOrFindPesquisador(trial.getScientificContact());
         if (pesquisador == null) {
             logger.warn("Could not create or find researcher for trial {}. Skipping trial.", trial.getMain().getTrialId());
             return;
         }
 
-        // 2. Criar o Estudo
+        // Criar o Estudo
         Estudo novoEstudo = new Estudo();
         novoEstudo.setTrialId(trial.getMain().getTrialId());
         novoEstudo.setPublicTitle(trial.getMain().getPublicTitle());
@@ -108,7 +109,23 @@ public class XmlProcessingService {
             novoEstudo.setSecId(trial.getSecondaryIds().get(0).getSecId());
         }
 
-        // 3. Criar o Critério
+        if (trial.getMain().getHealthConditionCodes() != null) {
+            for (String code : trial.getMain().getHealthConditionCodes()) {
+                // Remove espaços em branco que possam vir no XML
+                String cleanCode = code.trim();
+
+                Optional<Doenca> doencaOpt = doencaRepository.findByCodigo(cleanCode);
+
+                if (doencaOpt.isPresent()) {
+                    novoEstudo.addDoenca(doencaOpt.get());
+                    logger.info("Doença {} vinculada ao estudo {}", cleanCode, novoEstudo.getTrialId());
+                } else {
+                    logger.warn("Código de doença {} não encontrado no banco de dados.", cleanCode);
+                }
+            }
+        }
+
+        // Criar o Critério
         if (trial.getCriteria() != null) {
             Criterio criterio = new Criterio();
             criterio.setInclusionCriteria(trial.getCriteria().getInclusionCriteria());
