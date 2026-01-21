@@ -48,6 +48,10 @@ public class EstudoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Estudo com ID " + id + " não encontrado."));
     }
 
+    public List<Estudo> buscarEstudosPorDoenca(String termo) {
+        return estudoRepository.findByDoencaNome(termo);
+    }
+
     public List<Estudo> getAllEstudos() {
         return estudoRepository.findAll();
     }

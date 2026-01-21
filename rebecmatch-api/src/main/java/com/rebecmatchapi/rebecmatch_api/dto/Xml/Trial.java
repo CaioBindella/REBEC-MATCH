@@ -28,6 +28,10 @@ public class Trial {
     @JacksonXmlProperty(localName = "secondary_id")
     private List<SecondaryId> secondaryIds;
 
+    @JacksonXmlElementWrapper(localName = "health_condition_code")
+    @JacksonXmlProperty(localName = "hc_code")
+    private List<String> healthConditionCodes;
+
     // Métodos de conveniência para aceder facilmente aos dados aninhados
     public String getTrialId() {
         return main != null ? main.getTrialId() : null;
@@ -64,9 +68,6 @@ public class Trial {
         private String dateRegistration;
         @JacksonXmlProperty(localName = "date_enrolment")
         private String dateEnrolment;
-        @JacksonXmlElementWrapper(localName = "health_condition_code")
-        @JacksonXmlProperty(localName = "hc_code")
-        private List<String> healthConditionCodes;
     }
 
     @Data

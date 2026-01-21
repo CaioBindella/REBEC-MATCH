@@ -19,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -109,24 +110,32 @@ public class XmlProcessingService {
             novoEstudo.setSecId(trial.getSecondaryIds().get(0).getSecId());
         }
 
-        if (trial.getMain().getHealthConditionCodes() != null) {
-            for (String code : trial.getMain().getHealthConditionCodes()) {
-                // Remove espaços em branco que possam vir no XML
+        if (trial.getHealthConditionCodes() != null) {
+            for (String code : trial.getHealthConditionCodes()) {
                 String cleanCode = code.trim();
+                // Log para debug
+                logger.info("Processando código de doença: {}", cleanCode);
 
                 Optional<Doenca> doencaOpt = doencaRepository.findByCodigo(cleanCode);
 
                 if (doencaOpt.isPresent()) {
                     novoEstudo.addDoenca(doencaOpt.get());
-                    logger.info("Doença {} vinculada ao estudo {}", cleanCode, novoEstudo.getTrialId());
                 } else {
-                    logger.warn("Código de doença {} não encontrado no banco de dados.", cleanCode);
+                    // Log se não achar no banco
+                    logger.warn("Doença não encontrada no banco para o código: {}", cleanCode);
                 }
             }
+        } else {
+            logger.warn("Lista de códigos de doença VAZIA para o trial {}", trial.getMain().getTrialId());
         }
+
+        estudoRepository.save(novoEstudo);
+        logger.info("Estudo salvo com sucesso: {}", novoEstudo.getTrialId());
 
         // Criar o Critério
         if (trial.getCriteria() != null) {
+            List<Criterio> listaCriterios = new ArrayList<>();
+            
             Criterio criterio = new Criterio();
             criterio.setInclusionCriteria(trial.getCriteria().getInclusionCriteria());
             criterio.setAgeMin(trial.getCriteria().getAgeMin());
@@ -134,7 +143,9 @@ public class XmlProcessingService {
             criterio.setGender(trial.getCriteria().getGender());
             criterio.setExclusionCriteria(trial.getCriteria().getExclusionCriteria());
             criterio.setEstudo(novoEstudo);
-            novoEstudo.setCriterios(List.of(criterio));
+
+            listaCriterios.add(criterio);
+            novoEstudo.setCriterios(listaCriterios);
         }
 
         estudoRepository.save(novoEstudo);

@@ -22,10 +22,10 @@ public class Estudo {
     @JoinColumn(name = "pesquisador_id", nullable = false)
     private Pesquisador pesquisador;
 
-    @Column(name = "public_title", nullable = false)
+    @Column(name = "public_title", nullable = false, columnDefinition = "TEXT")
     private String publicTitle;
 
-    @Column(name = "scientific_title", nullable = false)
+    @Column(name = "scientific_title", nullable = false, columnDefinition = "TEXT")
     private String scientificTitle;
 
     @Column(name = "recruitment_status", nullable = false)
@@ -49,10 +49,10 @@ public class Estudo {
     @Column(name = "primary_sponsor", nullable = false)
     private String primarySponsor;
 
-    @Column(name = "hc_freetext", nullable = false)
+    @Column(name = "hc_freetext", nullable = false, columnDefinition = "TEXT")
     private String hcFreetext;
 
-    @Column(name = "i_freetext", nullable = false)
+    @Column(name = "i_freetext", nullable = false, columnDefinition = "TEXT")
     private String iFreetext;
 
     @Column(name = "approval_date")
@@ -70,7 +70,7 @@ public class Estudo {
     @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
     private List<Criterio> criterios;
 
-    @ManyToMany
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinTable(
             name = "estudo_doenca",
             joinColumns = @JoinColumn(name = "estudo_id"),
@@ -81,7 +81,9 @@ public class Estudo {
     private Set<Doenca> doencas = new HashSet<>();
 
     public void addDoenca(Doenca doenca) {
+        if (this.doencas == null) {
+            this.doencas = new HashSet<>();
+        }
         this.doencas.add(doenca);
-        doenca.getEstudos().add(this);
     }
 }

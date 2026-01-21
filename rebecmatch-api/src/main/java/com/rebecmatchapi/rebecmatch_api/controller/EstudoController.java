@@ -38,6 +38,15 @@ public class EstudoController {
         return ResponseEntity.ok(toResponseDTO(estudo));
     }
 
+    @GetMapping("/busca")
+    public ResponseEntity<List<EstudoResponseDTO>> buscarPorDoenca(@RequestParam String termo) {
+        List<Estudo> estudos = estudoService.buscarEstudosPorDoenca(termo);
+        List<EstudoResponseDTO> dtos = estudos.stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     @GetMapping
     public ResponseEntity<List<EstudoResponseDTO>> getAllEstudos() {
         List<Estudo> estudos = estudoService.getAllEstudos();

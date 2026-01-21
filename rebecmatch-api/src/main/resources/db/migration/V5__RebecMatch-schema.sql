@@ -18,3 +18,9 @@ CREATE TABLE estudo_doenca (
 ALTER TABLE estudo_doenca ADD CONSTRAINT fk_estudoe_on_doenca FOREIGN KEY (doenca_id) REFERENCES doencas (id);
 
 ALTER TABLE estudo_doenca ADD CONSTRAINT fk_estudoe_on_estudo FOREIGN KEY (estudo_id) REFERENCES estudo (id);
+
+ALTER TABLE estudo MODIFY scientific_title TEXT;
+ALTER TABLE estudo MODIFY public_title TEXT;
+
+ALTER TABLE estudo MODIFY hc_freetext TEXT;
+ALTER TABLE estudo MODIFY i_freetext TEXT;

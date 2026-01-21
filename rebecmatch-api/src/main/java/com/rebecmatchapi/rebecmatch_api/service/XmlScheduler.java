@@ -21,7 +21,7 @@ public class XmlScheduler {
      * A expressão cron "0 0 0 * * SUN" significa: "às 00:00:00 toda segunda-feira".
      * Para teste, usar "0 * * * * *" para rodar a cada minuto.
      */
-    @Scheduled(cron = "0 0 0 * * SUN")
+    @Scheduled(cron = "0 * * * * *")
     public void scheduleXmlProcessing() {
         logger.info("Starting scheduled XML processing task...");
         xmlProcessingService.processXmlFromUrl(XML_URL);
