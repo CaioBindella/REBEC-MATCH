@@ -52,6 +52,14 @@ public class EstudoService {
         return estudoRepository.findByDoencaNome(termo);
     }
 
+    public List<Estudo> getEstudosByPesquisadorId(Integer pesquisadorId) {
+        // Valida se o pesquisador existe antes de buscar (opcional, mas recomendado)
+        if (!pesquisadorRepository.existsById(pesquisadorId)) {
+            throw new ResourceNotFoundException("Pesquisador com ID " + pesquisadorId + " não encontrado.");
+        }
+        return estudoRepository.findByPesquisadorId(pesquisadorId);
+    }
+
     public List<Estudo> getAllEstudos() {
         return estudoRepository.findAll();
     }

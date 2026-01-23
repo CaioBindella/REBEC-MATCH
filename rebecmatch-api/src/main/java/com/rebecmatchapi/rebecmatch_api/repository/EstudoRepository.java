@@ -24,5 +24,7 @@ public interface EstudoRepository extends JpaRepository<Estudo, Integer> {
             "WHERE LOWER(d.nomeCientifico) LIKE LOWER(CONCAT('%', :termo, '%')) " +
             "OR LOWER(d.nomePopular) LIKE LOWER(CONCAT('%', :termo, '%'))")
     List<Estudo> findByDoencaNome(@Param("termo") String termo);
+
+    List<Estudo> findByPesquisadorId(Integer pesquisadorId);
 }
 

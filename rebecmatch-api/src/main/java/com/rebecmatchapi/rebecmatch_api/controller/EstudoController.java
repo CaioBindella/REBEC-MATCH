@@ -54,6 +54,17 @@ public class EstudoController {
         return ResponseEntity.ok(dtos);
     }
 
+    @GetMapping("/pesquisador/{pesquisadorId}")
+    public ResponseEntity<List<EstudoResponseDTO>> getEstudosByPesquisador(@PathVariable Integer pesquisadorId) {
+        List<Estudo> estudos = estudoService.getEstudosByPesquisadorId(pesquisadorId);
+
+        List<EstudoResponseDTO> dtos = estudos.stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<EstudoResponseDTO> updateEstudo(@PathVariable Integer id, @RequestBody EstudoUpdateDTO dto) {
         Estudo estudoAtualizado = estudoService.updateEstudo(id, dto);
