@@ -1,97 +1,151 @@
+// src/services/api.ts
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
+import { storage } from '@/services/storage';
+import { 
+  LoginResponseDTO, 
+  UsuarioCreateDTO, 
+  EstudoResponseDTO, 
+  CandidaturaCreateDTO, 
+  CandidaturaResponseDTO,
+  MatchResultResponseDTO,
+  RespostasBatchCreateDTO,
+  UsuarioResponseDTO
+} from '../../types/types';
 
-// Coloque a URL base da sua API aqui
-const baseURL = "http://10.0.2.2:8080";
-//process.env.PUBLIC_API_BASE_URL ||
 
-const api = axios.create({
-  baseURL,
+const BASE_URL = 'http://10.0.2.2:8080'; 
+
+export const api = axios.create({
+  baseURL: BASE_URL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
-// Este é um "interceptor". Ele vai adicionar o token de autenticação
-// em todas as requisições para a API depois que o usuário fizer login.
+// Interceptor para adicionar o Token automaticamente em todas as requisições
 api.interceptors.request.use(async (config) => {
-  // Busca o token que salvamos no AsyncStorage
-  const token = await AsyncStorage.getItem('userToken');
-
-  // Se o token existir, adiciona no cabeçalho 'Authorization'
+  const token = await SecureStore.getItemAsync('user_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-
   return config;
 }, (error) => {
   return Promise.reject(error);
 });
 
-export default api;
-
-
-// --- DADOS SIMULADOS ---
-const mockStudies = [
-  {
-    id: 1,
-    titulo: "Estudo sobre Eficácia de Novo Medicamento para Enxaqueca",
-    informacoesGerais: "Este estudo visa avaliar a redução na frequência de crises de enxaqueca em pacientes que utilizam o novo composto experimental X.",
-    status: 'EM_ANDAMENTO',
-    busca: {
-      id: 1,
-      anuncio: {
-        mensagem: "Procuram-se voluntários com diagnóstico de enxaqueca para participar em novo estudo clínico na região de São Paulo. Ajude a ciência a avançar!"
-      },
-      criterios: [
-        { texto: "Deve ter diagnóstico de enxaqueca crônica há mais de 2 anos." },
-        { texto: "Não deve estar a participar noutros estudos clínicos." },
-        { texto: "Idade entre 18 e 65 anos." }
-      ]
+export const apiService = {
+  auth: {
+    login: async (login: string, senha: string) => {
+      const response = await api.post<LoginResponseDTO>('/auth/login', { login, senha });
+      if (response.data.token) {
+        await SecureStore.setItemAsync('user_token', response.data.token);
+        await SecureStore.setItemAsync('user_data', JSON.stringify(response.data.usuario));
+      }
+      return response.data;
+    },
+    logout: async () => {
+      await SecureStore.deleteItemAsync('user_token');
+      await SecureStore.deleteItemAsync('user_data');
     }
   },
-  {
-    id: 2,
-    titulo: "Pesquisa sobre Qualidade do Sono e Uso de Dispositivos Eletrônicos",
-    informacoesGerais: "Análise da correlação entre o tempo de uso de telas antes de dormir e a qualidade do sono em adultos.",
-    status: 'RECRUTANDO',
-    busca: {
-      id: 2,
-      anuncio: {
-        mensagem: "Você usa o seu telemóvel antes de dormir? Participe na nossa pesquisa online e ajude-nos a entender melhor os hábitos de sono modernos."
-      },
-      criterios: [
-        { texto: "Idade superior a 18 anos." },
-        { texto: "Possuir um smartphone." }
-      ]
+
+  // --- USUÁRIOS ---
+  usuario: {
+    create: async (data: UsuarioCreateDTO) => {
+      const response = await api.post<UsuarioResponseDTO>('/api/v1/usuarios', data);
+      return response.data;
+    },
+    getById: async (id: number) => {
+      const response = await api.get<UsuarioResponseDTO>(`/api/v1/usuarios/${id}`);
+      return response.data;
+    },
+    update: async (id: number, data: Partial<UsuarioCreateDTO>) => {
+      const response = await api.put<UsuarioResponseDTO>(`/api/v1/usuarios/${id}`, data);
+      return response.data;
     }
   },
-  {
-    id: 3,
-    titulo: "Estudo sobre Dieta Mediterrânea e Saúde Cardiovascular",
-    informacoesGerais: "Avaliação dos benefícios da dieta mediterrânea na prevenção de doenças cardiovasculares. Não há anúncio para esta busca, então a descrição geral do estudo é mostrada.",
-    status: 'Recrutando',
-    busca: {
-      id: 3,
-      criterios: [
-        { texto: "Idade entre 40 e 75 anos." },
-        { texto: "Sem histórico de doença cardíaca grave." }
-      ]
+
+  // --- ESTUDOS ---
+  estudo: {
+    listAll: async () => {
+      const response = await api.get<EstudoResponseDTO[]>('/api/v1/estudos');
+      return response.data;
+    },
+    getById: async (id: number) => {
+      const response = await api.get<EstudoResponseDTO>(`/api/v1/estudos/${id}`);
+      return response.data;
+    },
+    // Busca inteligente por nome de doença
+    searchByDoenca: async (termo: string) => {
+      const response = await api.get<EstudoResponseDTO[]>('/api/v1/estudos/busca', {
+        params: { termo }
+      });
+      return response.data;
+    },
+    getByPesquisador: async (pesquisadorId: number) => {
+      const response = await api.get<any[]>(`/api/v1/estudos/pesquisador/${pesquisadorId}`);
+      return response.data;
+    }
+  },
+
+  // --- CANDIDATURAS (Novo Fluxo de Handshake) ---
+  candidatura: {
+    // oluntário se candidata
+    criar: async (data: CandidaturaCreateDTO) => {
+      const response = await api.post<CandidaturaResponseDTO>('/api/v1/candidaturas', data);
+      return response.data;
+    },
+    
+    // Pesquisador Aprova/Recusa
+    analisePesquisador: async (id: number, aprovado: boolean) => {
+      const response = await api.patch<CandidaturaResponseDTO>(
+        `/api/v1/candidaturas/${id}/analise-pesquisador`, 
+        aprovado, // Envia o booleano direto no corpo
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      return response.data;
+    },
+
+    // Voluntário Confirma Participação (Gera Match)
+    confirmacaoVoluntario: async (id: number, aceito: boolean) => {
+      const response = await api.patch<CandidaturaResponseDTO>(
+        `/api/v1/candidaturas/${id}/confirmacao-voluntario`, 
+        aceito,
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      return response.data;
+    },
+
+    listarPorVoluntario: async (voluntarioId: number) => {
+      const response = await api.get<CandidaturaResponseDTO[]>(`/api/v1/candidaturas/voluntario/${voluntarioId}`);
+      return response.data;
+    },
+
+    listarPorEstudo: async (estudoId: number) => {
+      const response = await api.get<CandidaturaResponseDTO[]>(`/api/v1/candidaturas/estudo/${estudoId}`);
+      return response.data;
+    }
+  },
+
+  // --- MATCHES (Resultados Finais) ---
+  match: {
+    listAll: async () => {
+      const response = await api.get<MatchResultResponseDTO[]>('/api/v1/match');
+      return response.data;
+    },
+    getById: async (id: number) => {
+      const response = await api.get<MatchResultResponseDTO>(`/api/v1/match/${id}`);
+      return response.data;
+    }
+  },
+
+  // --- FORMULÁRIOS & RESPOSTAS ---
+  formulario: {
+    enviarRespostasEmLote: async (data: RespostasBatchCreateDTO) => {
+      await api.post('/api/v1/respostas/batch', data);
     }
   }
-];
+};
 
-// // Função para obter o token (simulação)
-async function getToken() {
-  // Em um app real, você pegaria o token do AsyncStorage ou Expo SecureStore.
-  // Para simulação, retornamos um valor qualquer.
-  return 'SIMULATED_JWT_TOKEN';
-}
-
-export async function getAvailableStudies() {
-  console.log("Simulando chamada à API para buscar estudos...");
-
-  // Simula um atraso de rede de 1 segundo
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
-  console.log("Dados simulados retornados.");
-  return Promise.resolve(mockStudies);
-
-}
+export default api;

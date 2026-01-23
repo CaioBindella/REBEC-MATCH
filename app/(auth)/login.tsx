@@ -14,31 +14,46 @@ import {
   ScrollView
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { LoginCredentials } from '@/services/userService';
 import { router } from 'expo-router';
 
 export default function LoginForm() {
   const { logIn } = useAuth();
-  const [credentials, setCredentials] = useState<LoginCredentials>({ login: '', senha: '' });
+  
+  // Estado local para os inputs
+  const [credentials, setCredentials] = useState({ login: '', senha: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    // if (!credentials.login || !credentials.senha) {
-    //   Alert.alert('Atenção', 'Por favor, preencha os campos de login e senha.');
-    //   return;
-    // }
-    // setIsLoading(true);
-    // try {
-    //   await logIn(credentials);
-    // } catch (error: any) {
-    //   Alert.alert('Erro de Login', error.message || 'Não foi possível entrar. Verifique as suas credenciais.');
-    // } finally {
-    //   setIsLoading(false);
-    // }
-    router.replace('/(protected)/home/page');
+    // Validação básica
+    if (!credentials.login || !credentials.senha) {
+      Alert.alert('Atenção', 'Por favor, preencha os campos de login e senha.');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Chama a função do contexto que conecta na API
+      await logIn({
+        login: credentials.login,
+        senha: credentials.senha
+      });
+
+      // Se não deu erro no await acima, navega para a home
+      // O replace impede que o usuário volte para o login ao clicar em "voltar"
+      router.replace('/(protected)/home/page');
+
+    } catch (error: any) {
+      // 4. Tratamento de erro vindo da API
+      Alert.alert(
+        'Erro de Login', 
+        error.message || 'Não foi possível entrar. Verifique as suas credenciais.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // Função para lidar com "Esqueci minha senha"
   const handleForgotPassword = () => {
     Alert.alert('Esqueci minha senha', 'Funcionalidade a ser implementada.');
   };
@@ -47,7 +62,7 @@ export default function LoginForm() {
     <SafeAreaView style={styles.safeArea}>
       <KeyboardAvoidingView
         style={styles.screenContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'} // Define o comportamento
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView contentContainerStyle={styles.mainContent}>
           <View style={styles.headerContainer}>
@@ -62,11 +77,12 @@ export default function LoginForm() {
             
             <TextInput
               style={styles.input}
-              placeholder="Nome de usuário"
+              placeholder="Nome de usuário ou E-mail"
               value={credentials.login}
               onChangeText={(text) => setCredentials(prev => ({ ...prev, login: text }))}
               autoCapitalize="none"
               keyboardType="email-address"
+              autoCorrect={false}
             />
             <TextInput
               style={styles.input}

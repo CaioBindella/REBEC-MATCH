@@ -1,31 +1,70 @@
-import React from 'react';
-import { SafeAreaView, View, Text, FlatList, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+import React, { useState, useCallback } from 'react';
+import { 
+  SafeAreaView, 
+  View, 
+  Text, 
+  FlatList, 
+  StyleSheet, 
+  ActivityIndicator, 
+  TouchableOpacity,
+  Alert
+} from 'react-native';
+import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import Header from '@/components/reusable/Header';
 import ManageStudyCard, { StudySummary } from '@/components/researcherComponents/ManageStudyCard';
-// import { useAuth } from '@/context/AuthContext'; // Você usaria isso para pegar o ID real
-// import { getStudiesByResearcher } from '@/services/apiClient'; // E sua função de API
 
-// Simulação de dados. Na vida real, uma chamada à API com o ID do pesquisador.
-const mockStudies: StudySummary[] = [
-  { id: 1, titulo: 'Estudo sobre Eficácia de Novo Medicamento para Enxaqueca', status: 'EM_ANDAMENTO' },
-  { id: 5, titulo: 'Análise do Impacto de Exercícios Aeróbicos na Memória', status: 'RECRUTANDO' },
-];
-
-// Para testar o aviso de lista vazia, use a linha abaixo no lugar da de cima:
-// const mockStudies: StudySummary[] = [];
+// Imports de Lógica
+import { useAuth } from '@/context/AuthContext';
+import { apiService } from '@/services/api/apiClient'; // Ajuste o caminho conforme sua pasta real
 
 export default function ManageStudiesPage() {
   const router = useRouter();
-  // const { user } = useAuth();
-  // const { data: studies, isLoading } = useQuery(['studies', user.id], () => getStudiesByResearcher(user.id));
-  
-  // Usando os dados simulados por enquanto
-  const studies = mockStudies;
-  const isLoading = false;
+  const { user } = useAuth(); // Pega o usuário logado do Contexto
+
+  const [studies, setStudies] = useState<StudySummary[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Função para buscar dados na API
+  const fetchStudies = async () => {
+    if (!user?.id) return;
+
+    try {
+      setIsLoading(true);
+      
+      // Chama a nova função que criamos no apiService
+      const rawData = await apiService.estudo.getByPesquisador(user.id);
+
+      // MAPEAMENTO:
+      // O banco retorna "public_title" e "recruitment_status".
+      // O componente espera "titulo" e "status".
+      const formattedData: StudySummary[] = rawData.map((item: any) => ({
+        id: item.id,
+        titulo: item.publicTitle,       // Mapeia do banco para o front
+        status: item.recruitmentStatus, // Mapeia do banco para o front
+      }));
+
+      setStudies(formattedData);
+    } catch (error) {
+      console.error("Erro ao buscar estudos:", error);
+      Alert.alert("Erro", "Não foi possível carregar seus estudos.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Recarrega a lista toda vez que a tela ganha foco (ex: ao voltar de 'Criar Estudo')
+  useFocusEffect(
+    useCallback(() => {
+      fetchStudies();
+    }, [user?.id])
+  );
 
   if (isLoading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#15715A" /></View>;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#15715A" />
+      </View>
+    );
   }
   
   return (
@@ -34,9 +73,14 @@ export default function ManageStudiesPage() {
       <Header />
       <View style={styles.content}>
         <View style={styles.profileTag}>
-          <Text style={styles.profileTagText}>Perfil Pesquisador</Text>
+          {/* Exibe o nome fictício do pesquisador se disponível */}
+          <Text style={styles.profileTagText}>
+             {user?.nomeFicticio ? user.nomeFicticio : 'Pesquisador'}
+          </Text>
         </View>
+        
         <Text style={styles.pageTitle}>Gerenciar Meus Estudos</Text>
+        
         {studies.length > 0 ? (
           <FlatList
             data={studies}
@@ -52,11 +96,17 @@ export default function ManageStudiesPage() {
                 }
               />
             )}
+            // Permite arrastar para baixo para atualizar manualmente
+            refreshing={isLoading}
+            onRefresh={fetchStudies}
           />
         ) : (
           <View style={styles.centered}>
             <Text style={styles.emptyText}>Você ainda não registrou nenhum estudo.</Text>
-            <TouchableOpacity style={styles.createButton} onPress={() => router.push('/(protected)/researcher/create-study/page')}>
+            <TouchableOpacity 
+              style={styles.createButton} 
+              onPress={() => router.push('/(protected)/researcher/create-study/page')}
+            >
               <Text style={styles.createButtonText}>Criar Primeiro Estudo</Text>
             </TouchableOpacity>
           </View>
@@ -75,15 +125,15 @@ const styles = StyleSheet.create({
   createButton: { backgroundColor: '#15715A', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 },
   createButtonText: { color: '#fff', fontWeight: 'bold', fontSize: 16 },
   profileTag: {
-    backgroundColor: '#E0F2F1', // Um verde claro
+    backgroundColor: '#E0F2F1',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    alignSelf: 'flex-start', // Alinha à esquerda
+    alignSelf: 'flex-start',
     marginBottom: 16,
   },
   profileTagText: {
-    color: '#166865', // Verde escuro do seu tema
+    color: '#166865',
     fontWeight: '500',
   },
 });

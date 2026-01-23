@@ -13,12 +13,11 @@ import Header from "@/components/reusable/Header";
 import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
 // --- MOCK API ---
-// Mude para 'false' para ver a tela de bloqueio, ou 'true' para ver o dashboard
 const checkVolunteerFormStatus = async (): Promise<boolean> => {
   return new Promise((resolve) => {
     console.log("Verificando status do formulário...");
     setTimeout(() => {
-      resolve(true); // <--- Mude aqui para testar
+      resolve(true); // Mudar aqui para testar
     }, 1000);
   });
 };
@@ -35,7 +34,8 @@ export default function HomePage() {
     if (!isReady) return;
 
     // Lógica ajustada: Se user for null (dev bypass) ou tipo indefinido/voluntário, rodamos a verificação
-    const isVolunteerOrDev = !user || user?.userType === undefined || user?.userType === 'VOLUNTARIO';
+    // const isVolunteerOrDev = !user || user?.userType === undefined || user?.userType === 'VOLUNTARIO';
+    const isVolunteerOrDev = false;
 
     if (isVolunteerOrDev) {
       checkVolunteerFormStatus()
@@ -72,7 +72,8 @@ export default function HomePage() {
   }
 
   // Identificação do tipo de usuário (Adaptado para quando user é null)
-  const isResearcher = user?.userType === 'PESQUISADOR';
+  // const isResearcher = user?.userType === 'PESQUISADOR';
+  const isResearcher = true;
   // Se não é pesquisador, assumimos que é voluntário (mesmo que user seja null)
   const isVolunteer = !isResearcher;
 

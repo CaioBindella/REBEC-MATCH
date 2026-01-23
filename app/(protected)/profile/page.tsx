@@ -6,93 +6,82 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  ActivityIndicator
 } from 'react-native';
 import { Stack } from 'expo-router';
-import Header from '@/components/reusable/Header';
-import { useAuth } from '@/context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
 
-// --- Mock de Dados ---
-// Na vida real, isso viria de uma chamada à API usando o user.id
-const mockVolunteerData = {
-  id: 5,
-  usuario: {
-    id: 5,
-    nome: 'Novo Voluntario',
-    sobrenome: 'Teste',
-    login: 'voluntario.teste',
-    email: 'voluntario@teste.com',
-    tipoEspecifico: 'VOLUNTARIO',
-    sexo: 'OUTRO',
-  },
-  distancia: 200.0,
-  nomeFicticio: 'VL_PR435',
-};
+// Importa o Hook de Autenticação
+import { useAuth } from '@/context/AuthContext';
+import Header from '@/components/reusable/Header';
 
-const mockResearcherData = {
-  id: 1,
-  usuario: {
-    id: 1,
-    nome: 'Ana',
-    sobrenome: 'Souza',
-    login: 'ana.souza',
-    email: 'ana.souza@institutopesquisa.br',
-    tipoEspecifico: 'PESQUISADOR',
-    sexo: 'FEMININO',
-  },
-  nomeFicticio: 'PS_RJ2343',
-};
-// --- Fim do Mock ---
-
-// ✨ FIX: Criada uma interface para as props do InfoRow
+// Interface para as props do InfoRow
 interface InfoRowProps {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
-  value: string | number;
+  value: string | number | null | undefined;
 }
 
-// Componente auxiliar para exibir linhas de informação
-// ✨ FIX: Aplicada a interface de props para tipar os parâmetros
 const InfoRow = ({ icon, label, value }: InfoRowProps) => (
   <View style={styles.infoRow}>
     <Ionicons name={icon} size={20} color="#495057" style={styles.icon} />
     <Text style={styles.label}>{label}</Text>
-    <Text style={styles.value}>{String(value)}</Text>
+    <Text style={styles.value}>{value ? String(value) : '-'}</Text>
   </View>
 );
 
 export default function ProfilePage() {
-//   const { userType } = useAuth(); // Pega o tipo de usuário do contexto
-    const userType = 'VOLUNTARIO'; // Substitua por useAuth().userType quando estiver implementado
+  const { user } = useAuth();
 
-  // Seleciona os dados corretos com base no tipo de usuário
-  const profileData =
-    userType === 'VOLUNTARIO' ? mockVolunteerData : mockResearcherData;
+  // Loading state manual caso o user não esteja pronto
+  if (!user) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#15715A" />
+        </View>
+      </SafeAreaView>
+    );
+  }
 
-  const { usuario, nomeFicticio } = profileData;
+  // Lógica ajustada: 
+  // 1. Usamos APENAS o nome fictício.
+  const nomeExibicao = user.nomeFicticio || 'Usuário Sem Código';
+  
+  // 2. As iniciais agora vêm do código (ex: PS1MG -> PS)
+  const iniciais = nomeExibicao.substring(0, 2).toUpperCase();
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
       <ScrollView contentContainerStyle={styles.content}>
+        
+        {/* Cabeçalho do Perfil */}
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
-            <Ionicons name="person" size={50} color="#fff" />
+            <Text style={styles.avatarText}>{iniciais}</Text>
           </View>
-          <Text style={styles.name}>{`${usuario.nome} ${usuario.sobrenome}`}</Text>
-          <Text style={styles.fictionalName}>{nomeFicticio}</Text>
+          {/* AQUI: Exibe apenas o Nome Fictício em destaque */}
+          <Text style={styles.name}>{nomeExibicao}</Text>
+          <Text style={styles.roleLabel}>{user.tipoEspecifico}</Text>
         </View>
 
+        {/* Seção de Dados da Conta */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dados da Conta</Text>
-          <InfoRow icon="at-outline" label="Login" value={usuario.login} />
-          <InfoRow icon="person-circle-outline" label="Tipo" value={usuario.tipoEspecifico} />
+          
+          {/* Removemos nome/sobrenome daqui também para garantir privacidade visual */}
+          <InfoRow icon="at-outline" label="Login" value={user.login} />
+          <InfoRow icon="mail-outline" label="E-mail" value={user.email} />
+          <InfoRow icon="finger-print-outline" label="ID" value={user.id} />
         </View>
-
+        
         <TouchableOpacity style={styles.editButton}>
           <Text style={styles.editButtonText}>Editar Perfil</Text>
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -109,26 +98,47 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#15715A', // Cor verde principal
+    backgroundColor: '#15715A', 
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  avatarText: {
+    color: '#fff',
+    fontSize: 36, // Ajustado levemente
+    fontWeight: 'bold',
   },
   name: {
-    fontSize: 24,
+    fontSize: 26, // Maior destaque para o código
     fontWeight: 'bold',
     color: '#212529',
+    textAlign: 'center',
+    marginBottom: 4,
   },
-  fictionalName: {
-    fontSize: 16,
+  roleLabel: {
+    fontSize: 14,
     color: '#6c757d',
-    fontStyle: 'italic',
+    fontWeight: '600',
+    backgroundColor: '#e9ecef',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
   },
   section: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
+    elevation: 2, 
+    shadowColor: '#000', 
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
   },
   sectionTitle: {
     fontSize: 18,
@@ -142,19 +152,24 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f8f9fa',
   },
   icon: {
     marginRight: 15,
+    width: 24, 
   },
   label: {
     fontSize: 16,
     color: '#495057',
+    width: 70, 
+    fontWeight: '500',
   },
   value: {
     fontSize: 16,
     color: '#212529',
-    fontWeight: '500',
+    fontWeight: '400',
     flex: 1,
     textAlign: 'right',
   },
