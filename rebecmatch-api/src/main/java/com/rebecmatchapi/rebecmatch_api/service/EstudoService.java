@@ -60,6 +60,10 @@ public class EstudoService {
         return estudoRepository.findByPesquisadorId(pesquisadorId);
     }
 
+    public List<Estudo> getEstudosRecrutando() {
+        return estudoRepository.findByRecruitmentStatusIgnoreCase("Recruiting");
+    }
+
     public List<Estudo> getAllEstudos() {
         return estudoRepository.findAll();
     }

@@ -27,4 +27,5 @@ public class EstudoResponseDTO {
     private String secId;
     private String trialId;
     private List<CriterioResponseDTO> criterios;
+    private List<String> nomesDoencas;
 }

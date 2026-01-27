@@ -26,5 +26,7 @@ public interface EstudoRepository extends JpaRepository<Estudo, Integer> {
     List<Estudo> findByDoencaNome(@Param("termo") String termo);
 
     List<Estudo> findByPesquisadorId(Integer pesquisadorId);
+
+    List<Estudo> findByRecruitmentStatusIgnoreCase(String status);
 }
 

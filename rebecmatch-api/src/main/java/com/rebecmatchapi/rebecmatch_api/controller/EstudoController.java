@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.rebecmatchapi.rebecmatch_api.entity.Doenca;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,6 +78,18 @@ public class EstudoController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/recrutando")
+    public ResponseEntity<List<EstudoResponseDTO>> getEstudosRecrutando() {
+        List<Estudo> estudos = estudoService.getEstudosRecrutando();
+
+        List<EstudoResponseDTO> dtos = estudos.stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
+
     // --- MÉTODOS DE MAPEAMENTO ---
 
     private EstudoResponseDTO toResponseDTO(Estudo estudo) {
@@ -101,6 +114,12 @@ public class EstudoController {
         if (estudo.getCriterios() != null) {
             dto.setCriterios(estudo.getCriterios().stream()
                     .map(this::toCriterioResponseDTO)
+                    .collect(Collectors.toList()));
+        }
+
+        if (estudo.getDoencas() != null) {
+            dto.setNomesDoencas(estudo.getDoencas().stream()
+                    .map(Doenca::getNomePopular)
                     .collect(Collectors.toList()));
         }
 
