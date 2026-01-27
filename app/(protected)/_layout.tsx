@@ -13,9 +13,9 @@ export default function ProtectedLayout() {
     );
   }
 
-  // if (!user) {
-  //   return <Redirect href="/login" />;
-  // }
+  if (!user) {
+    return <Redirect href="/login" />;
+  }
 
   return <Stack screenOptions={{ headerShown: false }} />;
 }

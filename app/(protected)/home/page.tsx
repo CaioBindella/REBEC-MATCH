@@ -12,12 +12,14 @@ import ResearcherDashboard from '@/components/researcherComponents/ResearcherDas
 import Header from "@/components/reusable/Header";
 import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
-// --- MOCK API ---
-const checkVolunteerFormStatus = async (): Promise<boolean> => {
+// Função simulada para checar se o formulário foi preenchido
+// TODO: Substituir por uma chamada real à API (ex: apiService.voluntario.hasAnswers(user.id))
+const checkVolunteerFormStatus = async (userId: number): Promise<boolean> => {
   return new Promise((resolve) => {
-    console.log("Verificando status do formulário...");
+    console.log(`Verificando status do formulário para o usuário ${userId}...`);
     setTimeout(() => {
-      resolve(true); // Mudar aqui para testar
+      // Por enquanto retorna TRUE para não bloquear o fluxo durante o desenvolvimento
+      resolve(true); 
     }, 1000);
   });
 };
@@ -26,72 +28,68 @@ export default function HomePage() {
   const { user, isReady } = useAuth();
   const router = useRouter();
 
-  // Iniciamos checkingForm como true para garantir que ele mostre o loading logo de cara
   const [checkingForm, setCheckingForm] = useState(true);
   const [hasCompletedForm, setHasCompletedForm] = useState<boolean | null>(null);
 
+  // Identificação do tipo de usuário baseada na resposta da API (objeto user)
+  // O backend retorna 'tipoEspecifico': 'PESQUISADOR' ou 'VOLUNTARIO'
+  const isResearcher = user?.tipoEspecifico === 'PESQUISADOR';
+  const isVolunteer = user?.tipoEspecifico === 'VOLUNTARIO';
+
   useEffect(() => {
+    // Só roda a lógica quando o AuthContext estiver pronto (user carregado do storage)
     if (!isReady) return;
 
-    // Lógica ajustada: Se user for null (dev bypass) ou tipo indefinido/voluntário, rodamos a verificação
-    // const isVolunteerOrDev = !user || user?.userType === undefined || user?.userType === 'VOLUNTARIO';
-    const isVolunteerOrDev = false;
-
-    if (isVolunteerOrDev) {
-      checkVolunteerFormStatus()
+    if (isVolunteer && user?.id) {
+      // Se for voluntário, verifica se já preencheu o formulário inicial
+      setCheckingForm(true);
+      checkVolunteerFormStatus(user.id)
         .then((status) => {
-          console.log("Status recebido:", status);
           setHasCompletedForm(status);
         })
         .catch((err) => {
-          console.error("Erro na verificação", err);
-          setHasCompletedForm(true); // Fallback seguro
+          console.error("Erro na verificação do formulário", err);
+          setHasCompletedForm(false); // Em caso de erro, assume que não preencheu (segurança)
         })
         .finally(() => {
           setCheckingForm(false);
         });
     } else {
-      // Se for pesquisador, não precisa verificar formulário
+      // Se for Pesquisador ou user não identificado, não precisa verificar formulário
       setCheckingForm(false);
     }
-  }, [isReady, user]);
+  }, [isReady, user, isVolunteer]);
 
-  // Loading Inicial
-  if (!isReady || checkingForm) {
+  // Loading Inicial do App ou da Verificação de Formulário
+  if (!isReady || (isVolunteer && checkingForm)) {
     return (
       <SafeAreaView style={styles.safeArea}>
         <Header />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#15715A" />
-          <Text style={{ marginTop: 15, color: '#666', fontSize: 16 }}>
-            Verificando seu perfil...
+          <Text style={styles.loadingText}>
+            {isReady ? "Verificando perfil..." : "Carregando sessão..."}
           </Text>
         </View>
       </SafeAreaView>
     );
   }
 
-  // Identificação do tipo de usuário (Adaptado para quando user é null)
-  // const isResearcher = user?.userType === 'PESQUISADOR';
-  const isResearcher = true;
-  // Se não é pesquisador, assumimos que é voluntário (mesmo que user seja null)
-  const isVolunteer = !isResearcher;
-
   return (
     <SafeAreaView style={styles.safeArea}>
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
         
-        {/* Lógica do PESQUISADOR */}
+        {/* --- Lógica do PESQUISADOR --- */}
         {isResearcher && <ResearcherDashboard />}
 
-        {/* Lógica do VOLUNTÁRIO */}
+        {/* --- Lógica do VOLUNTÁRIO --- */}
         {isVolunteer && (
           <>
-            {/* Se já preencheu -> Dashboard */}
+            {/* Cenário 1: Já preencheu o formulário -> Acessa o Dashboard */}
             {hasCompletedForm === true && <VolunteerDashboard />}
 
-            {/* Se NÃO preencheu -> Tela de Bloqueio */}
+            {/* Cenário 2: NÃO preencheu -> Tela de Bloqueio obrigando o cadastro */}
             {hasCompletedForm === false && (
               <View style={styles.blockedContainer}>
                 <View style={styles.iconCircle}>
@@ -115,6 +113,13 @@ export default function HomePage() {
           </>
         )}
 
+        {/* Fallback caso o tipo de usuário não seja reconhecido (ex: erro no login) */}
+        {!isResearcher && !isVolunteer && user && (
+          <View style={styles.centered}>
+            <Text style={{ color: 'red' }}>Tipo de usuário desconhecido: {user.tipoEspecifico}</Text>
+          </View>
+        )}
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -134,6 +139,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingVertical: 100,
+  },
+  loadingText: {
+    marginTop: 15, 
+    color: '#666', 
+    fontSize: 16 
+  },
+  centered: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center'
   },
   
   // Estilos da Tela de Bloqueio

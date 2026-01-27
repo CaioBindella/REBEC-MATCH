@@ -77,7 +77,7 @@ export default function LoginForm() {
             
             <TextInput
               style={styles.input}
-              placeholder="Nome de usuário ou E-mail"
+              placeholder="Nome de usuário"
               value={credentials.login}
               onChangeText={(text) => setCredentials(prev => ({ ...prev, login: text }))}
               autoCapitalize="none"

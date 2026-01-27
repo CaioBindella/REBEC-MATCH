@@ -86,7 +86,22 @@ export const apiService = {
     getByPesquisador: async (pesquisadorId: number) => {
       const response = await api.get<any[]>(`/api/v1/estudos/pesquisador/${pesquisadorId}`);
       return response.data;
-    }
+    },
+    listRecruiting: async () => {
+      const response = await api.get('/api/v1/estudos/recrutando');
+      return response.data;
+    },
+  },
+
+  doenca: {
+    listAll: async () => {
+      const response = await api.get('/api/v1/doencas');
+      return response.data;
+    },
+    search: async (termo: string) => {
+      const response = await api.get('/api/v1/doencas/busca', { params: { termo } });
+      return response.data;
+    },
   },
 
   // --- CANDIDATURAS (Novo Fluxo de Handshake) ---
