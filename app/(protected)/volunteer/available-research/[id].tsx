@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { useAuth } from '@/context/AuthContext';
 
 import Header from '@/components/reusable/Header';
 import { apiService } from '@/services/api/apiClient';
@@ -30,6 +31,7 @@ interface StudyDetail {
 
 export default function StudyDetailScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { id } = useLocalSearchParams<{ id: string }>(); 
   
   const [study, setStudy] = useState<StudyDetail | null>(null);
@@ -55,8 +57,34 @@ export default function StudyDetailScreen() {
     fetchStudyDetails();
   }, [id]);
 
-  const handleCandidatura = async () => {
-    Alert.alert("Sucesso", "Solicitação de candidatura enviada! Aguarde a análise do pesquisador.");
+  const handleCandidatura = () => {
+    if (!study || !user) return;
+
+    Alert.alert(
+      "Confirmar Candidatura",
+      `Deseja se candidatar para o estudo "${study.publicTitle}"? O pesquisador terá acesso ao seu perfil.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Confirmar", 
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await apiService.candidatura.criar({
+                voluntarioId: user.id, // Assumindo que user.id é o ID do voluntário ou usuário
+                estudoId: study.id
+              });
+              Alert.alert("Sucesso", "Candidatura enviada! Você será notificado sobre o progresso.");
+              router.back();
+            } catch (error) {
+              Alert.alert("Erro", "Não foi possível realizar a candidatura.");
+            } finally {
+              setLoading(false);
+            }
+          }
+        }
+      ]
+    );
   };
 
   // Função auxiliar para formatar o Gênero

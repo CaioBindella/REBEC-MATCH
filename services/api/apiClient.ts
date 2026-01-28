@@ -143,6 +143,20 @@ export const apiService = {
     }
   },
 
+  notificacao: {
+    listar: async (usuarioId: number) => {
+      const response = await api.get(`/api/v1/notificacoes/usuario/${usuarioId}`);
+      return response.data;
+    }
+  },
+  resposta: {
+      // Endpoint para pegar as respostas do voluntário (necessário criar no backend se não existir)
+      getByVoluntario: async (voluntarioId: number) => {
+          const response = await api.get(`/api/v1/respostas/voluntario/${voluntarioId}`);
+          return response.data;
+      }
+  },
+
   // --- MATCHES (Resultados Finais) ---
   match: {
     listAll: async () => {
