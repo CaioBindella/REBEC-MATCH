@@ -1,5 +1,6 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Estudo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Pesquisador.PesquisadorResponseDTO;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class EstudoResponseDTO {
     private String url;
     private String primarySponsor;
     private String hcFreetext;
+    @JsonProperty("iFreetext")
     private String iFreetext;
     private String approvalDate;
     private String secId;

@@ -23,6 +23,7 @@ public class CandidaturaService {
     private final VoluntarioRepository voluntarioRepository;
     private final EstudoRepository estudoRepository;
     private final MatchResultRepository matchResultRepository;
+    private final NotificacaoService notificacaoService;
 
     // Voluntário se candidata
     public Candidatura criarCandidatura(CandidaturaCreateDTO dto) {
@@ -41,6 +42,23 @@ public class CandidaturaService {
         candidatura.setStatus(StatusCandidatura.PENDENTE); // Começa como Pendente
 
         return candidatureRepository.save(candidatura);
+
+        // NOTIFICAR PESQUISADOR
+        Integer idPesquisador = candidatura.getEstudo().getPesquisador().getUsuario().getId();
+        notificacaoService.criarNotificacao(
+                idPesquisador,
+                "Novo Candidato",
+                "O voluntário " + candidatura.getVoluntario().getNomeFicticio() + " aplicou para o estudo " + candidatura.getEstudo().getPublicTitle()
+        );
+
+        // NOTIFICAR VOLUNTÁRIO
+        notificacaoService.criarNotificacao(
+                candidatura.getVoluntario().getUsuario().getId(),
+                "Candidatura Enviada",
+                "Sua candidatura para " + candidatura.getEstudo().getPublicTitle() + " foi enviada com sucesso."
+        );
+
+        return candidatura;
     }
 
     // Pesquisador aprova (ou recusa)
