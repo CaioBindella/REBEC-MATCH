@@ -3,6 +3,7 @@ import { ActivityIndicator, ScrollView, StyleSheet, View, Text, TouchableOpacity
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { apiService } from '@/services/api/apiClient';
 
 // Context
 import { useAuth } from '@/context/AuthContext';
@@ -12,16 +13,16 @@ import ResearcherDashboard from '@/components/researcherComponents/ResearcherDas
 import Header from "@/components/reusable/Header";
 import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
-// Função simulada para checar se o formulário foi preenchido
-// TODO: Substituir por uma chamada real à API (ex: apiService.voluntario.hasAnswers(user.id))
 const checkVolunteerFormStatus = async (userId: number): Promise<boolean> => {
-  return new Promise((resolve) => {
-    console.log(`Verificando status do formulário para o usuário ${userId}...`);
-    setTimeout(() => {
-      // Por enquanto retorna TRUE para não bloquear o fluxo durante o desenvolvimento
-      resolve(true); 
-    }, 1000);
-  });
+  try {
+    console.log(`Verificando respostas para o usuário ${userId}...`);
+    const respostas = await apiService.resposta.getByVoluntario(userId);
+    
+    return respostas && respostas.length > 0;
+  } catch (error) {
+    console.error("Erro ao verificar status do formulário:", error);
+    return false;
+  }
 };
 
 export default function HomePage() {

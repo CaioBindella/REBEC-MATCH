@@ -1,17 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { 
-  SafeAreaView, 
-  View, 
-  Text, 
-  StyleSheet, 
-  FlatList, 
-  TouchableOpacity 
+  SafeAreaView, View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator 
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/reusable/Header';
+import { useAuth } from '@/context/AuthContext';
+import { apiService } from '@/services/api/apiClient';
 
-// Tipo de dado
+// Tipo de dado (adaptado para o retorno do backend)
 interface NotificationItem {
   id: string;
   title: string;
@@ -21,46 +18,60 @@ interface NotificationItem {
   type: 'info' | 'success' | 'warning';
 }
 
-// Mock de dados
-const initialNotifications: NotificationItem[] = [
-  {
-    id: '1',
-    title: 'Candidatura Aceita',
-    description: 'Você foi pré-selecionado para o "Estudo sobre Enxaqueca". O pesquisador entrará em contato em breve.',
-    time: 'Há 2 horas',
-    read: false,
-    type: 'success',
-  },
-  {
-    id: '2',
-    title: 'Nova Mensagem',
-    description: 'Dr. Alvares enviou uma mensagem no chat.',
-    time: 'Ontem',
-    read: true,
-    type: 'info',
-  },
-  {
-    id: '3',
-    title: 'Atualize seu Perfil',
-    description: 'Complete seus dados de saúde para aumentar suas chances de match.',
-    time: 'Há 3 dias',
-    read: true,
-    type: 'warning',
-  },
-];
-
 export default function NotificationsPage() {
-  const router = useRouter();
-  const [notifications, setNotifications] = useState(initialNotifications);
+  const { user } = useAuth();
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Marcar todas como lidas (simulação)
-  const markAllAsRead = () => {
-    const updated = notifications.map(n => ({ ...n, read: true }));
-    setNotifications(updated);
+  // useFocusEffect garante que a lista recarregue sempre que o usuário entrar na tela
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [user])
+  );
+
+  const fetchNotifications = async () => {
+    if (!user) return;
+    try {
+      // Chama a API real
+      const data = await apiService.notificacao.listar(user.id);
+      
+      // Mapeia os dados do Backend (Notificacao) para o Frontend (NotificationItem)
+      const formatted = data.map((n: any) => ({
+        id: String(n.id),
+        title: n.titulo,
+        description: n.mensagem,
+        // Formata a data (ex: 29/01/2026)
+        time: new Date(n.dataCriacao).toLocaleDateString('pt-BR', { 
+            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+        }), 
+        read: n.lida,
+        type: n.tipo || 'info', // Fallback se vier null
+      }));
+      
+      setNotifications(formatted);
+    } catch (error) {
+      console.error("Erro ao buscar notificações:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    if (!user) return;
+    try {
+      // Chama o endpoint de marcar todas como lidas
+      await apiService.notificacao.marcarLidas(user.id);
+      
+      // Atualiza o estado local para refletir a mudança instantaneamente
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (error) {
+      console.error("Erro ao marcar como lidas:", error);
+    }
   };
 
   const renderNotification = ({ item }: { item: NotificationItem }) => {
-    // Define ícone e cor com base no tipo
+    // Define ícone e cor com base no tipo vindo do banco
     let iconName: keyof typeof Ionicons.glyphMap = 'notifications';
     let iconColor = '#15715A';
     let bgColor = '#E0F2F1';
@@ -74,6 +85,7 @@ export default function NotificationsPage() {
       iconColor = '#d97706';
       bgColor = '#fef3c7';
     } else {
+      // Tipo 'info' ou padrão
       iconName = 'chatbubble-ellipses';
       iconColor = '#2563eb';
       bgColor = '#dbeafe';
@@ -89,7 +101,7 @@ export default function NotificationsPage() {
             <Text style={styles.cardTitle}>{item.title}</Text>
             <Text style={styles.timeText}>{item.time}</Text>
           </View>
-          <Text style={styles.cardDesc} numberOfLines={2}>{item.description}</Text>
+          <Text style={styles.cardDesc} numberOfLines={3}>{item.description}</Text>
         </View>
         {!item.read && <View style={styles.dot} />}
       </TouchableOpacity>
@@ -109,18 +121,22 @@ export default function NotificationsPage() {
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          data={notifications}
-          keyExtractor={item => item.id}
-          renderItem={renderNotification}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-              <Ionicons name="notifications-off-outline" size={60} color="#ccc" />
-              <Text style={styles.emptyText}>Você não tem novas notificações.</Text>
-            </View>
-          }
-        />
+        {loading ? (
+            <ActivityIndicator size="large" color="#15715A" style={{ marginTop: 50 }} />
+        ) : (
+            <FlatList
+            data={notifications}
+            keyExtractor={item => item.id}
+            renderItem={renderNotification}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            ListEmptyComponent={
+                <View style={styles.emptyContainer}>
+                <Ionicons name="notifications-off-outline" size={60} color="#ccc" />
+                <Text style={styles.emptyText}>Você não tem novas notificações.</Text>
+                </View>
+            }
+            />
+        )}
       </View>
     </SafeAreaView>
   );

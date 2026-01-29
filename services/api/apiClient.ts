@@ -147,17 +147,33 @@ export const apiService = {
     listar: async (usuarioId: number) => {
       const response = await api.get(`/api/v1/notificacoes/usuario/${usuarioId}`);
       return response.data;
+    },
+    marcarLidas: async (usuarioId: number) => {
+      await api.patch(`/api/v1/notificacoes/usuario/${usuarioId}/ler-todas`, {});
     }
   },
   resposta: {
-      // Endpoint para pegar as respostas do voluntário (necessário criar no backend se não existir)
-      getByVoluntario: async (voluntarioId: number) => {
-          const response = await api.get(`/api/v1/respostas/voluntario/${voluntarioId}`);
-          return response.data;
-      }
+    getByVoluntario: async (voluntarioId: number) => {
+      const response = await api.get(`/api/v1/respostas/voluntario/${voluntarioId}`);
+      return response.data;
+    },
+    // Envia respostas em lote (Batch)
+    criarEmLote: async (data: { 
+        voluntario_id: number; 
+        formulario_id: number; 
+        respostas: { questao_id: number; conteudo: string; marcado: boolean }[] 
+    }) => {
+      await api.post('/api/v1/respostas/batch', data);
+    }
   },
 
-  // --- MATCHES (Resultados Finais) ---
+  mensagem: {
+    listarPorEstudo: async (estudoId: number, usuarioId: number) => 
+        (await api.get(`/api/v1/mensagens/estudo/${estudoId}/usuario/${usuarioId}`)).data,
+    enviar: async (data: { autorId: number; leitorId: number; estudoId: number; conteudo: string }) => 
+        (await api.post('/api/v1/mensagens', data)).data
+  },
+
   match: {
     listAll: async () => {
       const response = await api.get<MatchResultResponseDTO[]>('/api/v1/match');

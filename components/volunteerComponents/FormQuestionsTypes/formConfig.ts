@@ -6,31 +6,30 @@ interface FormOption {
 
 // Interface para uma única pergunta
 interface FormQuestion {
-  id: string; // Corresponde ao `questao_id` no banco de dados
+  id: number; // Agora é number e os dados respeitam isso
   label: string;
-  type: 'text' | 'radio'; // Tipos de perguntas que suportamos
+  type: 'text' | 'radio';
   placeholder?: string;
   options?: FormOption[];
-  keyboardType?: 'default' | 'numeric'; // Para campos de texto numéricos
+  keyboardType?: 'default' | 'numeric';
 }
 
 // Interface para uma seção do formulário
 interface FormSection {
-  id: string;
+  id: number; // Padronizei para number também
   title: string;
   questions: FormQuestion[];
 }
 
-// Exportamos a configuração completa do formulário
 export const volunteerFormConfig: FormSection[] = [
   {
-    id: 'dados_pessoais',
+    id: 1,
     title: '1. Dados Pessoais',
     questions: [
-      { id: 'data_nascimento', label: '1.1. Data de nascimento', type: 'text', placeholder: 'DD/MM/AAAA' },
-      { id: 'idade', label: '1.2. Idade (em anos)', type: 'text', keyboardType: 'numeric' },
+      { id: 1, label: '1.1. Data de nascimento', type: 'text', placeholder: 'DD/MM/AAAA' },
+      { id: 2, label: '1.2. Idade (em anos)', type: 'text', keyboardType: 'numeric' },
       {
-        id: 'sexo_biologico',
+        id: 3,
         label: '1.3. Sexo biológico',
         type: 'radio',
         options: [
@@ -41,7 +40,7 @@ export const volunteerFormConfig: FormSection[] = [
         ],
       },
       {
-        id: 'identidade_genero',
+        id: 4,
         label: '1.4. Identidade de gênero',
         type: 'radio',
         options: [
@@ -53,7 +52,7 @@ export const volunteerFormConfig: FormSection[] = [
         ],
       },
       {
-        id: 'estado_civil',
+        id: 5,
         label: '1.5. Estado civil',
         type: 'radio',
         options: [
@@ -66,11 +65,11 @@ export const volunteerFormConfig: FormSection[] = [
     ],
   },
   {
-    id: 'etnia_raca',
+    id: 2,
     title: '2. Etnia/Raça',
     questions: [
       {
-        id: 'cor_raca',
+        id: 6,
         label: '2.1. Cor ou raça autodeclarada',
         type: 'radio',
         options: [
@@ -85,11 +84,11 @@ export const volunteerFormConfig: FormSection[] = [
     ],
   },
   {
-    id: 'escolaridade',
+    id: 3,
     title: '3. Escolaridade',
     questions: [
         {
-            id: 'grau_instrucao',
+            id: 7,
             label: '3.1. Grau de instrução (mais alto concluído)',
             type: 'radio',
             options: [
@@ -106,11 +105,11 @@ export const volunteerFormConfig: FormSection[] = [
     ],
   },
   {
-    id: 'ocupacao_renda',
+    id: 4,
     title: '4. Ocupação e Renda',
     questions: [
         {
-            id: 'situacao_trabalho',
+            id: 8,
             label: '4.1. Situação de trabalho atual',
             type: 'radio',
             options: [
@@ -123,9 +122,9 @@ export const volunteerFormConfig: FormSection[] = [
                 { label: 'Outro', value: 'OUTRO' },
             ],
         },
-        { id: 'profissao', label: '4.2. Profissão (se aplicável)', type: 'text' },
+        { id: 9, label: '4.2. Profissão (se aplicável)', type: 'text' },
         {
-            id: 'renda_familiar',
+            id: 10,
             label: '4.3. Renda familiar mensal',
             type: 'radio',
             options: [
@@ -141,11 +140,11 @@ export const volunteerFormConfig: FormSection[] = [
     ],
   },
   {
-    id: 'condicoes_moradia',
+    id: 5,
     title: '5. Condições de Moradia',
     questions: [
         {
-            id: 'tipo_moradia',
+            id: 11,
             label: '5.1. Tipo de moradia',
             type: 'radio',
             options: [
@@ -155,49 +154,49 @@ export const volunteerFormConfig: FormSection[] = [
                 { label: 'Outra', value: 'OUTRA' },
             ],
         },
-        { id: 'pessoas_moradia', label: '5.2. Quantas pessoas moram na mesma casa?', type: 'text', keyboardType: 'numeric' },
-        { id: 'acesso_agua_encanada', label: '5.3. Acesso a água encanada', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-        { id: 'acesso_esgoto', label: '5.3. Acesso a esgotamento sanitário', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-        { id: 'acesso_coleta_lixo', label: '5.3. Acesso a coleta de lixo regular', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-        { id: 'acesso_eletricidade', label: '5.3. Acesso a eletricidade', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 12, label: '5.2. Quantas pessoas moram na mesma casa?', type: 'text', keyboardType: 'numeric' },
+        { id: 13, label: '5.3. Acesso a água encanada', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 14, label: '5.4. Acesso a esgotamento sanitário', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 15, label: '5.5. Acesso a coleta de lixo regular', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 16, label: '5.6. Acesso a eletricidade', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
     ],
   },
   {
-    id: 'outras_informacoes',
+    id: 6,
     title: '6. Outras Informações',
     questions: [
-        { id: 'nacionalidade', label: '6.1. Nacionalidade', type: 'text' },
-        { id: 'pais_nascimento', label: '6.2. País de nascimento', type: 'text' },
-        { id: 'religiao', label: '6.3. Religião (se desejar informar)', type: 'text' },
-        { id: 'lingua_principal', label: '6.4. Língua principal falada em casa', type: 'text' },
+        { id: 17, label: '6.1. Nacionalidade', type: 'text' },
+        { id: 18, label: '6.2. País de nascimento', type: 'text' },
+        { id: 19, label: '6.3. Religião (se desejar informar)', type: 'text' },
+        { id: 20, label: '6.4. Língua principal falada em casa', type: 'text' },
     ],
   },
   {
-    id: 'acesso_inclusao',
+    id: 7,
     title: '7. Informações de Acesso e Inclusão Social',
     questions: [
-        { id: 'acesso_internet', label: '7.1. Possui acesso regular à internet?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-        { id: 'possui_whatsapp', label: '7.2. Possui telefone celular com WhatsApp?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-        { id: 'participou_estudo_clinico', label: '7.3. Você já participou de algum estudo clínico?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }, { label: 'Não sabe / Não lembra', value: 'NAO_SABE' }] },
+        { id: 21, label: '7.1. Possui acesso regular à internet?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 22, label: '7.2. Possui telefone celular com WhatsApp?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 23, label: '7.3. Você já participou de algum estudo clínico?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }, { label: 'Não sabe / Não lembra', value: 'NAO_SABE' }] },
     ],
   },
   {
-    id: 'estilo_vida',
+    id: 9,
     title: '9. Informações sobre Estilo de Vida',
     questions: [
-      { id: 'atividade_fisica', label: '9.1. Você pratica atividade física regularmente?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-      { id: 'fumante_atual', label: '9.2. Você fuma atualmente?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }, { label: 'Já fumou, mas parou', value: 'EX_FUMANTE' }] },
-      { id: 'consumo_alcool', label: '9.3. Você consome bebidas alcoólicas?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }, { label: 'Raramente', value: 'RARAMENTE' }] },
-      { id: 'gestante', label: '9.4. Você é gestante?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
-      { id: 'saude_geral', label: '9.5. Como você avaliaria sua saúde geral?', type: 'radio', options: [{ label: 'Excelente', value: 'EXCELENTE' }, { label: 'Boa', value: 'BOA' }, { label: 'Regular', value: 'REGULAR' }, { label: 'Ruim', value: 'RUIM' }, { label: 'Muito ruim', value: 'MUITO_RUIM' }] },
+      { id: 24, label: '9.1. Você pratica atividade física regularmente?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+      { id: 25, label: '9.2. Você fuma atualmente?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }, { label: 'Já fumou, mas parou', value: 'EX_FUMANTE' }] },
+      { id: 26, label: '9.3. Você consome bebidas alcoólicas?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }, { label: 'Raramente', value: 'RARAMENTE' }] },
+      { id: 27, label: '9.4. Você é gestante?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+      { id: 28, label: '9.5. Como você avaliaria sua saúde geral?', type: 'radio', options: [{ label: 'Excelente', value: 'EXCELENTE' }, { label: 'Boa', value: 'BOA' }, { label: 'Regular', value: 'REGULAR' }, { label: 'Ruim', value: 'RUIM' }, { label: 'Muito ruim', value: 'MUITO_RUIM' }] },
     ],
   },
   {
-    id: 'saude_mental',
+    id: 10,
     title: '10. Apoio Social e Saúde Mental',
     questions: [
-        { id: 'apoio_social', label: 'Você sente que pode contar com alguém em momentos difíceis?', type: 'radio', options: [{ label: 'Sempre', value: 'SEMPRE' }, { label: 'Às vezes', value: 'AS_VEZES' }, { label: 'Raramente', value: 'RARAMENTE' }, { label: 'Nunca', value: 'NUNCA' }] },
-        { id: 'saude_mental_tristeza', label: 'Nos últimos 30 dias, você sentiu-se triste ou desanimado na maior parte do tempo?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
+        { id: 29, label: 'Você sente que pode contar com alguém em momentos difíceis?', type: 'radio', options: [{ label: 'Sempre', value: 'SEMPRE' }, { label: 'Às vezes', value: 'AS_VEZES' }, { label: 'Raramente', value: 'RARAMENTE' }, { label: 'Nunca', value: 'NUNCA' }] },
+        { id: 30, label: 'Nos últimos 30 dias, você sentiu-se triste ou desanimado na maior parte do tempo?', type: 'radio', options: [{ label: 'Sim', value: 'SIM' }, { label: 'Não', value: 'NAO' }] },
     ],
   },
 ];
