@@ -36,6 +36,10 @@ public class SecurityConfig {
 //                        .requestMatchers(HttpMethod.GET, "/api/v1/match/DadosFiltrados").permitAll() // Trocar em produção
                         .requestMatchers(HttpMethod.GET, "/api/v1/estudos/recrutando").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/v1/doencas/**").authenticated()
+                        .requestMatchers("/api/v1/notificacoes/**").authenticated()
+                        .requestMatchers("/api/v1/candidaturas/**").authenticated()
+                        .requestMatchers("/api/v1/mensagens/**").authenticated()
+                        .requestMatchers("/api/v1/respostas/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 // Adiciona o nosso filtro de JWT para ser executado antes do filtro padrão de autenticação do Spring.

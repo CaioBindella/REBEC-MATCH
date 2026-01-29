@@ -46,6 +46,13 @@ public class RespostaController {
         return ResponseEntity.ok(dtos);
     }
 
+    @GetMapping("/voluntario/{voluntarioId}")
+    public ResponseEntity<List<RespostaResponseDTO>> getRespostasByVoluntario(@PathVariable Integer voluntarioId) {
+        List<Resposta> respostas = respostaService.getRespostasByVoluntarioId(voluntarioId);
+        List<RespostaResponseDTO> dtos = respostas.stream().map(this::toResponseDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<RespostaResponseDTO> updateResposta(@PathVariable Integer id, @RequestBody RespostaUpdateDTO dto) {
         Resposta respostaAtualizada = respostaService.updateResposta(id, dto);

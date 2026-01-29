@@ -44,6 +44,10 @@ public class RespostaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Resposta com ID " + id + " não encontrada."));
     }
 
+    public List<Resposta> getRespostasByVoluntarioId(Integer voluntarioId) {
+        return respostaRepository.findByVoluntarioId(voluntarioId);
+    }
+
     public List<Resposta> getAllRespostas() {
         return respostaRepository.findAll();
     }
@@ -62,19 +66,21 @@ public class RespostaService {
         respostaRepository.deleteById(id);
     }
 
-    // Método para salvar respostas em lote
     @Transactional
     public void createRespostasEmLote(RespostasBatchCreateDTO dto) {
-        Voluntario voluntario = voluntarioRepository.findById(dto.getVoluntarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Voluntário com ID " + dto.getVoluntarioId() + " não encontrado."));
+        Voluntario voluntario = voluntarioRepository.findByUsuarioId(dto.getVoluntarioId())
+                .orElseThrow(() -> new ResourceNotFoundException("Voluntário vinculado ao usuário " + dto.getVoluntarioId() + " não encontrado."));
 
-        // Opcional: Validar se o formulário existe
         formularioRepository.findById(dto.getFormularioId())
                 .orElseThrow(() -> new ResourceNotFoundException("Formulário com ID " + dto.getFormularioId() + " não encontrado."));
 
-
         List<Resposta> novasRespostas = new ArrayList<>();
         for (RespostasBatchCreateDTO.RespostaIndividualDTO respostaDto : dto.getRespostas()) {
+
+            if (respostaDto.getQuestaoId() == null) {
+                throw new ResourceNotFoundException("ID da questão não pode ser nulo.");
+            }
+
             Questao questao = questaoRepository.findById(respostaDto.getQuestaoId())
                     .orElseThrow(() -> new ResourceNotFoundException("Questão com ID " + respostaDto.getQuestaoId() + " não encontrada."));
 

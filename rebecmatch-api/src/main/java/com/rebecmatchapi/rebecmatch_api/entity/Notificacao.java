@@ -1,5 +1,6 @@
 package com.rebecmatchapi.rebecmatch_api.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -14,10 +15,12 @@ public class Notificacao {
 
     @ManyToOne
     @JoinColumn(name = "usuario_id")
+    @JsonIgnore
     private Usuario usuario; // Quem recebe a notificação
 
     private String titulo;
     private String mensagem;
+    private String tipo = "info";
     private boolean lida = false;
     private LocalDateTime dataCriacao = LocalDateTime.now();
 }

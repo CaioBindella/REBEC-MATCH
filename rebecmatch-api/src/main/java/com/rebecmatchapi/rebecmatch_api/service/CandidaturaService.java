@@ -27,38 +27,47 @@ public class CandidaturaService {
 
     // Voluntário se candidata
     public Candidatura criarCandidatura(CandidaturaCreateDTO dto) {
-        if (candidatureRepository.existsByVoluntarioIdAndEstudoId(dto.getVoluntarioId(), dto.getEstudoId())) {
+        Voluntario voluntario = voluntarioRepository.findByUsuarioId(dto.getVoluntarioId())
+                .orElseThrow(() -> new ResourceNotFoundException("Perfil de voluntário não encontrado. Complete seu cadastro antes de se candidatar."));
+
+        // 2. Valida duplicidade usando o ID real do voluntário encontrado
+        if (candidatureRepository.existsByVoluntarioIdAndEstudoId(voluntario.getId(), dto.getEstudoId())) {
             throw new BusinessException("Voluntário já se candidatou a este estudo.");
         }
-
-        Voluntario voluntario = voluntarioRepository.findById(dto.getVoluntarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Voluntário não encontrado"));
         Estudo estudo = estudoRepository.findById(dto.getEstudoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Estudo não encontrado"));
 
         Candidatura candidatura = new Candidatura();
         candidatura.setVoluntario(voluntario);
         candidatura.setEstudo(estudo);
-        candidatura.setStatus(StatusCandidatura.PENDENTE); // Começa como Pendente
+        candidatura.setStatus(StatusCandidatura.PENDENTE);
 
-        return candidatureRepository.save(candidatura);
+        Candidatura candidaturaSalva = candidatureRepository.save(candidatura);
 
-        // NOTIFICAR PESQUISADOR
-        Integer idPesquisador = candidatura.getEstudo().getPesquisador().getUsuario().getId();
-        notificacaoService.criarNotificacao(
-                idPesquisador,
-                "Novo Candidato",
-                "O voluntário " + candidatura.getVoluntario().getNomeFicticio() + " aplicou para o estudo " + candidatura.getEstudo().getPublicTitle()
-        );
+        try {
+            // NOTIFICAR PESQUISADOR
+            Integer idPesquisador = candidaturaSalva.getEstudo().getPesquisador().getUsuario().getId();
+            notificacaoService.criarNotificacao(
+                    idPesquisador,
+                    "Novo Candidato",
+                    "info",
+                    "O voluntário " + candidaturaSalva.getVoluntario().getNomeFicticio() + " aplicou para o estudo " + candidaturaSalva.getEstudo().getPublicTitle()
 
-        // NOTIFICAR VOLUNTÁRIO
-        notificacaoService.criarNotificacao(
-                candidatura.getVoluntario().getUsuario().getId(),
-                "Candidatura Enviada",
-                "Sua candidatura para " + candidatura.getEstudo().getPublicTitle() + " foi enviada com sucesso."
-        );
+            );
 
-        return candidatura;
+            // NOTIFICAR VOLUNTÁRIO
+            notificacaoService.criarNotificacao(
+                    candidaturaSalva.getVoluntario().getUsuario().getId(),
+                    "Candidatura Enviada",
+                    "success",
+                    "Sua candidatura para " + candidaturaSalva.getEstudo().getPublicTitle() + " foi enviada com sucesso."
+
+            );
+        } catch (Exception e) {
+            System.err.println("Erro ao enviar notificação: " + e.getMessage());
+        }
+
+        return candidaturaSalva;
     }
 
     // Pesquisador aprova (ou recusa)
