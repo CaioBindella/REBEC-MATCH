@@ -153,11 +153,10 @@ export const apiService = {
     }
   },
   resposta: {
-    getByVoluntario: async (voluntarioId: number) => {
-      const response = await api.get(`/api/v1/respostas/voluntario/${voluntarioId}`);
+    getByVoluntario: async (usuarioId: number) => {
+      const response = await api.get(`/api/v1/respostas/usuario/${usuarioId}`);
       return response.data;
     },
-    // Envia respostas em lote (Batch)
     criarEmLote: async (data: { 
         voluntario_id: number; 
         formulario_id: number; 
