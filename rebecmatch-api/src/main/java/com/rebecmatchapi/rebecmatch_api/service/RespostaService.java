@@ -44,6 +44,15 @@ public class RespostaService {
                 .orElseThrow(() -> new ResourceNotFoundException("Resposta com ID " + id + " não encontrada."));
     }
 
+    public List<Resposta> listarPorUsuario(Integer usuarioId) {
+        Voluntario voluntario = voluntarioRepository.findByUsuarioId(usuarioId)
+                .orElse(null);
+        if (voluntario == null) {
+            return new ArrayList<>();
+        }
+        return respostaRepository.findByVoluntarioId(voluntario.getId());
+    }
+
     public List<Resposta> getRespostasByVoluntarioId(Integer voluntarioId) {
         return respostaRepository.findByVoluntarioId(voluntarioId);
     }

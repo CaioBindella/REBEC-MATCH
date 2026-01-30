@@ -57,6 +57,9 @@ public class XmlProcessingService {
             Trials trialsWrapper = xmlMapper.readValue(xmlContent, Trials.class);
 
             if (trialsWrapper != null && trialsWrapper.getTrials() != null) {
+
+                // --- CÓDIGO ORIGINAL (PRODUÇÃO) ---
+                /*
                 for (Trial trial : trialsWrapper.getTrials()) {
                     if (trial.getMain() != null && !estudoRepository.existsByTrialId(trial.getMain().getTrialId())) {
                         logger.info("New trial found: {}. Processing...", trial.getMain().getTrialId());
@@ -65,8 +68,26 @@ public class XmlProcessingService {
                         logger.info("Trial with ID {} already exists or has no main data. Skipping.", trial.getTrialId());
                     }
                 }
+                */
+
+                // --- CÓDIGO TEMPORÁRIO (DESENVOLVIMENTO: LIMITADO A 100) ---
+                List<Trial> allTrials = trialsWrapper.getTrials();
+                int limit = Math.min(allTrials.size(), 100); // Garante que não quebre se tiver menos de 100
+
+                logger.info("Processing limited to first {} trials for development.", limit);
+
+                for (int i = 0; i < limit; i++) {
+                    Trial trial = allTrials.get(i);
+                    if (trial.getMain() != null && !estudoRepository.existsByTrialId(trial.getMain().getTrialId())) {
+                        logger.info("New trial found: {}. Processing...", trial.getMain().getTrialId());
+                        saveNewTrial(trial);
+                    } else {
+                        logger.info("Trial with ID {} already exists or has no main data. Skipping.", trial.getTrialId());
+                    }
+                }
+                // ------------------------------------------------------------
             }
-            logger.info("Finished processing all trials from XML.");
+            logger.info("Finished processing trials from XML.");
         } catch (Exception e) {
             logger.error("Failed to process XML from URL: " + url, e);
         }
@@ -135,7 +156,7 @@ public class XmlProcessingService {
         // Criar o Critério
         if (trial.getCriteria() != null) {
             List<Criterio> listaCriterios = new ArrayList<>();
-            
+
             Criterio criterio = new Criterio();
             criterio.setInclusionCriteria(trial.getCriteria().getInclusionCriteria());
             criterio.setAgeMin(trial.getCriteria().getAgeMin());

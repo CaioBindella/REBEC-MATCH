@@ -19,7 +19,7 @@ public class Formulario {
 
     // Relação N-para-1 com Estudo. Vários formulários podem pertencer a um estudo.
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "estudo_id", nullable = false)
+    @JoinColumn(name = "estudo_id", nullable = true)
     private Estudo estudo;
 
     @Column(nullable = false)

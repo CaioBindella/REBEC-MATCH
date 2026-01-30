@@ -65,6 +65,17 @@ public class RespostaController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/usuario/{usuarioId}")
+    public ResponseEntity<List<RespostaResponseDTO>> getRespostasByUsuario(@PathVariable Integer usuarioId) {
+        List<Resposta> respostas = respostaService.listarPorUsuario(usuarioId);
+
+        List<RespostaResponseDTO> dtos = respostas.stream()
+                .map(this::toResponseDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
+    }
+
     private RespostaResponseDTO toResponseDTO(Resposta resposta) {
         RespostaResponseDTO dto = new RespostaResponseDTO();
         dto.setId(resposta.getId());
