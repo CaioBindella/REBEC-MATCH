@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,7 +7,9 @@ import {
   TouchableOpacity, 
   LayoutAnimation, 
   Platform, 
-  UIManager 
+  UIManager,
+  ActivityIndicator,
+  Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
@@ -19,7 +21,9 @@ import * as Sharing from 'expo-sharing';
 import VolunteerCard from '@/components/volunteerComponents/VolunteerCard';
 import FilterPicker from '@/components/reusable/FilterPicker';
 
-// Ativar LayoutAnimation no Android
+import { apiService } from '@/services/api/apiClient';
+import { useAuth } from '@/context/AuthContext';
+
 if (
   Platform.OS === 'android' &&
   UIManager.setLayoutAnimationEnabledExperimental
@@ -27,14 +31,21 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// --- Mock Data ---
-const mockVolunteers = [
-  { id: 'VOL2666RJ', location: 'Rio de Janeiro', age: 34, sex: 'Masculino', gender: 'Homem Cis', education: 'Ensino Superior Completo', description: 'Candidato com ampla disponibilidade e interesse em estudos sobre enxaqueca.', studyApplied: 'Estudo sobre Enxaqueca' },
-  { id: 'VOL0453SP', location: 'São Paulo', age: 28, sex: 'Feminino', gender: 'Mulher Cis', education: 'Mestrado', description: 'Voluntária com experiência prévia em pesquisas sobre saúde mental.', studyApplied: 'Avaliação de App de Saúde Mental' },
-  { id: 'VOL06327BA', location: 'Bahia', age: 45, sex: 'Masculino', gender: 'Não-binário', education: 'Ensino Médio Completo', description: 'Participante interessado em pesquisas sobre nutrição e dieta.', studyApplied: 'Impacto da Dieta Mediterrânea' },
-  { id: 'VOL1122MG', location: 'Minas Gerais', age: 22, sex: 'Feminino', gender: 'Mulher Trans', education: 'Ensino Superior Incompleto', description: 'Jovem voluntária, estudante de psicologia.', studyApplied: 'Estudo sobre Enxaqueca' },
-  { id: 'VOL9876RS', location: 'Rio Grande do Sul', age: 52, sex: 'Masculino', gender: 'Homem Cis', education: 'Doutorado', description: 'Professor universitário com interesse em estudos de longo prazo.', studyApplied: 'Impacto da Dieta Mediterrânea' },
-];
+// 1. Atualizei a Interface para incluir o STATUS
+interface VolunteerData {
+  id: string;
+  candidaturaId: number;
+  location: string;
+  age: number;
+  sex: string;
+  gender: string;
+  education: string;
+  description: string;
+  studyApplied: string;
+  voluntarioIdReal: number;
+  nomeFicticio: string;
+  status: string; // <--- NOVO CAMPO
+}
 
 // --- Dados dos filtros ---
 const researcherStudies = [
@@ -44,48 +55,84 @@ const researcherStudies = [
 ];
 
 const regions = [
-  { label: 'Rio de Janeiro', value: 'Rio de Janeiro' },
-  { label: 'São Paulo', value: 'São Paulo' },
-  { label: 'Bahia', value: 'Bahia' },
-  { label: 'Minas Gerais', value: 'Minas Gerais' },
-  { label: 'Rio Grande do Sul', value: 'Rio Grande do Sul' },
+  { label: 'Rio de Janeiro', value: 'RJ' },
+  { label: 'São Paulo', value: 'SP' },
+  { label: 'Bahia', value: 'BA' },
+  { label: 'Minas Gerais', value: 'MG' },
+  { label: 'Rio Grande do Sul', value: 'RS' },
 ];
 
 const sexes = [
-  { label: 'Masculino', value: 'Masculino' },
-  { label: 'Feminino', value: 'Feminino' },
+  { label: 'Masculino', value: 'MASCULINO' },
+  { label: 'Feminino', value: 'FEMININO' },
 ];
 
 const genders = [
   { label: 'Homem Cis', value: 'Homem Cis' },
   { label: 'Mulher Cis', value: 'Mulher Cis' },
-  { label: 'Homem Trans', value: 'Homem Trans' },
-  { label: 'Mulher Trans', value: 'Mulher Trans' },
-  { label: 'Não-binário', value: 'Não-binário' },
 ];
 
 const educationLevels = [
-  { label: 'Ensino Médio Incompleto', value: 'Ensino Médio Incompleto' },
-  { label: 'Ensino Médio Completo', value: 'Ensino Médio Completo' },
-  { label: 'Ensino Superior Incompleto', value: 'Ensino Superior Incompleto' },
   { label: 'Ensino Superior Completo', value: 'Ensino Superior Completo' },
-  { label: 'Mestrado', value: 'Mestrado' },
-  { label: 'Doutorado', value: 'Doutorado' },
 ];
 
-
-// --- Tela principal ---
 export default function ResearcherCandidates() {
   const router = useRouter();
+  const { user } = useAuth();
 
+  const [volunteers, setVolunteers] = useState<VolunteerData[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Estados dos Filtros
   const [selectedStudy, setSelectedStudy] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedSex, setSelectedSex] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [selectedEducation, setSelectedEducation] = useState<string | null>(null);
   
-  // Inicia fechado (false) ou aberto (true) conforme preferir
   const [filtersVisible, setFiltersVisible] = useState(true);
+
+  useEffect(() => {
+    fetchCandidates();
+  }, []);
+
+  const fetchCandidates = async () => {
+    try {
+      setLoading(true);
+      const pesquisadorId = user?.perfilId; 
+
+      if (!pesquisadorId) {
+        console.warn("ID do pesquisador não encontrado.");
+        setLoading(false);
+        return;
+      }
+
+      const data = await apiService.candidatura.listarPorPesquisador(pesquisadorId);
+
+      // 2. Mapeamento atualizado incluindo o status
+      const formattedData: VolunteerData[] = data.map((item: any) => ({
+        id: item.nomeFicticio || `CAND-${item.candidaturaId}`,
+        nomeFicticio: item.nomeFicticio || item.voluntarioNome || `Candidato ${item.voluntarioId || ''}`,
+        candidaturaId: item.candidaturaId,
+        location: item.localizacao || 'Não informado',
+        age: item.idade || 0,
+        sex: item.sexo || 'Não informado',
+        gender: item.sexo === 'MASCULINO' ? 'Homem Cis' : item.sexo === 'FEMININO' ? 'Mulher Cis' : 'Outro',
+        education: 'Não informado',
+        description: item.descricao || `Interesse em ${item.estudoTitulo}`,
+        studyApplied: item.estudoTitulo,
+        voluntarioIdReal: item.voluntarioIdReal || item.voluntarioId,
+        status: item.status // <--- PEGANDO O STATUS DO BACKEND
+      }));
+
+      setVolunteers(formattedData);
+    } catch (error) {
+      console.error("Erro ao buscar voluntários:", error);
+      Alert.alert("Erro", "Não foi possível carregar a lista de candidatos.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const toggleFilters = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -93,16 +140,16 @@ export default function ResearcherCandidates() {
   };
 
   const filteredVolunteers = useMemo(() => {
-    return mockVolunteers.filter(volunteer => {
+    return volunteers.filter(volunteer => {
       return (
         (!selectedStudy || volunteer.studyApplied === selectedStudy) &&
-        (!selectedRegion || volunteer.location === selectedRegion) &&
+        (!selectedRegion || volunteer.location.includes(selectedRegion)) &&
         (!selectedSex || volunteer.sex === selectedSex) &&
         (!selectedGender || volunteer.gender === selectedGender) &&
         (!selectedEducation || volunteer.education === selectedEducation)
       );
     });
-  }, [selectedStudy, selectedRegion, selectedSex, selectedGender, selectedEducation]);
+  }, [volunteers, selectedStudy, selectedRegion, selectedSex, selectedGender, selectedEducation]);
 
   const handleExport = async () => {
     if (filteredVolunteers.length === 0) {
@@ -111,7 +158,7 @@ export default function ResearcherCandidates() {
     }
 
     const dataForSheet = [
-        ["ID", "Localização", "Sexo", "Gênero", "Escolaridade", "Descrição", "Estudo Aplicado"],
+        ["ID", "Localização", "Sexo", "Gênero", "Escolaridade", "Descrição", "Estudo Aplicado", "Status"],
         ...filteredVolunteers.map(item => [
             item.id,
             item.location,
@@ -119,7 +166,8 @@ export default function ResearcherCandidates() {
             item.gender,
             item.education,
             item.description,
-            item.studyApplied
+            item.studyApplied,
+            item.status
         ])
     ];
 
@@ -144,6 +192,14 @@ export default function ResearcherCandidates() {
       alert("Ocorreu um erro ao exportar os dados.");
     }
   };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#15715A" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
@@ -198,17 +254,31 @@ export default function ResearcherCandidates() {
       {filteredVolunteers.length > 0 ? (
         filteredVolunteers.map((volunteer) => (
           <VolunteerCard
-            key={volunteer.id}
+            key={volunteer.candidaturaId}
             id={volunteer.id}
             location={volunteer.location}
             description={volunteer.description}
             studyApplied={volunteer.studyApplied}
-            onAnalyze={() =>
+            // Passamos o status para o card (para você poder estilizar se quiser, ex: opacity)
+            // @ts-ignore - Caso o VolunteerCard ainda não tenha essa prop na tipagem
+            status={volunteer.status}
+            
+            // 3. Lógica para impedir acesso se RECUSADO
+            onAnalyze={() => {
+              if (volunteer.status === 'RECUSADO') {
+                Alert.alert("Candidatura Recusada", "Este candidato já foi recusado e não está mais disponível para análise.");
+                return; 
+              }
+
               router.push({
                 pathname: "/(protected)/researcher/volunteer-details/[id]",
-                params: { id: volunteer.id },
+                params: { 
+                  id: volunteer.candidaturaId,
+                  voluntarioId: volunteer.voluntarioIdReal,
+                  nomeFicticio: volunteer.nomeFicticio
+                 }, 
               })
-            }
+            }}
           />
         ))
       ) : (
@@ -221,7 +291,6 @@ export default function ResearcherCandidates() {
   );
 }
 
-// --- Estilos Melhorados ---
 const styles = StyleSheet.create({
     container: {
       flex: 1,
@@ -246,7 +315,7 @@ const styles = StyleSheet.create({
     exportButton: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: '#E0F2F1', // Fundo verde bem claro
+      backgroundColor: '#E0F2F1',
       paddingVertical: 10,
       paddingHorizontal: 16,
       borderRadius: 20,
@@ -257,19 +326,16 @@ const styles = StyleSheet.create({
       fontWeight: '600',
       color: '#15715A',
     },
-    
-    // Novo Estilo do Card de Filtros
     filtersWrapper: {
       backgroundColor: '#fff',
       borderRadius: 16,
       marginBottom: 24,
-      // Sombra
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
       shadowOpacity: 0.05,
       shadowRadius: 10,
       elevation: 3,
-      overflow: 'hidden', // Importante para o border radius com filhos
+      overflow: 'hidden',
       borderWidth: 1,
       borderColor: 'rgba(0,0,0,0.03)'
     },
@@ -288,7 +354,7 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#F0FDF4', // Verde muito sutil
+        backgroundColor: '#F0FDF4',
         justifyContent: 'center',
         alignItems: 'center',
         marginRight: 12,
@@ -308,8 +374,6 @@ const styles = StyleSheet.create({
     inputSpacing: {
         marginBottom: 12,
     },
-
-    // Empty State
     emptyState: {
         alignItems: 'center',
         justifyContent: 'center',

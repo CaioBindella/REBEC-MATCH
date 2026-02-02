@@ -40,7 +40,14 @@ export const apiService = {
       const response = await api.post<LoginResponseDTO>('/auth/login', { login, senha });
       if (response.data.token) {
         await SecureStore.setItemAsync('user_token', response.data.token);
-        await SecureStore.setItemAsync('user_data', JSON.stringify(response.data.usuario));
+
+        const userDataToSave = {
+            ...response.data.usuario,
+            perfilId: response.data.perfilId,
+            nomeFicticio: response.data.nomeFicticio
+        };
+
+        await SecureStore.setItemAsync('user_data', JSON.stringify(userDataToSave));
       }
       return response.data;
     },
@@ -62,6 +69,13 @@ export const apiService = {
     },
     update: async (id: number, data: Partial<UsuarioCreateDTO>) => {
       const response = await api.put<UsuarioResponseDTO>(`/api/v1/usuarios/${id}`, data);
+      return response.data;
+    }
+  },
+
+  pesquisador: {
+    getPesquisadorById: async (id: number) => {
+      const response = await api.get(`/api/v1/pesquisadores/${id}`);
       return response.data;
     }
   },
@@ -132,6 +146,12 @@ export const apiService = {
       return response.data;
     },
 
+    listarPorPesquisador: async (pesquisadorId: number) => {
+        // Esta rota deve retornar o DTO Detalhado sugerido anteriormente
+        const response = await api.get(`/api/v1/candidaturas/pesquisador/${pesquisadorId}`);
+        return response.data;
+    },
+
     listarPorVoluntario: async (voluntarioId: number) => {
       const response = await api.get<CandidaturaResponseDTO[]>(`/api/v1/candidaturas/voluntario/${voluntarioId}`);
       return response.data;
@@ -153,8 +173,8 @@ export const apiService = {
     }
   },
   resposta: {
-    getByVoluntario: async (usuarioId: number) => {
-      const response = await api.get(`/api/v1/respostas/usuario/${usuarioId}`);
+    getByVoluntario: async (voluntarioId: number) => {
+      const response = await api.get(`/api/v1/respostas/voluntario/${voluntarioId}`);
       return response.data;
     },
     criarEmLote: async (data: { 

@@ -13,7 +13,10 @@ const TOKEN_KEY = 'user_token';
 
 // Extendemos o DTO do backend para incluir 'nomeFicticio' que vem separado no LoginResponseDTO
 // Isso facilita o acesso no frontend (ex: user.nomeFicticio)
-export type UserSession = UsuarioResponseDTO & { nomeFicticio?: string | null };
+export type UserSession = UsuarioResponseDTO & { 
+    nomeFicticio?: string | null;
+    perfilId?: number;
+ };
 
 type AuthState = {
     user: UserSession | null;
@@ -75,7 +78,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
             // Cria a sessão unindo os dados do usuário + nome fictício (se houver)
             const userSession: UserSession = {
                 ...response.usuario,
-                nomeFicticio: response.nomeFicticio
+                nomeFicticio: response.nomeFicticio,
+                perfilId: response.perfilId
             };
 
             // Salva no Estado

@@ -1,89 +1,177 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-// Interface atualizada para as props do card
 interface VolunteerCardProps {
   id: string;
   location: string;
   description: string;
-  studyApplied: string; // Nome do estudo ao qual se candidatou
-  onAnalyze: () => void; // Função para o botão "Analisar"
+  studyApplied: string;
+  status?: string; // Recebe o status (RECUSADO, PENDENTE, etc.)
+  onAnalyze: () => void;
 }
 
-export default function VolunteerCard({ id, location, description, studyApplied, onAnalyze }: VolunteerCardProps) {
+export default function VolunteerCard({ 
+  id, 
+  location, 
+  description, 
+  studyApplied, 
+  status, 
+  onAnalyze 
+}: VolunteerCardProps) {
+
+  // Verifica se foi recusado para mudar o visual
+  const isRefused = status === 'RECUSADO';
+
   return (
-    <View style={styles.cardContainer}>
+    <View style={[styles.card, isRefused && styles.cardRefusedOpacity]}>
+      {/* Cabeçalho do Card */}
       <View style={styles.header}>
-        <Text style={styles.volunteerId}>{id}</Text>
-        <Text style={styles.location}>{location}</Text>
-      </View>
-      <Text style={styles.description}>{description}</Text>
-      
-      {/* Tag para o estudo */}
-      <View style={styles.studyTag}>
-        <Text style={styles.studyTagText}>Candidato para: {studyApplied}</Text>
+        <View style={styles.idContainer}>
+            <Ionicons name="person-circle-outline" size={24} color="#15715A" />
+            <Text style={styles.idText}>{id}</Text>
+        </View>
+        <View style={styles.badge}>
+            <Text style={styles.badgeText}>{location}</Text>
+        </View>
       </View>
 
-      {/* Botão para analisar o perfil */}
-      <TouchableOpacity style={styles.analyzeButton} onPress={onAnalyze}>
-        <Text style={styles.analyzeButtonText}>Analisar Perfil</Text>
-      </TouchableOpacity>
+      {/* Conteúdo */}
+      <View style={styles.content}>
+        <Text style={styles.label}>Estudo:</Text>
+        <Text style={styles.studyText} numberOfLines={1}>{studyApplied}</Text>
+        
+        <Text style={[styles.label, { marginTop: 8 }]}>Sobre:</Text>
+        <Text style={styles.descriptionText} numberOfLines={2}>
+          {description}
+        </Text>
+      </View>
+
+      {/* Rodapé: Botão ou Caixa Vermelha */}
+      <View style={styles.footer}>
+        {isRefused ? (
+          // --- CAIXA VERMELHA DE RECUSADO ---
+          <View style={styles.refusedContainer}>
+            <Ionicons name="close-circle" size={20} color="#fff" style={{ marginRight: 6 }} />
+            <Text style={styles.refusedText}>RECUSADO</Text>
+          </View>
+        ) : (
+          // --- BOTÃO DE ANALISAR (Padrão) ---
+          <TouchableOpacity 
+            style={styles.analyzeButton} 
+            onPress={onAnalyze}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.analyzeButtonText}>Analisar Candidato</Text>
+            <Ionicons name="arrow-forward" size={18} color="#fff" />
+          </TouchableOpacity>
+        )}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  cardContainer: {
+  card: {
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    // Sombra suave
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
     borderWidth: 1,
-    borderColor: '#e9ecef',
+    borderColor: 'rgba(0,0,0,0.03)',
+  },
+  cardRefusedOpacity: {
+    opacity: 0.8, // Deixa o card um pouco mais apagado se recusado
+    backgroundColor: '#fafafa',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
-  volunteerId: {
-    fontSize: 18,
+  idContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  idText: {
+    marginLeft: 6,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#212529',
   },
-  location: {
-    fontSize: 14,
-    color: '#6c757d',
+  badge: {
+    backgroundColor: '#E0F2F1',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
   },
-  description: {
+  badgeText: {
+    fontSize: 12,
+    color: '#15715A',
+    fontWeight: '600',
+  },
+  content: {
+    marginBottom: 16,
+  },
+  label: {
+    fontSize: 12,
+    color: '#868e96',
+    fontWeight: '600',
+    marginBottom: 2,
+    textTransform: 'uppercase',
+  },
+  studyText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#343a40',
+  },
+  descriptionText: {
     fontSize: 14,
     color: '#495057',
     lineHeight: 20,
-    marginBottom: 16,
   },
-  studyTag: {
-    backgroundColor: '#E0F2F1',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 8,
-    alignSelf: 'flex-start',
-    marginBottom: 16,
+  footer: {
+    marginTop: 4,
   },
-  studyTagText: {
-    color: '#166865',
-    fontWeight: '500',
-    fontSize: 12,
-  },
+  
+  // Estilo do Botão Padrão
   analyzeButton: {
+    flexDirection: 'row',
     backgroundColor: '#15715A',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   analyzeButtonText: {
     color: '#fff',
+    fontSize: 14,
     fontWeight: 'bold',
-    fontSize: 16,
+    marginRight: 8,
   },
+
+  // Estilo da Caixa VERMELHA (Recusado)
+  refusedContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#d9534f', // Vermelho bootstrap
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#c9302c',
+  },
+  refusedText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  }
 });

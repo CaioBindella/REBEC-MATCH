@@ -12,6 +12,7 @@ export interface LoginResponseDTO {
   token: string;
   usuario: UsuarioResponseDTO;
   nomeFicticio: string | null;
+  perfilId: number;
 }
 
 // --- USUÁRIO ---
