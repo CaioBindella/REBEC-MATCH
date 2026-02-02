@@ -43,7 +43,7 @@ public class AuthenticationController {
             nomeFicticio = usuario.getVoluntario().getNomeFicticio();
         }
 
-        return ResponseEntity.ok(new LoginResponseDTO(token, usuarioDTO, nomeFicticio));
+        return ResponseEntity.ok(new LoginResponseDTO(token, usuarioDTO, nomeFicticio, perfilId));
     }
 
     private UsuarioResponseDTO toUsuarioResponseDTO(Usuario usuario) {

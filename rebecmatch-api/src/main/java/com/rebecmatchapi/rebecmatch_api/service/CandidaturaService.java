@@ -1,5 +1,6 @@
 package com.rebecmatchapi.rebecmatch_api.service;
 
+import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidatoDetalhadoDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.*;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.StatusCandidatura;
@@ -13,7 +14,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.Period;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -112,6 +116,41 @@ public class CandidaturaService {
         }
 
         return candidatura;
+    }
+
+    public List<CandidatoDetalhadoDTO> listarPorPesquisador(Integer pesquisadorId) {
+        List<Candidatura> candidaturas = candidatureRepository.findByPesquisadorId(pesquisadorId);
+
+        return candidaturas.stream().map(c -> {
+            CandidatoDetalhadoDTO dto = new CandidatoDetalhadoDTO();
+            dto.setCandidaturaId(c.getId());
+
+            Usuario user = c.getVoluntario().getUsuario();
+
+            dto.setVoluntarioId(c.getVoluntario().getNomeFicticio()); // Ou gere o ID composto aqui
+            dto.setNomeFicticio(c.getVoluntario().getNomeFicticio());
+
+            // Calcular Idade
+            if (user.getDataNascimento() != null) {
+                dto.setIdade(Period.between(user.getDataNascimento(), LocalDate.now()).getYears());
+            }
+
+            // Sexo
+            if (user.getSexo() != null) {
+                dto.setSexo(user.getSexo().toString()); // MASCULINO, FEMININO
+            }
+            dto.setLocalizacao(user.getCep());
+
+            dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
+            dto.setStatus(c.getStatus().toString());
+
+            // Descrição fictícia ou dados reais se tiver
+            dto.setDescricao("Candidato interessado no estudo " + c.getEstudo().getScientificTitle());
+
+            dto.setVoluntarioIdReal(c.getVoluntario().getId());
+
+            return dto;
+        }).collect(Collectors.toList());
     }
 
     private void gerarMatchResult(Candidatura candidatura) {

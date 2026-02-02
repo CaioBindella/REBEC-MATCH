@@ -1,5 +1,6 @@
 package com.rebecmatchapi.rebecmatch_api.controller;
 
+import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidatoDetalhadoDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Candidatura;
@@ -55,6 +56,12 @@ public class CandidaturaController {
     public ResponseEntity<List<CandidaturaResponseDTO>> listarPorVoluntario(@PathVariable Integer voluntarioId) {
         List<Candidatura> list = candidaturaService.listarPorVoluntario(voluntarioId);
         return ResponseEntity.ok(list.stream().map(this::toDTO).collect(Collectors.toList()));
+    }
+
+    @GetMapping("/pesquisador/{pesquisadorId}")
+    public ResponseEntity<List<CandidatoDetalhadoDTO>> listarPorPesquisador(@PathVariable Integer pesquisadorId) {
+        List<CandidatoDetalhadoDTO> list = candidaturaService.listarPorPesquisador(pesquisadorId);
+        return ResponseEntity.ok(list);
     }
 
     private CandidaturaResponseDTO toDTO(Candidatura c) {

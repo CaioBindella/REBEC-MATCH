@@ -86,6 +86,7 @@ public class RespostaController {
         }
         if (resposta.getQuestao() != null) {
             dto.setQuestaoId(resposta.getQuestao().getId());
+            dto.setQuestaoTexto(resposta.getQuestao().getTexto());
         }
         return dto;
     }

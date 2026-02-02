@@ -8,4 +8,5 @@ public class RespostaResponseDTO {
     private Integer questaoId;
     private String conteudo;
     private boolean marcado;
+    private String questaoTexto;
 }

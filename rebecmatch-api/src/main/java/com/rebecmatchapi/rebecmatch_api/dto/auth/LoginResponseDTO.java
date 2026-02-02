@@ -12,4 +12,5 @@ public class LoginResponseDTO {
     private String token;
     private UsuarioResponseDTO usuario;
     private String nomeFicticio;
+    private Integer perfilId;
 }

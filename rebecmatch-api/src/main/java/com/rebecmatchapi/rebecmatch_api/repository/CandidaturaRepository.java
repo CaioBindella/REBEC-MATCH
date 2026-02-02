@@ -2,6 +2,8 @@ package com.rebecmatchapi.rebecmatch_api.repository;
 
 import com.rebecmatchapi.rebecmatch_api.entity.Candidatura;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -13,4 +15,7 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, Intege
 
     // Para evitar candidatura duplicada
     boolean existsByVoluntarioIdAndEstudoId(Integer voluntarioId, Integer estudoId);
+
+    @Query("SELECT c FROM Candidatura c WHERE c.estudo.pesquisador.id = :pesquisadorId")
+    List<Candidatura> findByPesquisadorId(@Param("pesquisadorId") Integer pesquisadorId);
 }
