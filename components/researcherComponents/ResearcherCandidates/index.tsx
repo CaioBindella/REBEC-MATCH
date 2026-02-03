@@ -31,7 +31,39 @@ if (
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// 1. Atualizei a Interface para incluir o STATUS
+// --- Função de Conversão CEP -> UF ---
+const convertCepToState = (cep: string | null): string => {
+  if (!cep) return 'BR';
+  const cepClean = cep.replace(/\D/g, '');
+  if (cepClean.length < 5) return 'BR';
+
+  const prefix = parseInt(cepClean.substring(0, 5));
+
+  if (prefix >= 1000 && prefix <= 19999) return 'SP';
+  if (prefix >= 20000 && prefix <= 28999) return 'RJ';
+  if (prefix >= 29000 && prefix <= 29999) return 'ES';
+  if (prefix >= 30000 && prefix <= 39999) return 'MG';
+  if (prefix >= 40000 && prefix <= 48999) return 'PR';
+  if (prefix >= 49000 && prefix <= 49999) return 'SE';
+  if (prefix >= 50000 && prefix <= 56999) return 'PE';
+  if (prefix >= 57000 && prefix <= 57999) return 'AL';
+  if (prefix >= 58000 && prefix <= 58999) return 'PB';
+  if (prefix >= 59000 && prefix <= 59999) return 'RN';
+  if (prefix >= 60000 && prefix <= 63999) return 'CE';
+  if (prefix >= 64000 && prefix <= 64999) return 'PI';
+  if (prefix >= 65000 && prefix <= 65999) return 'MA';
+  if (prefix >= 66000 && prefix <= 67999) return 'PA';
+  if (prefix >= 68000 && prefix <= 68999) return 'AP';
+  if (prefix >= 69000 && prefix <= 69999) return 'AM'; 
+  if (prefix >= 70000 && prefix <= 76999) return 'DF'; 
+  if (prefix >= 77000 && prefix <= 79999) return 'BA'; 
+  if (prefix >= 80000 && prefix <= 87999) return 'PR';
+  if (prefix >= 88000 && prefix <= 89999) return 'SC';
+  if (prefix >= 90000 && prefix <= 99999) return 'RS';
+
+  return 'BR';
+};
+
 interface VolunteerData {
   id: string;
   candidaturaId: number;
@@ -44,22 +76,38 @@ interface VolunteerData {
   studyApplied: string;
   voluntarioIdReal: number;
   nomeFicticio: string;
-  status: string; // <--- NOVO CAMPO
+  status: string;
 }
 
 // --- Dados dos filtros ---
-const researcherStudies = [
-  { label: 'Estudo sobre Enxaqueca', value: 'Estudo sobre Enxaqueca' },
-  { label: 'Avaliação de App de Saúde Mental', value: 'Avaliação de App de Saúde Mental' },
-  { label: 'Impacto da Dieta Mediterrânea', value: 'Impacto da Dieta Mediterrânea' },
-];
-
 const regions = [
-  { label: 'Rio de Janeiro', value: 'RJ' },
-  { label: 'São Paulo', value: 'SP' },
+  { label: 'Acre', value: 'AC' },
+  { label: 'Alagoas', value: 'AL' },
+  { label: 'Amapá', value: 'AP' },
+  { label: 'Amazonas', value: 'AM' },
   { label: 'Bahia', value: 'BA' },
+  { label: 'Ceará', value: 'CE' },
+  { label: 'Distrito Federal', value: 'DF' },
+  { label: 'Espírito Santo', value: 'ES' },
+  { label: 'Goiás', value: 'GO' },
+  { label: 'Maranhão', value: 'MA' },
+  { label: 'Mato Grosso', value: 'MT' },
+  { label: 'Mato Grosso do Sul', value: 'MS' },
   { label: 'Minas Gerais', value: 'MG' },
+  { label: 'Pará', value: 'PA' },
+  { label: 'Paraíba', value: 'PB' },
+  { label: 'Paraná', value: 'PR' },
+  { label: 'Pernambuco', value: 'PE' },
+  { label: 'Piauí', value: 'PI' },
+  { label: 'Rio de Janeiro', value: 'RJ' },
+  { label: 'Rio Grande do Norte', value: 'RN' },
   { label: 'Rio Grande do Sul', value: 'RS' },
+  { label: 'Rondônia', value: 'RO' },
+  { label: 'Roraima', value: 'RR' },
+  { label: 'Santa Catarina', value: 'SC' },
+  { label: 'São Paulo', value: 'SP' },
+  { label: 'Sergipe', value: 'SE' },
+  { label: 'Tocantins', value: 'TO' },
 ];
 
 const sexes = [
@@ -68,12 +116,22 @@ const sexes = [
 ];
 
 const genders = [
-  { label: 'Homem Cis', value: 'Homem Cis' },
-  { label: 'Mulher Cis', value: 'Mulher Cis' },
+  { label: 'Cisgênero', value: 'CISGENERO' },
+  { label: 'Transgênero', value: 'TRANSGENERO' },
+  { label: 'Não-binário', value: 'NAO_BINARIO' },
+  { label: 'Outro', value: 'OUTRO' },
+  { label: 'Prefere não responder', value: 'NAO_INFORMADO' },
 ];
 
 const educationLevels = [
-  { label: 'Ensino Superior Completo', value: 'Ensino Superior Completo' },
+  { label: 'Sem instrução formal', value: 'SEM_INSTRUCAO' },
+  { label: 'Ensino fundamental incompleto', value: 'FUNDAMENTAL_INCOMPLETO' },
+  { label: 'Ensino fundamental completo', value: 'FUNDAMENTAL_COMPLETO' },
+  { label: 'Ensino médio incompleto', value: 'MEDIO_INCOMPLETO' },
+  { label: 'Ensino médio completo', value: 'MEDIO_COMPLETO' },
+  { label: 'Ensino superior incompleto', value: 'SUPERIOR_INCOMPLETO' },
+  { label: 'Ensino superior completo', value: 'SUPERIOR_COMPLETO' },
+  { label: 'Pós-graduação', value: 'POS_GRADUACAO' },
 ];
 
 export default function ResearcherCandidates() {
@@ -82,9 +140,11 @@ export default function ResearcherCandidates() {
 
   const [volunteers, setVolunteers] = useState<VolunteerData[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estado para controlar o loading do botão de exportar
+  const [isExporting, setIsExporting] = useState(false);
 
   // Estados dos Filtros
-  const [selectedStudy, setSelectedStudy] = useState<string | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedSex, setSelectedSex] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
@@ -109,21 +169,23 @@ export default function ResearcherCandidates() {
 
       const data = await apiService.candidatura.listarPorPesquisador(pesquisadorId);
 
-      // 2. Mapeamento atualizado incluindo o status
-      const formattedData: VolunteerData[] = data.map((item: any) => ({
-        id: item.nomeFicticio || `CAND-${item.candidaturaId}`,
-        nomeFicticio: item.nomeFicticio || item.voluntarioNome || `Candidato ${item.voluntarioId || ''}`,
-        candidaturaId: item.candidaturaId,
-        location: item.localizacao || 'Não informado',
-        age: item.idade || 0,
-        sex: item.sexo || 'Não informado',
-        gender: item.sexo === 'MASCULINO' ? 'Homem Cis' : item.sexo === 'FEMININO' ? 'Mulher Cis' : 'Outro',
-        education: 'Não informado',
-        description: item.descricao || `Interesse em ${item.estudoTitulo}`,
-        studyApplied: item.estudoTitulo,
-        voluntarioIdReal: item.voluntarioIdReal || item.voluntarioId,
-        status: item.status // <--- PEGANDO O STATUS DO BACKEND
-      }));
+      const formattedData: VolunteerData[] = data.map((item: any) => {
+        const uf = convertCepToState(item.localizacao);
+        return {
+            id: item.nomeFicticio || `CAND-${item.candidaturaId}`,
+            nomeFicticio: item.nomeFicticio || item.voluntarioNome || `Candidato ${item.voluntarioId || ''}`,
+            candidaturaId: item.candidaturaId,
+            location: uf, 
+            age: item.idade || 0,
+            sex: item.sexo || 'Não informado',
+            gender: 'Não informado', 
+            education: 'Não informado', 
+            description: item.descricao || `Interesse em ${item.estudoTitulo}`,
+            studyApplied: item.estudoTitulo,
+            voluntarioIdReal: item.voluntarioIdReal || item.voluntarioId,
+            status: item.status
+        };
+      });
 
       setVolunteers(formattedData);
     } catch (error) {
@@ -142,54 +204,98 @@ export default function ResearcherCandidates() {
   const filteredVolunteers = useMemo(() => {
     return volunteers.filter(volunteer => {
       return (
-        (!selectedStudy || volunteer.studyApplied === selectedStudy) &&
-        (!selectedRegion || volunteer.location.includes(selectedRegion)) &&
+        (!selectedRegion || volunteer.location === selectedRegion) && 
         (!selectedSex || volunteer.sex === selectedSex) &&
         (!selectedGender || volunteer.gender === selectedGender) &&
         (!selectedEducation || volunteer.education === selectedEducation)
       );
     });
-  }, [volunteers, selectedStudy, selectedRegion, selectedSex, selectedGender, selectedEducation]);
+  }, [volunteers, selectedRegion, selectedSex, selectedGender, selectedEducation]);
 
+  // --- FUNÇÃO DE EXPORTAÇÃO ATUALIZADA ---
   const handleExport = async () => {
     if (filteredVolunteers.length === 0) {
-      alert("Nenhum candidato encontrado para exportar.");
+      Alert.alert("Atenção", "Nenhum candidato encontrado para exportar.");
       return;
     }
 
-    const dataForSheet = [
-        ["ID", "Localização", "Sexo", "Gênero", "Escolaridade", "Descrição", "Estudo Aplicado", "Status"],
-        ...filteredVolunteers.map(item => [
-            item.id,
-            item.location,
-            item.sex,
-            item.gender,
-            item.education,
-            item.description,
-            item.studyApplied,
-            item.status
-        ])
-    ];
+    setIsExporting(true);
 
-    const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Candidatos");
-
-    const base64 = XLSX.write(wb, { type: "base64" });
-    const filename = FileSystem.cacheDirectory + "candidatos_filtrados.xlsx";
-    
     try {
+      // Cabeçalho do Excel
+      const dataForSheet = [
+          ["Nome Fictício", "Estudo Aplicado", "Status", "Localização (UF)", "Sexo", "Respostas Completas"]
+      ];
+
+      // Itera sobre os voluntários filtrados e busca as respostas de cada um
+      for (const volunteer of filteredVolunteers) {
+        let answersString = "";
+
+        try {
+            // Busca as respostas na API
+            const answers = await apiService.resposta.getByVoluntario(volunteer.voluntarioIdReal);
+            
+            if (answers && answers.length > 0) {
+                // Formata as respostas em uma string legível (Pergunta: Resposta)
+                answersString = answers.map((a: any) => {
+                    const question = a.questaoTexto || `Questão ${a.questaoId}`;
+                    const answer = a.conteudo || (a.marcado ? "Sim" : "Não");
+                    return `${question}: ${answer}`;
+                }).join("\n"); // Quebra de linha dentro da célula do Excel
+            } else {
+                answersString = "Nenhuma resposta registrada.";
+            }
+        } catch (err) {
+            console.error(`Erro ao buscar respostas para ${volunteer.nomeFicticio}`, err);
+            answersString = "Erro ao carregar respostas.";
+        }
+
+        // Adiciona a linha do voluntário
+        dataForSheet.push([
+            volunteer.nomeFicticio,
+            volunteer.studyApplied,
+            volunteer.status,
+            volunteer.location,
+            volunteer.sex,
+            answersString // Coluna gigante com as respostas
+        ]);
+      }
+
+      // Criação do Arquivo
+      const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
+      
+      // Ajuste de largura das colunas (opcional, melhora visualização)
+      ws['!cols'] = [
+        { wch: 20 }, // Nome
+        { wch: 30 }, // Estudo
+        { wch: 15 }, // Status
+        { wch: 10 }, // UF
+        { wch: 15 }, // Sexo
+        { wch: 100 } // Respostas (bem largo)
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Candidatos");
+
+      const base64 = XLSX.write(wb, { type: "base64" });
+      const filename = FileSystem.cacheDirectory + "candidatos_com_respostas.xlsx";
+      
       await FileSystem.writeAsStringAsync(filename, base64, {
         encoding: FileSystem.EncodingType.Base64
       });
+
       if (!(await Sharing.isAvailableAsync())) {
-        alert("O compartilhamento não está disponível no seu dispositivo.");
+        Alert.alert("Erro", "O compartilhamento não está disponível no seu dispositivo.");
         return;
       }
+      
       await Sharing.shareAsync(filename);
+
     } catch (e) {
       console.error(e);
-      alert("Ocorreu um erro ao exportar os dados.");
+      Alert.alert("Erro", "Ocorreu um erro ao gerar o arquivo Excel.");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -205,9 +311,20 @@ export default function ResearcherCandidates() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Candidatos</Text>
-        <TouchableOpacity style={styles.exportButton} onPress={handleExport}>
-            <Ionicons name="download-outline" size={18} color="#15715A" />
-            <Text style={styles.exportButtonText}>Exportar</Text>
+        
+        <TouchableOpacity 
+            style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
+            onPress={handleExport}
+            disabled={isExporting}
+        >
+            {isExporting ? (
+                <ActivityIndicator size="small" color="#15715A" />
+            ) : (
+                <Ionicons name="download-outline" size={18} color="#15715A" />
+            )}
+            <Text style={styles.exportButtonText}>
+                {isExporting ? "Gerando..." : "Exportar"}
+            </Text>
         </TouchableOpacity>
       </View>
 
@@ -233,19 +350,40 @@ export default function ResearcherCandidates() {
         {filtersVisible && (
           <View style={styles.filterContent}>
             <View style={styles.inputSpacing}>
-                <FilterPicker label="Estudo" value={selectedStudy} onValueChange={(value) => setSelectedStudy(value as string | null)} items={researcherStudies} placeholder={{ label: "Todos os estudos", value: null }} />
+                <FilterPicker 
+                    label="Região (UF)" 
+                    value={selectedRegion} 
+                    onValueChange={(value) => setSelectedRegion(value as string | null)} 
+                    items={regions} 
+                    placeholder={{ label: "Todas as regiões", value: null }} 
+                />
             </View>
             <View style={styles.inputSpacing}>
-                <FilterPicker label="Região" value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as string | null)} items={regions} placeholder={{ label: "Todas as regiões", value: null }} />
+                <FilterPicker 
+                    label="Sexo Biológico" 
+                    value={selectedSex} 
+                    onValueChange={(value) => setSelectedSex(value as string | null)} 
+                    items={sexes} 
+                    placeholder={{ label: "Todos os sexos", value: null }} 
+                />
             </View>
             <View style={styles.inputSpacing}>
-                <FilterPicker label="Sexo" value={selectedSex} onValueChange={(value) => setSelectedSex(value as string | null)} items={sexes} placeholder={{ label: "Todos os sexos", value: null }} />
+                <FilterPicker 
+                    label="Identidade de Gênero" 
+                    value={selectedGender} 
+                    onValueChange={(value) => setSelectedGender(value as string | null)} 
+                    items={genders} 
+                    placeholder={{ label: "Todos os gêneros", value: null }} 
+                />
             </View>
             <View style={styles.inputSpacing}>
-                <FilterPicker label="Gênero" value={selectedGender} onValueChange={(value) => setSelectedGender(value as string | null)} items={genders} placeholder={{ label: "Todos os gêneros", value: null }} />
-            </View>
-            <View style={styles.inputSpacing}>
-                <FilterPicker label="Escolaridade" value={selectedEducation} onValueChange={(value) => setSelectedEducation(value as string | null)} items={educationLevels} placeholder={{ label: "Todos os níveis", value: null }} />
+                <FilterPicker 
+                    label="Escolaridade" 
+                    value={selectedEducation} 
+                    onValueChange={(value) => setSelectedEducation(value as string | null)} 
+                    items={educationLevels} 
+                    placeholder={{ label: "Todos os níveis", value: null }} 
+                />
             </View>
           </View>
         )}
@@ -259,11 +397,8 @@ export default function ResearcherCandidates() {
             location={volunteer.location}
             description={volunteer.description}
             studyApplied={volunteer.studyApplied}
-            // Passamos o status para o card (para você poder estilizar se quiser, ex: opacity)
-            // @ts-ignore - Caso o VolunteerCard ainda não tenha essa prop na tipagem
             status={volunteer.status}
             
-            // 3. Lógica para impedir acesso se RECUSADO
             onAnalyze={() => {
               if (volunteer.status === 'RECUSADO') {
                 Alert.alert("Candidatura Recusada", "Este candidato já foi recusado e não está mais disponível para análise.");

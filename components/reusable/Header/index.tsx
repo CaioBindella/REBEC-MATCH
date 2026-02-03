@@ -1,18 +1,25 @@
 import { View, Image, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import { Menu, MenuOptions, MenuOption, MenuTrigger } from 'react-native-popup-menu';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router'; // <--- Importe usePathname
 import { Ionicons } from '@expo/vector-icons';
 
 export default function Header() {
   const { logOut } = useAuth();
   const router = useRouter();
+  const pathname = usePathname(); // <--- Pega a rota atual
+  
   const canGoBack = router.canGoBack();
+
+  // Verifica se a rota atual contém 'home'. Ajuste se sua rota for diferente.
+  // Isso garante que na tela principal a seta nunca apareça.
+  const isHomePage = pathname.includes('/home');
 
   return (
     <View style={styles.header}>
       <View style={styles.leftContainer}>
-        {canGoBack && (
+        {/* Só mostra a seta se puder voltar E se NÃO for a home page */}
+        {canGoBack && !isHomePage && (
           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#333" />
           </TouchableOpacity>

@@ -33,21 +33,32 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     if (!user) return;
     try {
-      // Chama a API real
       const data = await apiService.notificacao.listar(user.id);
       
-      // Mapeia os dados do Backend (Notificacao) para o Frontend (NotificationItem)
-      const formatted = data.map((n: any) => ({
-        id: String(n.id),
-        title: n.titulo,
-        description: n.mensagem,
-        // Formata a data (ex: 29/01/2026)
-        time: new Date(n.dataCriacao).toLocaleDateString('pt-BR', { 
-            day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
-        }), 
-        read: n.lida,
-        type: n.tipo || 'info', // Fallback se vier null
-      }));
+      const formatted = data.map((n: any) => {
+        let dateObj;
+
+        // CORREÇÃO: Verifica se a data veio como Array do Java [ano, mes, dia, hora, min]
+        if (Array.isArray(n.dataCriacao)) {
+            const [year, month, day, hour = 0, minute = 0, second = 0] = n.dataCriacao;
+            // Importante: No JavaScript o mês começa em 0 (Janeiro=0), mas no Java começa em 1.
+            dateObj = new Date(year, month - 1, day, hour, minute, second);
+        } else {
+            // Caso venha como string ISO futuramente
+            dateObj = new Date(n.dataCriacao);
+        }
+
+        return {
+            id: String(n.id),
+            title: n.titulo,
+            description: n.mensagem,
+            time: dateObj.toLocaleDateString('pt-BR', { 
+                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
+            }), 
+            read: n.lida,
+            type: n.tipo || 'info',
+        };
+      });
       
       setNotifications(formatted);
     } catch (error) {

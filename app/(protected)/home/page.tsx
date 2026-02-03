@@ -13,10 +13,10 @@ import ResearcherDashboard from '@/components/researcherComponents/ResearcherDas
 import Header from "@/components/reusable/Header";
 import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
-const checkVolunteerFormStatus = async (userId: number): Promise<boolean> => {
+const checkVolunteerFormStatus = async (voluntarioId: number): Promise<boolean> => {
   try {
-    console.log(`Verificando respostas para o usuário ${userId}...`);
-    const respostas = await apiService.resposta.getByVoluntario(userId);
+    console.log(`Verificando respostas para o voluntário ID: ${voluntarioId}...`);
+    const respostas = await apiService.resposta.getByVoluntario(voluntarioId);
     
     return respostas && respostas.length > 0;
   } catch (error) {
@@ -41,10 +41,10 @@ export default function HomePage() {
     // Só roda a lógica quando o AuthContext estiver pronto (user carregado do storage)
     if (!isReady) return;
 
-    if (isVolunteer && user?.id) {
+    if (isVolunteer && user?.perfilId) {
       // Se for voluntário, verifica se já preencheu o formulário inicial
       setCheckingForm(true);
-      checkVolunteerFormStatus(user.id)
+      checkVolunteerFormStatus(user.perfilId)
         .then((status) => {
           setHasCompletedForm(status);
         })
