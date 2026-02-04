@@ -73,6 +73,11 @@ public class CandidaturaController {
         dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
         dto.setStatus(c.getStatus());
         dto.setDataCandidatura(c.getDataCandidatura());
+
+        if (c.getEstudo().getPesquisador() != null) {
+            dto.setPesquisadorNomeFicticio(c.getEstudo().getPesquisador().getNomeFicticio());
+        }
+
         return dto;
     }
 }

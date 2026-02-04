@@ -11,6 +11,7 @@ public class CandidaturaResponseDTO {
     private String voluntarioNome;
     private Integer estudoId;
     private String estudoTitulo;
+    private String pesquisadorNomeFicticio;
     private StatusCandidatura status;
     private LocalDateTime dataCandidatura;
 }
