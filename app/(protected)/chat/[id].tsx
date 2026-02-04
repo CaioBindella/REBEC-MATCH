@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 import { apiService } from '@/services/api/apiClient';
 
 export default function ChatScreen() {
-  const { id } = useLocalSearchParams(); // ID do Estudo
+  const { id } = useLocalSearchParams();
   const { user } = useAuth();
   const router = useRouter();
   

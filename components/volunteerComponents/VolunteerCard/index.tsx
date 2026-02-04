@@ -7,7 +7,7 @@ interface VolunteerCardProps {
   location: string;
   description: string;
   studyApplied: string;
-  status?: string; // Recebe o status (RECUSADO, PENDENTE, etc.)
+  status?: string; // Status vindo do banco
   onAnalyze: () => void;
 }
 
@@ -20,11 +20,16 @@ export default function VolunteerCard({
   onAnalyze 
 }: VolunteerCardProps) {
 
-  // Verifica se foi recusado para mudar o visual
   const isRefused = status === 'RECUSADO';
+  const isWaiting = status === 'ACEITO_PELO_PESQUISADOR';
+  const isConcluded = status === 'CONCLUIDO';
 
   return (
-    <View style={[styles.card, isRefused && styles.cardRefusedOpacity]}>
+    <View style={[
+        styles.card, 
+        isRefused && styles.cardRefusedOpacity,
+        isWaiting && styles.cardWaitingOpacity // Opcional: destaca levemente se estiver aguardando
+    ]}>
       {/* Cabeçalho do Card */}
       <View style={styles.header}>
         <View style={styles.idContainer}>
@@ -47,25 +52,49 @@ export default function VolunteerCard({
         </Text>
       </View>
 
-      {/* Rodapé: Botão ou Caixa Vermelha */}
+      {/* Rodapé: Muda de acordo com o STATUS */}
       <View style={styles.footer}>
-        {isRefused ? (
-          // --- CAIXA VERMELHA DE RECUSADO ---
-          <View style={styles.refusedContainer}>
+        
+        {/* CASO 1: RECUSADO (Caixa Vermelha) */}
+        {isRefused && (
+          <View style={styles.statusContainerRefused}>
             <Ionicons name="close-circle" size={20} color="#fff" style={{ marginRight: 6 }} />
-            <Text style={styles.refusedText}>RECUSADO</Text>
+            <Text style={styles.statusTextRefused}>RECUSADO</Text>
           </View>
-        ) : (
-          // --- BOTÃO DE ANALISAR (Padrão) ---
+        )}
+
+        {/* CASO 2: AGUARDANDO ACEITE (Caixa Amarela - SEM BOTÃO DE CLIQUE) */}
+        {isWaiting && (
+          <View style={styles.statusContainerWaiting}>
+            <Ionicons name="time-outline" size={20} color="#856404" style={{ marginRight: 6 }} />
+            <Text style={styles.statusTextWaiting}>Aguardando Aceite do Voluntário</Text>
+          </View>
+        )}
+
+        {/* CASO 3: CONCLUÍDO (Botão Azul de Chat) */}
+        {isConcluded && (
           <TouchableOpacity 
-            style={styles.analyzeButton} 
+            style={[styles.button, styles.buttonChat]} 
             onPress={onAnalyze}
             activeOpacity={0.8}
           >
-            <Text style={styles.analyzeButtonText}>Analisar Candidato</Text>
+            <Text style={styles.buttonText}>Acessar Chat</Text>
+            <Ionicons name="chatbubbles-outline" size={18} color="#fff" />
+          </TouchableOpacity>
+        )}
+
+        {/* CASO 4: PADRÃO / PENDENTE (Botão Verde de Analisar) */}
+        {!isRefused && !isWaiting && !isConcluded && (
+          <TouchableOpacity 
+            style={[styles.button, styles.buttonAnalyze]} 
+            onPress={onAnalyze}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.buttonText}>Analisar Candidato</Text>
             <Ionicons name="arrow-forward" size={18} color="#fff" />
           </TouchableOpacity>
         )}
+
       </View>
     </View>
   );
@@ -77,7 +106,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    // Sombra suave
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -87,8 +115,12 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0,0,0,0.03)',
   },
   cardRefusedOpacity: {
-    opacity: 0.8, // Deixa o card um pouco mais apagado se recusado
+    opacity: 0.8,
     backgroundColor: '#fafafa',
+  },
+  cardWaitingOpacity: {
+    backgroundColor: '#fffcf5', // Fundo levemente amarelado (opcional)
+    borderColor: '#ffeeba',
   },
   header: {
     flexDirection: 'row',
@@ -140,27 +172,38 @@ const styles = StyleSheet.create({
   footer: {
     marginTop: 4,
   },
-  
-  // Estilo do Botão Padrão
-  analyzeButton: {
+
+  // --- ESTILOS DOS BOTÕES E CAIXAS DE STATUS ---
+
+  // Botão Padrão (Base)
+  button: {
     flexDirection: 'row',
-    backgroundColor: '#15715A',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  analyzeButtonText: {
-    color: '#fff',
+  buttonText: {
     fontSize: 14,
     fontWeight: 'bold',
+    color: '#fff',
     marginRight: 8,
   },
+  
+  // Variação: Analisar (Verde)
+  buttonAnalyze: {
+    backgroundColor: '#15715A',
+  },
+  
+  // Variação: Chat (Azul)
+  buttonChat: {
+    backgroundColor: '#007bff',
+  },
 
-  // Estilo da Caixa VERMELHA (Recusado)
-  refusedContainer: {
+  // Caixa de Status: RECUSADO (Vermelho)
+  statusContainerRefused: {
     flexDirection: 'row',
-    backgroundColor: '#d9534f', // Vermelho bootstrap
+    backgroundColor: '#d9534f',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
@@ -168,10 +211,27 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#c9302c',
   },
-  refusedText: {
+  statusTextRefused: {
     color: '#fff',
     fontSize: 14,
     fontWeight: 'bold',
     letterSpacing: 1,
-  }
+  },
+
+  // Caixa de Status: AGUARDANDO (Amarelo)
+  statusContainerWaiting: {
+    flexDirection: 'row',
+    backgroundColor: '#fff3cd', // Amarelo claro bootstrap
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ffeeba',
+  },
+  statusTextWaiting: {
+    color: '#856404', // Marrom/Dourado escuro para contraste
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
 });

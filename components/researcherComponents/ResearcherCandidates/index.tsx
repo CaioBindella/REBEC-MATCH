@@ -67,6 +67,7 @@ const convertCepToState = (cep: string | null): string => {
 interface VolunteerData {
   id: string;
   candidaturaId: number;
+  estudoId: number;
   location: string;
   age: number;
   sex: string;
@@ -81,33 +82,15 @@ interface VolunteerData {
 
 // --- Dados dos filtros ---
 const regions = [
-  { label: 'Acre', value: 'AC' },
-  { label: 'Alagoas', value: 'AL' },
-  { label: 'Amapá', value: 'AP' },
-  { label: 'Amazonas', value: 'AM' },
-  { label: 'Bahia', value: 'BA' },
-  { label: 'Ceará', value: 'CE' },
-  { label: 'Distrito Federal', value: 'DF' },
-  { label: 'Espírito Santo', value: 'ES' },
-  { label: 'Goiás', value: 'GO' },
-  { label: 'Maranhão', value: 'MA' },
-  { label: 'Mato Grosso', value: 'MT' },
-  { label: 'Mato Grosso do Sul', value: 'MS' },
-  { label: 'Minas Gerais', value: 'MG' },
-  { label: 'Pará', value: 'PA' },
-  { label: 'Paraíba', value: 'PB' },
-  { label: 'Paraná', value: 'PR' },
-  { label: 'Pernambuco', value: 'PE' },
-  { label: 'Piauí', value: 'PI' },
-  { label: 'Rio de Janeiro', value: 'RJ' },
-  { label: 'Rio Grande do Norte', value: 'RN' },
-  { label: 'Rio Grande do Sul', value: 'RS' },
-  { label: 'Rondônia', value: 'RO' },
-  { label: 'Roraima', value: 'RR' },
-  { label: 'Santa Catarina', value: 'SC' },
-  { label: 'São Paulo', value: 'SP' },
-  { label: 'Sergipe', value: 'SE' },
-  { label: 'Tocantins', value: 'TO' },
+  { label: 'Acre', value: 'AC' }, { label: 'Alagoas', value: 'AL' }, { label: 'Amapá', value: 'AP' },
+  { label: 'Amazonas', value: 'AM' }, { label: 'Bahia', value: 'BA' }, { label: 'Ceará', value: 'CE' },
+  { label: 'Distrito Federal', value: 'DF' }, { label: 'Espírito Santo', value: 'ES' }, { label: 'Goiás', value: 'GO' },
+  { label: 'Maranhão', value: 'MA' }, { label: 'Mato Grosso', value: 'MT' }, { label: 'Mato Grosso do Sul', value: 'MS' },
+  { label: 'Minas Gerais', value: 'MG' }, { label: 'Pará', value: 'PA' }, { label: 'Paraíba', value: 'PB' },
+  { label: 'Paraná', value: 'PR' }, { label: 'Pernambuco', value: 'PE' }, { label: 'Piauí', value: 'PI' },
+  { label: 'Rio de Janeiro', value: 'RJ' }, { label: 'Rio Grande do Norte', value: 'RN' }, { label: 'Rio Grande do Sul', value: 'RS' },
+  { label: 'Rondônia', value: 'RO' }, { label: 'Roraima', value: 'RR' }, { label: 'Santa Catarina', value: 'SC' },
+  { label: 'São Paulo', value: 'SP' }, { label: 'Sergipe', value: 'SE' }, { label: 'Tocantins', value: 'TO' },
 ];
 
 const sexes = [
@@ -134,23 +117,24 @@ const educationLevels = [
   { label: 'Pós-graduação', value: 'POS_GRADUACAO' },
 ];
 
+type TabOption = 'candidates' | 'approved';
+
 export default function ResearcherCandidates() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const [volunteers, setVolunteers] = useState<VolunteerData[]>([]);
+  const [allVolunteers, setAllVolunteers] = useState<VolunteerData[]>([]);
   const [loading, setLoading] = useState(true);
   
-  // Estado para controlar o loading do botão de exportar
+  const [activeTab, setActiveTab] = useState<TabOption>('candidates');
   const [isExporting, setIsExporting] = useState(false);
 
-  // Estados dos Filtros
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedSex, setSelectedSex] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
   const [selectedEducation, setSelectedEducation] = useState<string | null>(null);
   
-  const [filtersVisible, setFiltersVisible] = useState(true);
+  const [filtersVisible, setFiltersVisible] = useState(false);
 
   useEffect(() => {
     fetchCandidates();
@@ -175,6 +159,7 @@ export default function ResearcherCandidates() {
             id: item.nomeFicticio || `CAND-${item.candidaturaId}`,
             nomeFicticio: item.nomeFicticio || item.voluntarioNome || `Candidato ${item.voluntarioId || ''}`,
             candidaturaId: item.candidaturaId,
+            estudoId: item.estudoId,
             location: uf, 
             age: item.idade || 0,
             sex: item.sexo || 'Não informado',
@@ -187,7 +172,7 @@ export default function ResearcherCandidates() {
         };
       });
 
-      setVolunteers(formattedData);
+      setAllVolunteers(formattedData);
     } catch (error) {
       console.error("Erro ao buscar voluntários:", error);
       Alert.alert("Erro", "Não foi possível carregar a lista de candidatos.");
@@ -202,7 +187,20 @@ export default function ResearcherCandidates() {
   };
 
   const filteredVolunteers = useMemo(() => {
-    return volunteers.filter(volunteer => {
+    return allVolunteers.filter(volunteer => {
+      
+      // Lógica das Abas AJUSTADA
+      if (activeTab === 'candidates') {
+        // Aba "Gerenciar Candidatos":
+        // Mostra PENDENTE (para analisar)
+        // Mostra ACEITO_PELO_PESQUISADOR (aguardando voluntário)
+        // Mostra RECUSADO (histórico)
+        if (volunteer.status === 'CONCLUIDO') return false; 
+      } else {
+        if (volunteer.status !== 'CONCLUIDO') return false;
+      }
+
+      // Filtros
       return (
         (!selectedRegion || volunteer.location === selectedRegion) && 
         (!selectedSex || volunteer.sex === selectedSex) &&
@@ -210,92 +208,101 @@ export default function ResearcherCandidates() {
         (!selectedEducation || volunteer.education === selectedEducation)
       );
     });
-  }, [volunteers, selectedRegion, selectedSex, selectedGender, selectedEducation]);
+  }, [allVolunteers, activeTab, selectedRegion, selectedSex, selectedGender, selectedEducation]);
 
-  // --- FUNÇÃO DE EXPORTAÇÃO ATUALIZADA ---
   const handleExport = async () => {
     if (filteredVolunteers.length === 0) {
-      Alert.alert("Atenção", "Nenhum candidato encontrado para exportar.");
+      Alert.alert("Atenção", "Nenhum candidato encontrado na lista atual para exportar.");
       return;
     }
 
     setIsExporting(true);
 
     try {
-      // Cabeçalho do Excel
       const dataForSheet = [
           ["Nome Fictício", "Estudo Aplicado", "Status", "Localização (UF)", "Sexo", "Respostas Completas"]
       ];
 
-      // Itera sobre os voluntários filtrados e busca as respostas de cada um
       for (const volunteer of filteredVolunteers) {
         let answersString = "";
-
         try {
-            // Busca as respostas na API
             const answers = await apiService.resposta.getByVoluntario(volunteer.voluntarioIdReal);
-            
             if (answers && answers.length > 0) {
-                // Formata as respostas em uma string legível (Pergunta: Resposta)
                 answersString = answers.map((a: any) => {
                     const question = a.questaoTexto || `Questão ${a.questaoId}`;
                     const answer = a.conteudo || (a.marcado ? "Sim" : "Não");
                     return `${question}: ${answer}`;
-                }).join("\n"); // Quebra de linha dentro da célula do Excel
+                }).join("\n");
             } else {
                 answersString = "Nenhuma resposta registrada.";
             }
         } catch (err) {
-            console.error(`Erro ao buscar respostas para ${volunteer.nomeFicticio}`, err);
             answersString = "Erro ao carregar respostas.";
         }
 
-        // Adiciona a linha do voluntário
         dataForSheet.push([
             volunteer.nomeFicticio,
             volunteer.studyApplied,
             volunteer.status,
             volunteer.location,
             volunteer.sex,
-            answersString // Coluna gigante com as respostas
+            answersString
         ]);
       }
 
-      // Criação do Arquivo
       const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-      
-      // Ajuste de largura das colunas (opcional, melhora visualização)
-      ws['!cols'] = [
-        { wch: 20 }, // Nome
-        { wch: 30 }, // Estudo
-        { wch: 15 }, // Status
-        { wch: 10 }, // UF
-        { wch: 15 }, // Sexo
-        { wch: 100 } // Respostas (bem largo)
-      ];
+      ws['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 20 }, { wch: 10 }, { wch: 15 }, { wch: 100 }];
 
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Candidatos");
 
       const base64 = XLSX.write(wb, { type: "base64" });
-      const filename = FileSystem.cacheDirectory + "candidatos_com_respostas.xlsx";
+      const filename = FileSystem.cacheDirectory + `candidatos_${activeTab}.xlsx`;
       
-      await FileSystem.writeAsStringAsync(filename, base64, {
-        encoding: FileSystem.EncodingType.Base64
-      });
+      await FileSystem.writeAsStringAsync(filename, base64, { encoding: FileSystem.EncodingType.Base64 });
 
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert("Erro", "O compartilhamento não está disponível no seu dispositivo.");
+        Alert.alert("Erro", "O compartilhamento não está disponível.");
         return;
       }
-      
       await Sharing.shareAsync(filename);
 
     } catch (e) {
       console.error(e);
-      Alert.alert("Erro", "Ocorreu um erro ao gerar o arquivo Excel.");
+      Alert.alert("Erro", "Ocorreu um erro ao gerar o arquivo.");
     } finally {
       setIsExporting(false);
+    }
+  };
+
+  const handleCardPress = (volunteer: VolunteerData) => {
+    if (activeTab === 'candidates') {
+        // Na aba de candidatos, verificamos o status específico
+        if (volunteer.status === 'PENDENTE') {
+            // Vai para a tela de análise
+            router.push({
+                pathname: "/(protected)/researcher/volunteer-details/[id]",
+                params: { 
+                  id: volunteer.candidaturaId,
+                  voluntarioId: volunteer.voluntarioIdReal,
+                  nomeFicticio: volunteer.nomeFicticio
+                 }, 
+            });
+        } else if (volunteer.status === 'ACEITO_PELO_PESQUISADOR') {
+            Alert.alert("Aguardando", "Você já aprovou este candidato. Aguarde o voluntário aceitar o convite para iniciar o chat.");
+        } else if (volunteer.status === 'RECUSADO') {
+            Alert.alert("Recusado", "Esta candidatura foi recusada.");
+        }
+    } else {
+        // Na aba Em Andamento (só tem CONCLUIDO)
+        // Vai para o Chat
+        router.push({
+            pathname: "/(protected)/chat/[id]", 
+            params: { 
+                id: volunteer.estudoId,
+                voluntarioId: volunteer.voluntarioIdReal 
+            },
+        });
     }
   };
 
@@ -310,20 +317,34 @@ export default function ResearcherCandidates() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.headerContainer}>
-        <Text style={styles.title}>Candidatos</Text>
+        <Text style={styles.title}>Gerenciar Candidatos</Text>
         
         <TouchableOpacity 
             style={[styles.exportButton, isExporting && { opacity: 0.7 }]} 
             onPress={handleExport}
             disabled={isExporting}
         >
-            {isExporting ? (
-                <ActivityIndicator size="small" color="#15715A" />
-            ) : (
-                <Ionicons name="download-outline" size={18} color="#15715A" />
-            )}
-            <Text style={styles.exportButtonText}>
-                {isExporting ? "Gerando..." : "Exportar"}
+            {isExporting ? <ActivityIndicator size="small" color="#15715A" /> : <Ionicons name="download-outline" size={18} color="#15715A" />}
+            <Text style={styles.exportButtonText}>Exportar</Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.tabsContainer}>
+        <TouchableOpacity 
+            style={[styles.tabButton, activeTab === 'candidates' && styles.activeTabButton]}
+            onPress={() => setActiveTab('candidates')}
+        >
+            <Text style={[styles.tabText, activeTab === 'candidates' && styles.activeTabText]}>
+                Candidatos
+            </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+            style={[styles.tabButton, activeTab === 'approved' && styles.activeTabButton]}
+            onPress={() => setActiveTab('approved')}
+        >
+            <Text style={[styles.tabText, activeTab === 'approved' && styles.activeTabText]}>
+                Em Andamento
             </Text>
         </TouchableOpacity>
       </View>
@@ -338,7 +359,7 @@ export default function ResearcherCandidates() {
                 <View style={styles.iconCircle}>
                     <Ionicons name="options" size={20} color="#15715A" />
                 </View>
-                <Text style={styles.mainFilterTitle}>Filtrar Resultados</Text>
+                <Text style={styles.mainFilterTitle}>Filtrar {activeTab === 'candidates' ? 'Candidatos' : 'Ativos'}</Text>
             </View>
             <Ionicons 
                 name={filtersVisible ? 'chevron-up' : 'chevron-down'} 
@@ -350,40 +371,16 @@ export default function ResearcherCandidates() {
         {filtersVisible && (
           <View style={styles.filterContent}>
             <View style={styles.inputSpacing}>
-                <FilterPicker 
-                    label="Região (UF)" 
-                    value={selectedRegion} 
-                    onValueChange={(value) => setSelectedRegion(value as string | null)} 
-                    items={regions} 
-                    placeholder={{ label: "Todas as regiões", value: null }} 
-                />
+                <FilterPicker label="Região (UF)" value={selectedRegion} onValueChange={(value) => setSelectedRegion(value as string | null)} items={regions} placeholder={{ label: "Todas as regiões", value: null }} />
             </View>
             <View style={styles.inputSpacing}>
-                <FilterPicker 
-                    label="Sexo Biológico" 
-                    value={selectedSex} 
-                    onValueChange={(value) => setSelectedSex(value as string | null)} 
-                    items={sexes} 
-                    placeholder={{ label: "Todos os sexos", value: null }} 
-                />
+                <FilterPicker label="Sexo Biológico" value={selectedSex} onValueChange={(value) => setSelectedSex(value as string | null)} items={sexes} placeholder={{ label: "Todos os sexos", value: null }} />
             </View>
             <View style={styles.inputSpacing}>
-                <FilterPicker 
-                    label="Identidade de Gênero" 
-                    value={selectedGender} 
-                    onValueChange={(value) => setSelectedGender(value as string | null)} 
-                    items={genders} 
-                    placeholder={{ label: "Todos os gêneros", value: null }} 
-                />
+                <FilterPicker label="Identidade de Gênero" value={selectedGender} onValueChange={(value) => setSelectedGender(value as string | null)} items={genders} placeholder={{ label: "Todos os gêneros", value: null }} />
             </View>
             <View style={styles.inputSpacing}>
-                <FilterPicker 
-                    label="Escolaridade" 
-                    value={selectedEducation} 
-                    onValueChange={(value) => setSelectedEducation(value as string | null)} 
-                    items={educationLevels} 
-                    placeholder={{ label: "Todos os níveis", value: null }} 
-                />
+                <FilterPicker label="Escolaridade" value={selectedEducation} onValueChange={(value) => setSelectedEducation(value as string | null)} items={educationLevels} placeholder={{ label: "Todos os níveis", value: null }} />
             </View>
           </View>
         )}
@@ -398,28 +395,17 @@ export default function ResearcherCandidates() {
             description={volunteer.description}
             studyApplied={volunteer.studyApplied}
             status={volunteer.status}
-            
-            onAnalyze={() => {
-              if (volunteer.status === 'RECUSADO') {
-                Alert.alert("Candidatura Recusada", "Este candidato já foi recusado e não está mais disponível para análise.");
-                return; 
-              }
-
-              router.push({
-                pathname: "/(protected)/researcher/volunteer-details/[id]",
-                params: { 
-                  id: volunteer.candidaturaId,
-                  voluntarioId: volunteer.voluntarioIdReal,
-                  nomeFicticio: volunteer.nomeFicticio
-                 }, 
-              })
-            }}
+            onAnalyze={() => handleCardPress(volunteer)}
           />
         ))
       ) : (
         <View style={styles.emptyState}>
-            <Ionicons name="search-outline" size={48} color="#ccc" />
-            <Text style={styles.noResultsText}>Nenhum candidato encontrado com os filtros selecionados.</Text>
+            <Ionicons name={activeTab === 'candidates' ? "people-outline" : "chatbubbles-outline"} size={48} color="#ccc" />
+            <Text style={styles.noResultsText}>
+                {activeTab === 'candidates' 
+                    ? "Nenhum candidato pendente." 
+                    : "Nenhum estudo ativo no momento."}
+            </Text>
         </View>
       )}
     </ScrollView>
@@ -443,7 +429,7 @@ const styles = StyleSheet.create({
       marginBottom: 20,
     },
     title: {
-      fontSize: 28,
+      fontSize: 24,
       fontWeight: 'bold',
       color: '#212529',
     },
@@ -451,8 +437,8 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       backgroundColor: '#E0F2F1',
-      paddingVertical: 10,
-      paddingHorizontal: 16,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
       borderRadius: 20,
     },
     exportButtonText: {
@@ -460,6 +446,33 @@ const styles = StyleSheet.create({
       fontSize: 14,
       fontWeight: '600',
       color: '#15715A',
+    },
+    tabsContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#fff',
+        borderRadius: 8,
+        padding: 4,
+        marginBottom: 20,
+        borderWidth: 1,
+        borderColor: '#eee',
+    },
+    tabButton: {
+        flex: 1,
+        paddingVertical: 10,
+        alignItems: 'center',
+        borderRadius: 6,
+    },
+    activeTabButton: {
+        backgroundColor: '#E0F2F1', 
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '600',
+        color: '#6c757d',
+    },
+    activeTabText: {
+        color: '#15715A',
+        fontWeight: 'bold',
     },
     filtersWrapper: {
       backgroundColor: '#fff',
