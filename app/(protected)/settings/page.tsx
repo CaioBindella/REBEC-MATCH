@@ -13,6 +13,7 @@ import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/reusable/Header';
 import { useAuth } from '@/context/AuthContext';
+import { push } from 'expo-router/build/global-state/routing';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -121,7 +122,7 @@ export default function SettingsPage() {
           <SettingItem 
             icon="document-text-outline" 
             title="Termos de Uso" 
-            onPress={() => {}} 
+            onPress={() => { router.push('/(public)/terms/page')}} 
           />
           <SettingItem 
             icon="information-circle-outline" 

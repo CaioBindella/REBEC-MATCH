@@ -15,16 +15,15 @@ import {
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons'; // Import Ionicons for the arrow
 
 export default function LoginForm() {
   const { logIn } = useAuth();
   
-  // Estado local para os inputs
   const [credentials, setCredentials] = useState({ login: '', senha: '' });
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-    // Validação básica
     if (!credentials.login || !credentials.senha) {
       Alert.alert('Atenção', 'Por favor, preencha os campos de login e senha.');
       return;
@@ -33,18 +32,14 @@ export default function LoginForm() {
     setIsLoading(true);
 
     try {
-      // Chama a função do contexto que conecta na API
       await logIn({
         login: credentials.login,
         senha: credentials.senha
       });
 
-      // Se não deu erro no await acima, navega para a home
-      // O replace impede que o usuário volte para o login ao clicar em "voltar"
       router.replace('/(protected)/home/page');
 
     } catch (error: any) {
-      // 4. Tratamento de erro vindo da API
       Alert.alert(
         'Erro de Login', 
         error.message || 'Não foi possível entrar. Verifique as suas credenciais.'
@@ -112,6 +107,15 @@ export default function LoginForm() {
               <Text style={styles.buttonText}>Entrar</Text>
             )}
           </TouchableOpacity>
+
+          {/* New Go Back Button */}
+          <TouchableOpacity 
+            style={styles.backButton} 
+            onPress={() => router.back()} // Navigates back to the previous screen (firstpage)
+          >
+             <Ionicons name="arrow-back" size={20} color="#15715A" style={{ marginRight: 8 }} />
+             <Text style={styles.backButtonText}>Voltar</Text>
+          </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -163,9 +167,26 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',
+    marginBottom: 12, // Space between Enter and Back buttons
   },
   buttonText: {
     color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  // Back Button Styles
+  backButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#15715A',
+    backgroundColor: '#fff',
+  },
+  backButtonText: {
+    color: '#15715A',
     fontSize: 16,
     fontWeight: 'bold',
   },
