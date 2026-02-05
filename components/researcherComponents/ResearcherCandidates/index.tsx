@@ -129,6 +129,9 @@ export default function ResearcherCandidates() {
   const [activeTab, setActiveTab] = useState<TabOption>('candidates');
   const [isExporting, setIsExporting] = useState(false);
 
+  // NOVO ESTADO: Controle para ocultar recusados
+  const [hideRefused, setHideRefused] = useState(false);
+
   const [selectedRegion, setSelectedRegion] = useState<string | null>(null);
   const [selectedSex, setSelectedSex] = useState<string | null>(null);
   const [selectedGender, setSelectedGender] = useState<string | null>(null);
@@ -170,7 +173,7 @@ export default function ResearcherCandidates() {
             voluntarioIdReal: item.voluntarioIdReal || item.voluntarioId,
             status: item.status
         };
-      });
+      }).reverse(); // <--- INVERTE A ORDEM AQUI (Novos primeiro)
 
       setAllVolunteers(formattedData);
     } catch (error) {
@@ -189,18 +192,20 @@ export default function ResearcherCandidates() {
   const filteredVolunteers = useMemo(() => {
     return allVolunteers.filter(volunteer => {
       
-      // Lógica das Abas AJUSTADA
+      // Lógica das Abas
       if (activeTab === 'candidates') {
-        // Aba "Gerenciar Candidatos":
-        // Mostra PENDENTE (para analisar)
-        // Mostra ACEITO_PELO_PESQUISADOR (aguardando voluntário)
-        // Mostra RECUSADO (histórico)
+        // Exclui os concluídos
         if (volunteer.status === 'CONCLUIDO') return false; 
+        
+        // NOVO: Se o botão "Ocultar Recusados" estiver ativo e o status for RECUSADO, remove da lista
+        if (hideRefused && volunteer.status === 'RECUSADO') return false;
+
       } else {
+        // Aba Em Andamento: Apenas concluídos
         if (volunteer.status !== 'CONCLUIDO') return false;
       }
 
-      // Filtros
+      // Filtros Padrão
       return (
         (!selectedRegion || volunteer.location === selectedRegion) && 
         (!selectedSex || volunteer.sex === selectedSex) &&
@@ -208,7 +213,7 @@ export default function ResearcherCandidates() {
         (!selectedEducation || volunteer.education === selectedEducation)
       );
     });
-  }, [allVolunteers, activeTab, selectedRegion, selectedSex, selectedGender, selectedEducation]);
+  }, [allVolunteers, activeTab, selectedRegion, selectedSex, selectedGender, selectedEducation, hideRefused]); // Adicionado hideRefused
 
   const handleExport = async () => {
     if (filteredVolunteers.length === 0) {
@@ -277,9 +282,7 @@ export default function ResearcherCandidates() {
 
   const handleCardPress = (volunteer: VolunteerData) => {
     if (activeTab === 'candidates') {
-        // Na aba de candidatos, verificamos o status específico
         if (volunteer.status === 'PENDENTE') {
-            // Vai para a tela de análise
             router.push({
                 pathname: "/(protected)/researcher/volunteer-details/[id]",
                 params: { 
@@ -294,8 +297,6 @@ export default function ResearcherCandidates() {
             Alert.alert("Recusado", "Esta candidatura foi recusada.");
         }
     } else {
-        // Na aba Em Andamento (só tem CONCLUIDO)
-        // Vai para o Chat
         router.push({
             pathname: "/(protected)/chat/[id]", 
             params: { 
@@ -348,6 +349,26 @@ export default function ResearcherCandidates() {
             </Text>
         </TouchableOpacity>
       </View>
+
+      {/* NOVO BOTÃO: Ocultar Recusados (Apenas na aba Candidatos) */}
+      {activeTab === 'candidates' && (
+        <View style={styles.toggleContainer}>
+          <TouchableOpacity 
+            style={styles.toggleButton} 
+            onPress={() => setHideRefused(!hideRefused)}
+          >
+            <Ionicons 
+                name={hideRefused ? "eye" : "eye-off"} 
+                size={16} 
+                color="#6c757d" 
+                style={{ marginRight: 6 }}
+            />
+            <Text style={styles.toggleButtonText}>
+                {hideRefused ? "Mostrar Recusados" : "Ocultar Recusados"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       <View style={styles.filtersWrapper}>
         <TouchableOpacity 
@@ -452,7 +473,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         borderRadius: 8,
         padding: 4,
-        marginBottom: 20,
+        marginBottom: 10, // Reduzi um pouco para caber o novo botão
         borderWidth: 1,
         borderColor: '#eee',
     },
@@ -474,6 +495,25 @@ const styles = StyleSheet.create({
         color: '#15715A',
         fontWeight: 'bold',
     },
+    
+    // Estilos do Botão Ocultar
+    toggleContainer: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginBottom: 10,
+    },
+    toggleButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 4,
+        paddingHorizontal: 8,
+    },
+    toggleButtonText: {
+        fontSize: 13,
+        color: '#6c757d',
+        fontWeight: '500',
+    },
+
     filtersWrapper: {
       backgroundColor: '#fff',
       borderRadius: 16,

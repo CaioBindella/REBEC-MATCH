@@ -48,7 +48,7 @@ export default function VolunteerDetailsScreen() {
           Alert.alert(
               "Sucesso", 
               aprovado ? "Candidato Aprovado e Match Confirmado!" : "Candidato Recusado.",
-              [{ text: "OK", onPress: () => router.back() }]
+              [{ text: "OK", onPress: () => router.push('/(protected)/home/page') }]
           );
       } catch (error) {
           Alert.alert("Erro", "Falha ao processar análise.");

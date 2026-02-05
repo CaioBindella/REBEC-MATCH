@@ -308,22 +308,31 @@ export default function RegisterForm() {
       {/* Termos de Uso */}
       <TouchableOpacity 
         style={styles.termosContainer} 
-        onPress={() => setAceitoTermos(!aceitoTermos)}
+        onPress={() => setAceitoTermos(!aceitoTermos)} // Clicar na linha toda marca/desmarca
         activeOpacity={0.8}
       >
         <View style={[styles.checkboxBase, aceitoTermos && styles.checkboxChecked]}>
           {aceitoTermos && <Ionicons name="checkmark" size={18} color="#fff" />}
         </View>
         <Text style={styles.termosText}>
-            Eu aceito os <Text style={{ textDecorationLine: 'underline', fontWeight: 'bold' }}>Termos de Ciência</Text>
+            Eu aceito os{' '}
+            <Text 
+              style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#166865' }}
+              onPress={(e) => {
+                e.stopPropagation(); 
+                router.push('/(public)/terms/page');
+              }}
+            >
+              Termos de Ciência
+            </Text>
         </Text>
       </TouchableOpacity>
 
       {/* Botão de Envio */}
       <TouchableOpacity 
-        style={[styles.button, loading && { opacity: 0.7 }]} 
+        style={[styles.button, (!aceitoTermos || loading) && { opacity: 0.5 }]} 
         onPress={handleSubmit(onSubmit)}
-        disabled={loading}
+        disabled={!aceitoTermos || loading}
       >
         {loading ? (
             <ActivityIndicator color="#fff" />

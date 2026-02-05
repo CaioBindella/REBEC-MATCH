@@ -10,13 +10,13 @@ export default function ResearcherDashboard() {
         <Text style={styles.mainTitle}>Pesquisador</Text>
       </View>
 
-      <InfoCard
+      {/* <InfoCard
         icon={{ name: 'add-circle-outline', size: 60, color: '#15715A' }}
         title="Registrar Novo Estudo"
         description="Cadastre uma nova pesquisa, defina seus objetivos, critérios de inclusão e prepare-se para recrutar voluntários."
         buttonText="Registrar Estudo"
         linkTo="/(protected)/researcher/create-study/page"
-      />
+      /> */}
 
       <InfoCard
         icon={{ name: 'list-outline', size: 60, color: '#15715A' }}
@@ -34,13 +34,13 @@ export default function ResearcherDashboard() {
         linkTo="/(protected)/researcher/manage-candidates/page"
       />
 
-      <InfoCard
+      {/* <InfoCard
         icon={{ name: 'chatbubble-ellipses-outline', size: 60, color: '#15715A' }}
         title="Contato com Voluntários"
         description="Estabeleça comunicação direta com os voluntários inscritos para esclarecer dúvidas, fornecer informações adicionais ou coordenar detalhes do estudo."
         buttonText="Conversar"
         linkTo="/(protected)/researcher/contacts/page"
-      />
+      /> */}
     </View>
   );
 }
