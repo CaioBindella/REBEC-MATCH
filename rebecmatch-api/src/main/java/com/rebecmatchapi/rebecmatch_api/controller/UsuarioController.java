@@ -1,5 +1,6 @@
 package com.rebecmatchapi.rebecmatch_api.controller;
 
+import com.rebecmatchapi.rebecmatch_api.dto.Usuario.ChangePasswordDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioUpdateDTO;
@@ -42,6 +43,12 @@ public class UsuarioController {
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
+    }
+
+    @PutMapping("/{id}/senha")
+    public ResponseEntity<Void> alterarSenha(@PathVariable Integer id, @RequestBody ChangePasswordDTO dto) {
+        usuarioService.alterarSenha(id, dto.getSenhaAtual(), dto.getNovaSenha());
+        return ResponseEntity.noContent().build();
     }
 
     // Recebe UsuarioUpdateDTO e retorna UsuarioResponseDTO

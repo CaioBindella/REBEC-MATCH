@@ -7,6 +7,7 @@ import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import com.rebecmatchapi.rebecmatch_api.entity.Voluntario;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoUsuario;
+import com.rebecmatchapi.rebecmatch_api.exception.BusinessException;
 import com.rebecmatchapi.rebecmatch_api.repository.PesquisadorRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
@@ -74,6 +75,18 @@ public class UsuarioService {
             voluntario.setDistancia(0.0); // Valor padrão inicial
             voluntarioRepository.save(voluntario);
         }
+    }
+
+    public void alterarSenha(Integer id, String senhaAtual, String novaSenha) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+
+        if (!passwordEncoder.matches(senhaAtual, usuario.getSenha())) {
+            throw new BusinessException("A senha atual informada está incorreta.");
+        }
+
+        usuario.setSenha(passwordEncoder.encode(novaSenha));
+        usuarioRepository.save(usuario);
     }
 
     /**

@@ -1,5 +1,6 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Estudo;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 import java.time.LocalDate;
@@ -17,6 +18,7 @@ public class EstudoUpdateDTO {
     private String url;
     private String primarySponsor;
     private String hcFreetext;
+    @JsonProperty("iFreetext")
     private String iFreetext;
     private String approvalDate;
     private String secId;
