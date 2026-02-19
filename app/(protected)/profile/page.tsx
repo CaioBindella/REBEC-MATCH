@@ -77,10 +77,6 @@ export default function ProfilePage() {
           <InfoRow icon="mail-outline" label="E-mail" value={user.email} />
           <InfoRow icon="finger-print-outline" label="ID" value={user.id} />
         </View>
-        
-        <TouchableOpacity style={styles.editButton}>
-          <Text style={styles.editButtonText}>Editar Perfil</Text>
-        </TouchableOpacity>
 
       </ScrollView>
     </SafeAreaView>

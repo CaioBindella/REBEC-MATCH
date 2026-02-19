@@ -12,17 +12,9 @@ import {
   TextInputProps,
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/reusable/Header';
-
-interface StudyData {
-  id: number;
-  titulo: string;
-  codigoRegistro: string;
-  status: string;
-  dataInicio: string;
-  dataFim: string;
-  informacoesGerais: string;
-}
+import { apiService } from '@/services/api/apiClient';
 
 interface InputFieldProps extends TextInputProps {
   label: string;
@@ -35,64 +27,143 @@ const InputField = ({ label, value, ...props }: InputFieldProps) => (
   </View>
 );
 
-const getStudyById = (id: string): StudyData => ({
-  id: parseInt(id, 10),
-  titulo: 'Estudo sobre Eficácia de Novo Medicamento para Enxaqueca',
-  codigoRegistro: 'REBEC-XYZ-987',
-  status: 'EM_ANDAMENTO',
-  dataInicio: '2025-08-10',
-  dataFim: '2026-08-10',
-  informacoesGerais: 'Este estudo visa avaliar a redução na frequência de crises de enxaqueca em pacientes que utilizam o novo composto experimental X.',
-});
+// Mapeamento de Status (UI <-> API)
+const statusToUI: Record<string, string> = {
+  'Recruiting': 'RECRUTANDO',
+  'Active, not recruiting': 'EM_ANDAMENTO',
+  'Completed': 'CONCLUIDO',
+  'Suspended': 'SUSPENSO',
+};
+
+const uiToStatus: Record<string, string> = {
+  'RECRUTANDO': 'Recruiting',
+  'EM_ANDAMENTO': 'Active, not recruiting',
+  'CONCLUIDO': 'Completed',
+  'SUSPENSO': 'Suspended',
+};
+
+const statusOptions = ['RECRUTANDO', 'EM_ANDAMENTO', 'CONCLUIDO'];
 
 export default function EditStudyPage() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
 
-  const [formData, setFormData] = useState<StudyData | null>(null);
+  const [originalData, setOriginalData] = useState<any>(null);
+  
+  // O estado agora controla apenas o título e o status
+  const [formData, setFormData] = useState({
+    titulo: '',
+    status: '',
+  });
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      const studyData = getStudyById(id);
-      setFormData(studyData);
-    }
+    fetchStudyData();
   }, [id]);
 
-  const handleInputChange = (field: keyof StudyData, value: string) => {
-    if (formData) {
-      setFormData(prev => ({ ...prev!, [field]: value }));
+  const fetchStudyData = async () => {
+    if (!id) return;
+    try {
+      setIsLoading(true);
+      const data = await apiService.estudo.getById(Number(id));
+      
+      setOriginalData(data); // Guarda tudo para não perder campos ao atualizar
+
+      const statusVisual = statusToUI[data.recruitmentStatus] || 'EM_ANDAMENTO';
+
+      setFormData({
+        titulo: data.publicTitle || '',
+        status: statusOptions.includes(statusVisual) ? statusVisual : 'EM_ANDAMENTO',
+      });
+
+    } catch (error) {
+      console.error('Erro ao buscar estudo', error);
+      Alert.alert('Erro', 'Não foi possível carregar os detalhes do estudo.');
+      router.back();
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleUpdate = () => {
-    console.log('Atualizando estudo com os dados:', formData);
-    Alert.alert('Sucesso', 'Alterações salvas (simulação).');
-    router.back();
+  const handleInputChange = (field: string, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  if (!formData) {
-    return <ActivityIndicator style={{flex: 1}} size="large" />;
-  }
+  const handleUpdate = async () => {
+    if (!formData.titulo.trim()) {
+      Alert.alert('Atenção', 'O título do estudo não pode ficar vazio.');
+      return;
+    }
 
-  // Opções de status disponíveis
-  const statusOptions = ['RECRUTANDO', 'EM_ANDAMENTO', 'CONCLUIDO'];
+    try {
+      setIsSaving(true);
+
+      const statusBanco = uiToStatus[formData.status] || formData.status;
+
+      // Monta o payload restaurando o scientificTitle e outros campos que não foram editados
+      const payload = {
+        pesquisadorId: originalData.pesquisador?.id || originalData.pesquisadorId,
+        publicTitle: formData.titulo,
+        recruitmentStatus: statusBanco, 
+        
+        scientificTitle: originalData.scientificTitle, // Usa o valor intocado do banco
+        studyType: originalData.studyType,
+        phase: originalData.phase,
+        dateRegistration: originalData.dateRegistration,
+        dateEnrolment: originalData.dateEnrolment,
+        url: originalData.url,
+        primarySponsor: originalData.primarySponsor,
+        hcFreetext: originalData.hcFreetext,
+        iFreetext: originalData.iFreetext,
+        approvalDate: originalData.approvalDate,
+        secId: originalData.secId,
+        trialId: originalData.trialId,
+      };
+
+      await apiService.estudo.update(Number(id), payload);
+
+      Alert.alert('Sucesso', 'As informações do estudo foram atualizadas!', [
+        { text: 'OK', onPress: () => router.back() }
+      ]);
+      
+    } catch (error) {
+      console.error('Erro ao atualizar', error);
+      Alert.alert('Erro', 'Não foi possível salvar as alterações.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#15715A" />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
+      
+      <View style={styles.headerTitleContainer}>
         <Text style={styles.pageTitle}>Editar Estudo</Text>
+        <View style={{ width: 24 }} /> 
+      </View>
+
+      <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
         
         <InputField
-          label="Título do Estudo"
+          label="Título do Estudo (Público)"
           value={formData.titulo}
           onChangeText={(text) => handleInputChange('titulo', text)}
         />
 
-        {/* --- NOVO SELETOR DE STATUS --- */}
         <View style={styles.inputGroup}>
-          <Text style={styles.label}>Status Atual</Text>
+          <Text style={styles.label}>Status do Recrutamento</Text>
           <View style={styles.statusSelector}>
             {statusOptions.map((option) => (
               <TouchableOpacity
@@ -102,6 +173,7 @@ export default function EditStudyPage() {
                   formData.status === option && styles.statusButtonActive
                 ]}
                 onPress={() => handleInputChange('status', option)}
+                activeOpacity={0.8}
               >
                 <Text style={[
                   styles.statusText,
@@ -113,17 +185,19 @@ export default function EditStudyPage() {
             ))}
           </View>
         </View>
-
-        <InputField
-          label="Informações Gerais"
-          value={formData.informacoesGerais}
-          onChangeText={(text) => handleInputChange('informacoesGerais', text)}
-          multiline
-          numberOfLines={5}
-        />
-        <TouchableOpacity style={styles.submitButton} onPress={handleUpdate}>
-          <Text style={styles.submitButtonText}>Salvar Alterações</Text>
+        
+        <TouchableOpacity 
+            style={[styles.submitButton, isSaving && { opacity: 0.7 }]} 
+            onPress={handleUpdate}
+            disabled={isSaving}
+        >
+          {isSaving ? (
+             <ActivityIndicator color="#fff" />
+          ) : (
+             <Text style={styles.submitButtonText}>Salvar Alterações</Text>
+          )}
         </TouchableOpacity>
+
       </ScrollView>
     </SafeAreaView>
   );
@@ -131,16 +205,22 @@ export default function EditStudyPage() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
-  scrollContainer: { padding: 20 },
-  pageTitle: { fontSize: 24, fontWeight: 'bold', color: '#212529', marginBottom: 24 },
+  headerTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: 15,
+  },
+  backButton: { padding: 5 },
+  scrollContainer: { padding: 20, paddingBottom: 40 },
+  pageTitle: { fontSize: 22, fontWeight: 'bold', color: '#212529', textAlign: 'center', flex: 1 },
   inputGroup: { width: '100%', marginBottom: 20 },
-  label: { fontSize: 16, fontWeight: '600', color: '#495057', marginBottom: 8 },
+  label: { fontSize: 15, fontWeight: '600', color: '#495057', marginBottom: 8 },
   input: { backgroundColor: '#fff', minHeight: 50, borderWidth: 1, borderColor: '#ced4da', borderRadius: 8, paddingHorizontal: 15, fontSize: 16 },
   textarea: { height: 120, textAlignVertical: 'top', paddingTop: 15 },
-  submitButton: { backgroundColor: '#15715A', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20 },
+  submitButton: { backgroundColor: '#15715A', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 10 },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
   
-  // Estilos para o seletor de status
   statusSelector: {
     flexDirection: 'row',
     backgroundColor: '#fff',
@@ -151,7 +231,7 @@ const styles = StyleSheet.create({
   },
   statusButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 14,
     alignItems: 'center',
     borderRightWidth: 1,
     borderRightColor: '#eee',
@@ -162,8 +242,8 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
-    color: '#495057',
+    fontWeight: 'bold',
+    color: '#6c757d',
   },
   statusTextActive: {
     color: '#fff',

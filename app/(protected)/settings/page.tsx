@@ -17,7 +17,7 @@ import { push } from 'expo-router/build/global-state/routing';
 
 export default function SettingsPage() {
   const router = useRouter();
-//   const { signOut } = useAuth(); // Se quiser usar o logout real
+  const { logOut } = useAuth();
   
   // Estados para os Switches
   const [pushEnabled, setPushEnabled] = useState(true);
@@ -35,10 +35,8 @@ export default function SettingsPage() {
           text: "Sair", 
           style: "destructive", 
           onPress: async () => {
-             // await signOut(); 
+             await logOut(); 
              // router.replace('/login');
-             console.log("Logout acionado");
-             Alert.alert("Logout", "Você saiu do app (simulação).");
              router.replace('/(auth)/login');
           } 
         }
@@ -101,7 +99,7 @@ export default function SettingsPage() {
             icon="lock-closed-outline" 
             title="Segurança" 
             subtitle="Alterar senha"
-            onPress={() => Alert.alert('Segurança', 'Tela de alterar senha')} 
+            onPress={() => router.push('/(protected)/settings/change-password')} 
           />
         </View>
 

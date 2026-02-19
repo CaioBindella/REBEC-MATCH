@@ -70,6 +70,10 @@ export const apiService = {
     update: async (id: number, data: Partial<UsuarioCreateDTO>) => {
       const response = await api.put<UsuarioResponseDTO>(`/api/v1/usuarios/${id}`, data);
       return response.data;
+    },
+    updatePassword: async (id: number, data: { senhaAtual: string; novaSenha: string }) => {
+      const response = await api.put(`/api/v1/usuarios/${id}/senha`, data);
+      return response.data;
     }
   },
 
@@ -105,6 +109,10 @@ export const apiService = {
       const response = await api.get('/api/v1/estudos/recrutando');
       return response.data;
     },
+    update: async (id: number, data: any) => {
+    const response = await api.put(`/api/v1/estudos/${id}`, data);
+    return response.data;
+  },
   },
 
   doenca: {
