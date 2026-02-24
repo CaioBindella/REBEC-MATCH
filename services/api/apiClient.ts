@@ -23,6 +23,10 @@ export const api = axios.create({
   },
 });
 
+export const chatApi = axios.create({
+  baseURL: 'http://10.0.2.2:3001',
+});
+
 // Interceptor para adicionar o Token automaticamente em todas as requisições
 api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync('user_token');

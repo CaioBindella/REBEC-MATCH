@@ -23,6 +23,7 @@ interface StudyData {
   estudoId: number;     
   titulo: string;
   pesquisador: { nomeFicticio: string };
+  pesquisadorId: number;
   status: string;
 }
 
@@ -67,6 +68,7 @@ export default function MyStudiesScreen() {
         pesquisador: { 
             nomeFicticio: item.pesquisadorNomeFicticio || 'Pesquisador' 
         },
+        pesquisadorId: item.pesquisadorId,
         status: item.status
       }));
 
@@ -236,8 +238,8 @@ export default function MyStudiesScreen() {
                             router.push({
                                 pathname: "/(protected)/chat/[id]", 
                                 params: { 
-                                    id: item.estudoId, 
-                                    voluntarioId: user?.perfilId 
+                                    id: item.estudoId,
+                                    pesquisadorId: item.pesquisadorId 
                                 },
                             })
                         }
