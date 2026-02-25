@@ -24,8 +24,24 @@ export const api = axios.create({
 });
 
 export const chatApi = axios.create({
-  baseURL: 'http://10.0.2.2:3001',
+  baseURL: 'http://10.0.2.2:4000',
 });
+
+chatApi.interceptors.request.use(
+  async (config) => {
+    
+    const token = await SecureStore.getItemAsync('user_token'); 
+    
+    console.log("Token a ser enviado para o Node:", token ? "SIM, TEM TOKEN" : "NÃO, ESTÁ VAZIO");
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // Interceptor para adicionar o Token automaticamente em todas as requisições
 api.interceptors.request.use(async (config) => {

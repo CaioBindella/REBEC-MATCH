@@ -40,12 +40,14 @@ export default function ChatScreen() {
   }, [id, myId, targetLeitorId]); // <-- Atualizei as dependências aqui
 
   const fetchMessages = async () => {
-    // Verificamos se temos quem está enviando (myId) e quem vai ler (targetLeitorId)
-    if (!myId || !id || !targetLeitorId) return;
+    // Se faltar algum dado, nós avisamos no console E paramos o loading!
+    if (!myId || !id || !targetLeitorId) {
+        console.warn("Faltam parâmetros para abrir o chat:", { myId, id, targetLeitorId });
+        setLoading(false); // <-- ISSO RESOLVE O CARREGAMENTO INFINITO
+        return;
+    }
     
     try {
-        // Usa a ROTA DO NODE.JS: GET /mensagens/:estudoId/:usuario1/:usuario2
-        // Enviando exatamente os 3 parâmetros que o Node.js espera!
         const response = await chatApi.get(`/mensagens/${id}/${myId}/${targetLeitorId}`);
         setMessages(response.data);
     } catch (error) {
@@ -107,18 +109,20 @@ export default function ChatScreen() {
         <View style={{width: 24}} />
       </View>
 
-      {loading ? (
-          <ActivityIndicator size="large" color="#15715A" style={{marginTop: 50}} />
-      ) : (
-          <FlatList
-            ref={flatListRef}
-            data={messages}
-            keyExtractor={(item) => String(item.id)}
-            renderItem={renderItem}
-            contentContainerStyle={{ padding: 15 }}
-            onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-          />
-      )}
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        {loading ? (
+            <ActivityIndicator size="large" color="#15715A" />
+        ) : (
+            <FlatList
+              ref={flatListRef}
+              data={messages}
+              keyExtractor={(item) => String(item.id)}
+              renderItem={renderItem}
+              contentContainerStyle={{ padding: 15 }}
+              onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
+            />
+        )}
+      </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : "height"}>
         <View style={styles.inputContainer}>

@@ -297,12 +297,13 @@ export default function ResearcherCandidates() {
             Alert.alert("Recusado", "Esta candidatura foi recusada.");
         }
     } else {
+        console.log("EstudoId:", volunteer.estudoId);
         router.push({
-            pathname: "/(protected)/chat/[id]", 
-            params: { 
+              pathname: "/(protected)/chat/[id]", 
+              params: {
                 id: volunteer.estudoId,
-                voluntarioId: volunteer.voluntarioIdReal 
-            },
+                pesquisadorId: user?.perfilId
+              },
         });
     }
   };
