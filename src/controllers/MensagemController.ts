@@ -13,15 +13,25 @@ export class MensagensController {
         const data = createMensagemSchema.parse(req.body);
 
         try {
-            const result = await pool.query(
-                `INSERT INTO "Mensagem" ("autorId", "leitorId", "conteudo") 
-                 VALUES ($1, $2, $3) RETURNING *`,
-                [data.autorId, data.leitorId, data.conteudo]
+            // 1. Faz o INSERT no MySQL (substituindo $1 por ?)
+            const [result]: any = await pool.query(
+                `INSERT INTO mensagem (autor_id, leitor_id, estudo_id, conteudo, data_envio) 
+                 VALUES (?, ?, ?, ?, NOW())`,
+                [data.autorId, data.leitorId, data.estudoId, data.conteudo]
             );
 
-            const novaMensagem = result.rows[0];
+            // 2. Pega o ID da mensagem que acabou de ser inserida
+            const insertId = result.insertId;
 
-            // Envia para o destinatário (leitorId) e autorId (opcional)
+            // 3. Faz um SELECT para buscar a mensagem completa recém-criada
+            const [rows]: any = await pool.query(
+                `SELECT * FROM mensagem WHERE id = ?`,
+                [insertId]
+            );
+
+            const novaMensagem = rows[0];
+
+            // Envia via Socket para o destinatário e remetente
             this.io.to(`user-${data.leitorId}`).emit('nova-mensagem', novaMensagem);
             this.io.to(`user-${data.autorId}`).emit('mensagem-enviada', novaMensagem);
 
@@ -33,18 +43,21 @@ export class MensagensController {
     }
 
     async MensagesList(req: Request, res: Response): Promise<void> {
-        const { usuario1, usuario2 } = req.params;
+        // Recebe o Estudo e os dois usuários envolvidos no chat
+        const { estudoId, usuario1, usuario2 } = req.params;
 
         try {
-            const result = await pool.query(
-                `SELECT * FROM "Mensagem"
-                 WHERE ("autorId" = $1 AND "leitorId" = $2)
-                    OR ("autorId" = $2 AND "leitorId" = $1)
+            // Consulta no MySQL
+            const [rows]: any = await pool.query(
+                `SELECT * FROM mensagem 
+                 WHERE estudo_id = ? 
+                   AND ((autor_id = ? AND leitor_id = ?) 
+                    OR (autor_id = ? AND leitor_id = ?))
                  ORDER BY data_envio ASC`,
-                [usuario1, usuario2]
+                [estudoId, usuario1, usuario2, usuario2, usuario1]
             );
 
-            res.json(result.rows);
+            res.json(rows);
         } catch (error) {
             console.error('Erro ao buscar conversas:', error);
             res.status(500).json({ message: 'Erro interno do servidor.' });

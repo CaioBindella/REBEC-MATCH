@@ -1,32 +1,27 @@
-import { Pool } from 'pg';
+import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-const pool = new Pool({
-  user: process.env.POSTGRES_USER,
-  password: process.env.POSTGRES_PASSWORD,
-  host: process.env.POSTGRES_HOST,
-  port: parseInt(process.env.POSTGRES_PORT || '5432'),
-  database: process.env.POSTGRES_NAME,
-  // ssl: process.env.NODE_ENV === 'production'
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'match_v2',
+  port: parseInt(process.env.DB_PORT || '3306'),
+  waitForConnections: true,
+  connectionLimit: 100,
+  queueLimit: 0
 });
 
-// Test the connection
-pool.connect((err, client, release) => {
-  if (err) {
-    return console.error('Error acquiring client', err.stack);
-  }
-  if (client) {
-    client.query('SELECT NOW()', (err, result) => {
-      release();
-      if (err) {
-        return console.error('Error executing query', err.stack);
-      }
-      console.log('Connected to PostgreSQL Database');
-    });
-  }
-});
+// Teste de conexão
+pool.getConnection()
+  .then((conn) => {
+    console.log('Conectado à Base de Dados MySQL');
+    conn.release();
+  })
+  .catch((err) => {
+    console.error('Erro ao conectar ao MySQL:', err.message);
+  });
 
 export default pool;
-export { pool };
