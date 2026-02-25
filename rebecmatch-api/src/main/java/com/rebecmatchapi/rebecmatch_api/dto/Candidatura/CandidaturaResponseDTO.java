@@ -14,4 +14,5 @@ public class CandidaturaResponseDTO {
     private String pesquisadorNomeFicticio;
     private StatusCandidatura status;
     private LocalDateTime dataCandidatura;
+    private Integer pesquisadorId;
 }
