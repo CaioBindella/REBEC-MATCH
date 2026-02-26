@@ -76,7 +76,7 @@ public class CandidaturaController {
 
         if (c.getEstudo().getPesquisador() != null) {
             dto.setPesquisadorNomeFicticio(c.getEstudo().getPesquisador().getNomeFicticio());
-            dto.setPesquisadorId(c.getEstudo().getPesquisador().getId());
+            dto.setPesquisadorId(c.getEstudo().getPesquisador().getUsuario().getId());
         }
 
         return dto;

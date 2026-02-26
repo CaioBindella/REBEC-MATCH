@@ -140,14 +140,14 @@ public class CandidaturaService {
                 dto.setSexo(user.getSexo().toString()); // MASCULINO, FEMININO
             }
             dto.setLocalizacao(user.getCep());
-
+            dto.setEstudoId(c.getEstudo().getId());
             dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
             dto.setStatus(c.getStatus().toString());
 
             // Descrição fictícia ou dados reais se tiver
             dto.setDescricao("Candidato interessado no estudo " + c.getEstudo().getScientificTitle());
 
-            dto.setVoluntarioIdReal(c.getVoluntario().getId());
+            dto.setVoluntarioIdReal(c.getVoluntario().getUsuario().getId());
 
             return dto;
         }).collect(Collectors.toList());
