@@ -13,10 +13,20 @@ export default function ChatScreen() {
   const router = useRouter();
   const { user } = useAuth();
   
-  // Parâmetros recebidos na navegação
-  // 'id' é o ID do estudo.
-  // 'voluntarioId' e 'pesquisadorId' devem ser passados na navegação para a tela de chat saber quem é quem
-  const { id, voluntarioId, pesquisadorId } = useLocalSearchParams<{ id: string, voluntarioId?: string, pesquisadorId?: string }>();
+  // Adicionados nomeContato e tituloEstudo nos parâmetros
+  const { 
+      id, 
+      voluntarioId, 
+      pesquisadorId, 
+      nomeContato, 
+      tituloEstudo 
+  } = useLocalSearchParams<{ 
+      id: string, 
+      voluntarioId?: string, 
+      pesquisadorId?: string,
+      nomeContato?: string,
+      tituloEstudo?: string
+  }>();
   
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState('');
@@ -24,26 +34,22 @@ export default function ChatScreen() {
   const [sending, setSending] = useState(false);
   const flatListRef = useRef<FlatList>(null);
 
-  // Lógica para definir os IDs corretamente para a API do Node.js
-  const myId = user?.id; // Assumindo que user.id seja o ID da tabela Usuario
-  const isVolunteer = user?.tipoEspecifico === 'VOLUNTARIO'; // Ajuste conforme a propriedade do seu AuthContext
+  const myId = user?.id; 
+  const isVolunteer = user?.tipoEspecifico === 'VOLUNTARIO'; 
   
-  // O ID do voluntário usado na rota GET
   const targetVoluntarioId = isVolunteer ? myId : Number(voluntarioId);
-  // Quem vai ler a mensagem (O oposto de quem está logado)
   const targetLeitorId = isVolunteer ? Number(pesquisadorId) : Number(voluntarioId);
 
   useEffect(() => {
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000); 
     return () => clearInterval(interval);
-  }, [id, myId, targetLeitorId]); // <-- Atualizei as dependências aqui
+  }, [id, myId, targetLeitorId]); 
 
   const fetchMessages = async () => {
-    // Se faltar algum dado, nós avisamos no console E paramos o loading!
     if (!myId || !id || !targetLeitorId) {
         console.warn("Faltam parâmetros para abrir o chat:", { myId, id, targetLeitorId });
-        setLoading(false); // <-- ISSO RESOLVE O CARREGAMENTO INFINITO
+        setLoading(false);
         return;
     }
     
@@ -59,21 +65,19 @@ export default function ChatScreen() {
 
   const handleSend = async () => {
     if (inputText.trim() === '' || !myId || !targetLeitorId) {
-        console.warn("Faltam dados para enviar a mensagem (leitorId não encontrado)");
         return;
     }
     
     setSending(true);
     try {
-      // Usa a ROTA DO NODE.JS: POST /mensagens
       await chatApi.post('/mensagens', {
           autorId: myId,
-          leitorId: targetLeitorId, // Agora o backend Node.js recebe exatamente para quem é
+          leitorId: targetLeitorId, 
           estudoId: Number(id),
           conteudo: inputText
       });
       setInputText('');
-      fetchMessages(); // Recarrega imediatamente
+      fetchMessages(); 
     } catch (error) {
       console.error("Erro ao enviar mensagem:", error);
     } finally {
@@ -82,7 +86,6 @@ export default function ChatScreen() {
   };
 
   const renderItem = ({ item }: { item: any }) => {
-    // O Node retorna "autor_id" na consulta SQL, então pegamos assim:
     const isMe = item.autor_id === myId; 
     
     return (
@@ -101,12 +104,26 @@ export default function ChatScreen() {
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#f5f5f5' }}>
+      
+      {/* HEADER ATUALIZADO */}
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
             <Ionicons name="arrow-back" size={24} color="#333" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Chat do Estudo</Text>
-        <View style={{width: 24}} />
+        
+        {/* Ícone de Avatar genérico para dar um ar mais profissional */}
+        <View style={styles.avatar}>
+            <Ionicons name="person" size={20} color="#fff" />
+        </View>
+
+        <View style={styles.headerTextContainer}>
+            <Text style={styles.headerTitle} numberOfLines={1}>
+                {nomeContato || 'Usuário'}
+            </Text>
+            <Text style={styles.headerSubtitle} numberOfLines={1}>
+                {tituloEstudo || 'Chat do Estudo'}
+            </Text>
+        </View>
       </View>
 
       <View style={{ flex: 1, justifyContent: 'center' }}>
@@ -147,8 +164,45 @@ export default function ChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 15, backgroundColor: '#fff', elevation: 2 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#15715A' },
+  // Estilos do Novo Header
+  header: { 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      padding: 12, 
+      backgroundColor: '#fff', 
+      elevation: 3,
+      borderBottomWidth: 1,
+      borderBottomColor: '#f0f0f0'
+  },
+  backButton: {
+      padding: 5,
+      marginRight: 5
+  },
+  avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: '#15715A',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12
+  },
+  headerTextContainer: {
+      flex: 1,
+      justifyContent: 'center'
+  },
+  headerTitle: { 
+      fontSize: 16, 
+      fontWeight: 'bold', 
+      color: '#333' 
+  },
+  headerSubtitle: {
+      fontSize: 12,
+      color: '#666',
+      marginTop: 2
+  },
+
+  // Restante dos estilos
   bubbleContainer: { flexDirection: 'row', marginBottom: 10 },
   rightContainer: { justifyContent: 'flex-end' },
   leftContainer: { justifyContent: 'flex-start' },
@@ -159,7 +213,7 @@ const styles = StyleSheet.create({
   rightText: { color: '#fff' },
   leftText: { color: '#333' },
   timeText: { fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
-  inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: '#fff', alignItems: 'center' },
+  inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: '#fff', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f0f0' },
   input: { flex: 1, backgroundColor: '#f0f2f5', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, maxHeight: 100, marginRight: 10 },
   sendBtn: { backgroundColor: '#15715A', width: 45, height: 45, borderRadius: 23, justifyContent: 'center', alignItems: 'center' }
 });

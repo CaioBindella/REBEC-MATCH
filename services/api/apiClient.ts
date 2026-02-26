@@ -30,9 +30,7 @@ export const chatApi = axios.create({
 chatApi.interceptors.request.use(
   async (config) => {
     
-    const token = await SecureStore.getItemAsync('user_token'); 
-    
-    console.log("Token a ser enviado para o Node:", token ? "SIM, TEM TOKEN" : "NÃO, ESTÁ VAZIO");
+    const token = await SecureStore.getItemAsync('user_token');
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;

@@ -300,10 +300,12 @@ export default function ResearcherCandidates() {
         console.log("EstudoId:", volunteer.estudoId);
         router.push({
               pathname: "/(protected)/chat/[id]", 
-              params: {
+              params: { 
                 id: volunteer.estudoId,
-                pesquisadorId: user?.perfilId
-              },
+                voluntarioId: volunteer.voluntarioIdReal,
+                nomeContato: volunteer.nomeFicticio,
+                tituloEstudo: volunteer.studyApplied
+            },
         });
     }
   };

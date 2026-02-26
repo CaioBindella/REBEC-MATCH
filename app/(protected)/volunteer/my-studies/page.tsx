@@ -238,8 +238,10 @@ export default function MyStudiesScreen() {
                             router.push({
                                 pathname: "/(protected)/chat/[id]", 
                                 params: { 
-                                    id: item.estudoId,
-                                    pesquisadorId: item.pesquisadorId 
+                                    id: item.estudoId, 
+                                    pesquisadorId: item.pesquisadorId,
+                                    nomeContato: item.pesquisador.nomeFicticio,
+                                    tituloEstudo: item.titulo 
                                 },
                             })
                         }
