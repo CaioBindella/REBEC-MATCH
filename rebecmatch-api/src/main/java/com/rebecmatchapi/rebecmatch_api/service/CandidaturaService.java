@@ -139,7 +139,11 @@ public class CandidaturaService {
             if (user.getSexo() != null) {
                 dto.setSexo(user.getSexo().toString()); // MASCULINO, FEMININO
             }
-            dto.setLocalizacao(user.getCep());
+            if (user.getCep() != null && user.getCep().length() >= 5) {
+                dto.setLocalizacao(user.getCep().substring(0, 5));
+            } else {
+                dto.setLocalizacao(user.getCep());
+            }
             dto.setEstudoId(c.getEstudo().getId());
             dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
             dto.setStatus(c.getStatus().toString());

@@ -4,10 +4,13 @@ import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidatoDetalhadoDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Candidatura;
+import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
+import com.rebecmatchapi.rebecmatch_api.exception.ForbiddenException;
 import com.rebecmatchapi.rebecmatch_api.service.CandidaturaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,7 +62,11 @@ public class CandidaturaController {
     }
 
     @GetMapping("/pesquisador/{pesquisadorId}")
-    public ResponseEntity<List<CandidatoDetalhadoDTO>> listarPorPesquisador(@PathVariable Integer pesquisadorId) {
+    public ResponseEntity<List<CandidatoDetalhadoDTO>> listarPorPesquisador(@PathVariable Integer pesquisadorId,
+                                                                             @AuthenticationPrincipal Usuario usuarioLogado) {
+        if (usuarioLogado.getPesquisador() == null || !usuarioLogado.getPesquisador().getId().equals(pesquisadorId)) {
+            throw new ForbiddenException("Você só pode consultar candidatos dos seus próprios estudos.");
+        }
         List<CandidatoDetalhadoDTO> list = candidaturaService.listarPorPesquisador(pesquisadorId);
         return ResponseEntity.ok(list);
     }
