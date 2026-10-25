@@ -2,6 +2,8 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.List;
 
@@ -13,6 +15,8 @@ public class Voluntario {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", referencedColumnName = "id", nullable = false, unique = true)
     private Usuario usuario;
@@ -22,6 +26,8 @@ public class Voluntario {
     @Column(name = "nomeFicticio")
     private String nomeFicticio;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "voluntario")
     private List<Resposta> respostas;
 }

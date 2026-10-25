@@ -18,6 +18,8 @@ public class Estudo {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "pesquisador_id", nullable = false)
     private Pesquisador pesquisador;
@@ -64,9 +66,13 @@ public class Estudo {
     @Column(name = "trial_id", nullable = false)
     private String trialId;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
     private List<Formulario> formularios;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
     private List<Criterio> criterios;
 

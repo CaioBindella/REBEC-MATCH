@@ -1,69 +1,43 @@
 package com.rebecmatchapi.rebecmatch_api.service;
 
-import com.rebecmatchapi.rebecmatch_api.dto.Voluntario.VoluntarioCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Voluntario.VoluntarioUpdateDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import com.rebecmatchapi.rebecmatch_api.entity.Voluntario;
-import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
-import com.rebecmatchapi.rebecmatch_api.exception.BusinessException;
-import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
+import com.rebecmatchapi.rebecmatch_api.exception.ForbiddenException;
+import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-
+/**
+ * O perfil de voluntário é criado junto com a conta (UsuarioService) e removido junto com ela.
+ */
 @Service
 @RequiredArgsConstructor
 public class VoluntarioService {
     private final VoluntarioRepository voluntarioRepository;
-    private final UsuarioRepository usuarioRepository;
+    private final AcessoService acessoService;
 
-    public Voluntario creteVoluntario(VoluntarioCreateDTO dto){
-        Usuario usuario = usuarioRepository.findById(dto.getUsuarioId())
-                .orElseThrow(
-                        () -> new RuntimeException("Usuario com ID" + dto.getUsuarioId() + "não encontrado.")
-                );
-        // Garante que o usuário já não tem um perfil associado.
-        if (usuario.getPesquisador() != null || usuario.getVoluntario() != null) {
-            throw new BusinessException("Usuário com ID " + usuario.getId() + " já possui um perfil de pesquisador ou voluntário associado.");
-        }
-
-        // Garante que o usuário foi criado como VOLUNTARIO.
-        if (usuario.getTipoEspecifico() != TipoEspecifico.VOLUNTARIO) {
-            throw new BusinessException("Não é possível criar um perfil de voluntário para um usuário que não é do tipo VOLUNTARIO.");
-        }
-
-        Voluntario novoVoluntario = new Voluntario();
-
-        novoVoluntario.setDistancia(dto.getDistancia());
-        novoVoluntario.setNomeFicticio(dto.getNomeFicticio());
-        novoVoluntario.setUsuario(usuario);
-
-        return voluntarioRepository.save(novoVoluntario);
+    @Transactional(readOnly = true)
+    public Voluntario getById(Integer id, Usuario usuario) {
+        Voluntario voluntario = buscar(id);
+        acessoService.exigirAcessoAoVoluntario(usuario, voluntario);
+        return voluntario;
     }
 
-    public Voluntario updateVoluntario(Integer id, VoluntarioUpdateDTO dto) {
-        Voluntario voluntarioExistente = voluntarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Voluntário não encontrado."));
-
-        // Atualiza os campos a partir do DTO
+    @Transactional
+    public Voluntario updateVoluntario(Integer id, VoluntarioUpdateDTO dto, Usuario usuario) {
+        Voluntario voluntarioExistente = buscar(id);
+        if (!voluntarioExistente.getUsuario().getId().equals(usuario.getId())) {
+            throw new ForbiddenException("Você só pode alterar o seu próprio perfil.");
+        }
         voluntarioExistente.setDistancia(dto.getDistancia());
-        voluntarioExistente.setNomeFicticio(dto.getNomeFicticio());
-
         return voluntarioRepository.save(voluntarioExistente);
     }
 
-    public Voluntario getById(Integer id){
+    private Voluntario buscar(Integer id) {
         return voluntarioRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Voluntário não encontrado.") );
-    }
-
-    public List<Voluntario> listAll() {
-        return voluntarioRepository.findAll();
-    }
-
-    public void delete(Integer id){
-        voluntarioRepository.deleteById(id);
+                .orElseThrow(() -> new ResourceNotFoundException("Voluntário não encontrado."));
     }
 }

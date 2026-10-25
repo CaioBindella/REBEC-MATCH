@@ -3,10 +3,10 @@ package com.rebecmatchapi.rebecmatch_api.controller;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidatoDetalhadoDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaResponseDTO;
-import com.rebecmatchapi.rebecmatch_api.entity.Candidatura;
+import com.rebecmatchapi.rebecmatch_api.dto.DtoMapper;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
-import com.rebecmatchapi.rebecmatch_api.exception.ForbiddenException;
 import com.rebecmatchapi.rebecmatch_api.service.CandidaturaService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +14,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/candidaturas")
@@ -23,69 +22,47 @@ public class CandidaturaController {
 
     private final CandidaturaService candidaturaService;
 
-    // Voluntário se candidata
+    // Voluntário autenticado se candidata a um estudo
     @PostMapping
-    public ResponseEntity<CandidaturaResponseDTO> candidatar(@RequestBody CandidaturaCreateDTO dto) {
-        Candidatura candidatura = candidaturaService.criarCandidatura(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(toDTO(candidatura));
+    public ResponseEntity<CandidaturaResponseDTO> candidatar(@Valid @RequestBody CandidaturaCreateDTO dto,
+                                                             @AuthenticationPrincipal Usuario usuario) {
+        var candidatura = candidaturaService.criarCandidatura(dto.getEstudoId(), usuario);
+        return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toCandidatura(candidatura));
     }
 
-    // Pesquisador aprova ou recusa a candidatura inicial
-    // Exemplo de corpo JSON: true ou false
+    // Pesquisador responsável aprova ou recusa a candidatura inicial. Corpo JSON: true ou false
     @PatchMapping("/{id}/analise-pesquisador")
-    public ResponseEntity<CandidaturaResponseDTO> analisePesquisador(
-            @PathVariable Integer id,
-            @RequestBody boolean aprovado) {
-        Candidatura atualizada = candidaturaService.processarPeloPesquisador(id, aprovado);
-        return ResponseEntity.ok(toDTO(atualizada));
+    public ResponseEntity<CandidaturaResponseDTO> analisePesquisador(@PathVariable Integer id,
+                                                                     @RequestBody boolean aprovado,
+                                                                     @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(DtoMapper.toCandidatura(candidaturaService.processarPeloPesquisador(id, aprovado, usuario)));
     }
 
-    // Voluntário confirma participação final
+    // Voluntário confirma (ou recusa) a participação final. Corpo JSON: true ou false
     @PatchMapping("/{id}/confirmacao-voluntario")
-    public ResponseEntity<CandidaturaResponseDTO> confirmacaoVoluntario(
-            @PathVariable Integer id,
-            @RequestBody boolean aceito) {
-        Candidatura atualizada = candidaturaService.confirmarPeloVoluntario(id, aceito);
-        return ResponseEntity.ok(toDTO(atualizada));
+    public ResponseEntity<CandidaturaResponseDTO> confirmacaoVoluntario(@PathVariable Integer id,
+                                                                        @RequestBody boolean aceito,
+                                                                        @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(DtoMapper.toCandidatura(candidaturaService.confirmarPeloVoluntario(id, aceito, usuario)));
     }
 
     @GetMapping("/estudo/{estudoId}")
-    public ResponseEntity<List<CandidaturaResponseDTO>> listarPorEstudo(@PathVariable Integer estudoId) {
-        List<Candidatura> list = candidaturaService.listarPorEstudo(estudoId);
-        return ResponseEntity.ok(list.stream().map(this::toDTO).collect(Collectors.toList()));
+    public ResponseEntity<List<CandidaturaResponseDTO>> listarPorEstudo(@PathVariable Integer estudoId,
+                                                                        @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(candidaturaService.listarPorEstudo(estudoId, usuario).stream()
+                .map(DtoMapper::toCandidatura).toList());
     }
 
     @GetMapping("/voluntario/{voluntarioId}")
-    public ResponseEntity<List<CandidaturaResponseDTO>> listarPorVoluntario(@PathVariable Integer voluntarioId) {
-        List<Candidatura> list = candidaturaService.listarPorVoluntario(voluntarioId);
-        return ResponseEntity.ok(list.stream().map(this::toDTO).collect(Collectors.toList()));
+    public ResponseEntity<List<CandidaturaResponseDTO>> listarPorVoluntario(@PathVariable Integer voluntarioId,
+                                                                            @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(candidaturaService.listarPorVoluntario(voluntarioId, usuario).stream()
+                .map(DtoMapper::toCandidatura).toList());
     }
 
     @GetMapping("/pesquisador/{pesquisadorId}")
     public ResponseEntity<List<CandidatoDetalhadoDTO>> listarPorPesquisador(@PathVariable Integer pesquisadorId,
-                                                                             @AuthenticationPrincipal Usuario usuarioLogado) {
-        if (usuarioLogado.getPesquisador() == null || !usuarioLogado.getPesquisador().getId().equals(pesquisadorId)) {
-            throw new ForbiddenException("Você só pode consultar candidatos dos seus próprios estudos.");
-        }
-        List<CandidatoDetalhadoDTO> list = candidaturaService.listarPorPesquisador(pesquisadorId);
-        return ResponseEntity.ok(list);
-    }
-
-    private CandidaturaResponseDTO toDTO(Candidatura c) {
-        CandidaturaResponseDTO dto = new CandidaturaResponseDTO();
-        dto.setId(c.getId());
-        dto.setVoluntarioId(c.getVoluntario().getId());
-        dto.setVoluntarioNome(c.getVoluntario().getNomeFicticio());
-        dto.setEstudoId(c.getEstudo().getId());
-        dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
-        dto.setStatus(c.getStatus());
-        dto.setDataCandidatura(c.getDataCandidatura());
-
-        if (c.getEstudo().getPesquisador() != null) {
-            dto.setPesquisadorNomeFicticio(c.getEstudo().getPesquisador().getNomeFicticio());
-            dto.setPesquisadorId(c.getEstudo().getPesquisador().getUsuario().getId());
-        }
-
-        return dto;
+                                                                            @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(candidaturaService.listarPorPesquisador(pesquisadorId, usuario));
     }
 }

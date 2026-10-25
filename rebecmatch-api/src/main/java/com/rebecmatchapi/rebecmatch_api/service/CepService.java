@@ -2,65 +2,71 @@ package com.rebecmatchapi.rebecmatch_api.service;
 
 import org.springframework.stereotype.Service;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.List;
 
 /**
- * Serviço de utilidade para manipulação e consulta de informações de CEP.
+ * Serviço de utilidade para obter a unidade federativa a partir do CEP, sem consulta externa,
+ * com base nas faixas numéricas de CEP definidas pelos Correios (cinco primeiros dígitos).
  */
 @Service
 public class CepService {
 
-    // Usamos LinkedHashMap para garantir a ordem de verificação.
-    private static final Map<Pattern, String> REGIOES_CEP = new LinkedHashMap<>();
-
-    static {
-        REGIOES_CEP.put(Pattern.compile("^([0][1-9][0-9]{3}|[1][0-9]{4})"), "SP"); // São Paulo
-        REGIOES_CEP.put(Pattern.compile("^[2][0-8][0-9]{3}"), "RJ"); // Rio de Janeiro
-        REGIOES_CEP.put(Pattern.compile("^[2][9][0-9]{3}"), "ES"); // Espírito Santo
-        REGIOES_CEP.put(Pattern.compile("^[3][0-9]{4}"), "MG"); // Minas Gerais
-        REGIOES_CEP.put(Pattern.compile("^[4][0-8][0-9]{3}"), "PR"); // Paraná
-        REGIOES_CEP.put(Pattern.compile("^[4][9][0-9]{3}"), "SE"); // Sergipe
-        REGIOES_CEP.put(Pattern.compile("^[5][0-6][0-9]{3}"), "PE"); // Pernambuco
-        REGIOES_CEP.put(Pattern.compile("^[5][7][0-9]{3}"), "AL"); // Alagoas
-        REGIOES_CEP.put(Pattern.compile("^[5][8][0-9]{3}"), "PB"); // Paraíba
-        REGIOES_CEP.put(Pattern.compile("^[5][9][0-9]{3}"), "RN"); // Rio Grande do Norte
-        REGIOES_CEP.put(Pattern.compile("^[6][0-3][0-9]{3}"), "CE"); // Ceará
-        REGIOES_CEP.put(Pattern.compile("^[6][4][0-9]{3}"), "PI"); // Piauí
-        REGIOES_CEP.put(Pattern.compile("^[6][5][0-9]{3}"), "MA"); // Maranhão
-        REGIOES_CEP.put(Pattern.compile("^[6][6][0-9]{3}"), "PA"); // Pará
-        REGIOES_CEP.put(Pattern.compile("^[6][8][0-9]{3}"), "AP"); // Amapá
-        REGIOES_CEP.put(Pattern.compile("^[6][9][0-9]{3}"), "AM"); // Amazonas e RR
-        REGIOES_CEP.put(Pattern.compile("^[7][0-6][0-9]{3}"), "DF"); // Distrito Federal, GO, TO, MT, MS, RO, AC
-        REGIOES_CEP.put(Pattern.compile("^[7][7-9][0-9]{3}"), "BA"); // Bahia
-        REGIOES_CEP.put(Pattern.compile("^[8][0-7][0-9]{3}"), "PR"); // Paraná
-        REGIOES_CEP.put(Pattern.compile("^[8][8-9][0-9]{3}"), "SC"); // Santa Catarina
-        REGIOES_CEP.put(Pattern.compile("^[9][0-9]{4}"), "RS"); // Rio Grande do Sul
+    private record Faixa(int inicio, int fim, String uf) {
     }
+
+    // Faixas pelos cinco primeiros dígitos do CEP; algumas UFs possuem mais de uma faixa.
+    private static final List<Faixa> FAIXAS = List.of(
+            new Faixa(1000, 19999, "SP"),
+            new Faixa(20000, 28999, "RJ"),
+            new Faixa(29000, 29999, "ES"),
+            new Faixa(30000, 39999, "MG"),
+            new Faixa(40000, 48999, "BA"),
+            new Faixa(49000, 49999, "SE"),
+            new Faixa(50000, 56999, "PE"),
+            new Faixa(57000, 57999, "AL"),
+            new Faixa(58000, 58999, "PB"),
+            new Faixa(59000, 59999, "RN"),
+            new Faixa(60000, 63999, "CE"),
+            new Faixa(64000, 64999, "PI"),
+            new Faixa(65000, 65999, "MA"),
+            new Faixa(66000, 68899, "PA"),
+            new Faixa(68900, 68999, "AP"),
+            new Faixa(69000, 69299, "AM"),
+            new Faixa(69300, 69399, "RR"),
+            new Faixa(69400, 69899, "AM"),
+            new Faixa(69900, 69999, "AC"),
+            new Faixa(70000, 72799, "DF"),
+            new Faixa(72800, 72999, "GO"),
+            new Faixa(73000, 73699, "DF"),
+            new Faixa(73700, 76799, "GO"),
+            new Faixa(76800, 76999, "RO"),
+            new Faixa(77000, 77999, "TO"),
+            new Faixa(78000, 78899, "MT"),
+            new Faixa(79000, 79999, "MS"),
+            new Faixa(80000, 87999, "PR"),
+            new Faixa(88000, 89999, "SC"),
+            new Faixa(90000, 99999, "RS")
+    );
 
     /**
      * Obtém a sigla do estado com base no CEP fornecido.
      *
-     * @param cep O CEP do usuário.
-     * @return A sigla do estado (ex: "RJ", "SP") ou "BR" se não for encontrado.
+     * @param cep O CEP do usuário (com ou sem hífen).
+     * @return A sigla do estado (ex: "RJ", "SP") ou "BR" se o CEP for nulo, inválido ou fora das faixas.
      */
     public String getStateAbbreviation(String cep) {
         if (cep == null || cep.isBlank()) {
-            return "BR"; // Retorna um valor padrão se o CEP for nulo ou vazio
+            return "BR";
         }
-        String cepNumerico = cep.replaceAll("\\D", ""); // Remove caracteres não numéricos
+        String cepNumerico = cep.replaceAll("\\D", "");
         if (cepNumerico.length() < 5) {
-            return "BR"; // CEP inválido
+            return "BR";
         }
-        String cepPrefix = cepNumerico.substring(0, 5);
-
-        for (Map.Entry<Pattern, String> entry : REGIOES_CEP.entrySet()) {
-            if (entry.getKey().matcher(cepPrefix).matches()) {
-                return entry.getValue();
-            }
-        }
-
-        return "BR"; // Retorna padrão se nenhuma região corresponder
+        int prefixo = Integer.parseInt(cepNumerico.substring(0, 5));
+        return FAIXAS.stream()
+                .filter(f -> prefixo >= f.inicio() && prefixo <= f.fim())
+                .map(Faixa::uf)
+                .findFirst()
+                .orElse("BR");
     }
 }

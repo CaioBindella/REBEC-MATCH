@@ -1,12 +1,12 @@
 package com.rebecmatchapi.rebecmatch_api.controller;
 
-import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioResponseDTO;
+import com.rebecmatchapi.rebecmatch_api.dto.DtoMapper;
 import com.rebecmatchapi.rebecmatch_api.dto.auth.AuthenticationDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.auth.LoginResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.service.TokenService;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,24 +17,26 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthenticationController {
-    @Autowired
-    private AuthenticationManager authenticationManager;
-    @Autowired
-    private TokenService tokenService;
 
+    private final AuthenticationManager authenticationManager;
+    private final TokenService tokenService;
+
+    /**
+     * Valida as credenciais e devolve, em uma única resposta, o token JWT, os dados da conta e o
+     * identificador do perfil específico (id de Voluntario ou de Pesquisador).
+     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDTO> login(@RequestBody AuthenticationDTO data){
+    public ResponseEntity<LoginResponseDTO> login(@RequestBody AuthenticationDTO data) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(data.login(), data.senha());
         var auth = this.authenticationManager.authenticate(usernamePassword);
 
         var usuario = (Usuario) auth.getPrincipal();
         var token = tokenService.generateToken(usuario);
 
-        UsuarioResponseDTO usuarioDTO = toUsuarioResponseDTO(usuario);
         Integer perfilId = null;
         String nomeFicticio = null;
-
         if (usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR && usuario.getPesquisador() != null) {
             perfilId = usuario.getPesquisador().getId();
             nomeFicticio = usuario.getPesquisador().getNomeFicticio();
@@ -43,20 +45,6 @@ public class AuthenticationController {
             nomeFicticio = usuario.getVoluntario().getNomeFicticio();
         }
 
-        return ResponseEntity.ok(new LoginResponseDTO(token, usuarioDTO, nomeFicticio, perfilId));
-    }
-
-    private UsuarioResponseDTO toUsuarioResponseDTO(Usuario usuario) {
-        if (usuario == null) return null;
-        UsuarioResponseDTO dto = new UsuarioResponseDTO();
-        dto.setId(usuario.getId());
-        dto.setNome(usuario.getNome());
-        dto.setSobrenome(usuario.getSobrenome());
-        dto.setLogin(usuario.getLogin());
-        dto.setEmail(usuario.getEmail());
-        dto.setTipoEspecifico(usuario.getTipoEspecifico());
-        dto.setSexo(usuario.getSexo());
-        dto.setTester(usuario.isTester());
-        return dto;
+        return ResponseEntity.ok(new LoginResponseDTO(token, DtoMapper.toUsuario(usuario), nomeFicticio, perfilId));
     }
 }

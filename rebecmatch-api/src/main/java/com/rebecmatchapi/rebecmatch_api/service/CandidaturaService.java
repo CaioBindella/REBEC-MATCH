@@ -1,15 +1,15 @@
 package com.rebecmatchapi.rebecmatch_api.service;
 
 import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidatoDetalhadoDTO;
-import com.rebecmatchapi.rebecmatch_api.dto.Candidatura.CandidaturaCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.*;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.StatusCandidatura;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.StatusRecrutamento;
 import com.rebecmatchapi.rebecmatch_api.exception.BusinessException;
+import com.rebecmatchapi.rebecmatch_api.exception.ForbiddenException;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.CandidaturaRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
-import com.rebecmatchapi.rebecmatch_api.repository.MatchResultRepository;
-import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
+import com.rebecmatchapi.rebecmatch_api.repository.RespostaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,166 +17,178 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.List;
-import java.util.stream.Collectors;
 
+/**
+ * Fluxo de candidatura modelado como máquina de estados com confirmação em duas etapas:
+ * <pre>
+ * PENDENTE --(pesquisador aprova)--> ACEITO_PELO_PESQUISADOR --(voluntário confirma)--> CONCLUIDO (+ MatchResult)
+ *    |                                        |
+ *    +--(pesquisador recusa)--> RECUSADO <----+--(voluntário recusa)
+ * </pre>
+ * Cada transição dispara notificações às partes envolvidas.
+ */
 @Service
 @RequiredArgsConstructor
 public class CandidaturaService {
 
-    private final CandidaturaRepository candidatureRepository;
-    private final VoluntarioRepository voluntarioRepository;
+    private final CandidaturaRepository candidaturaRepository;
     private final EstudoRepository estudoRepository;
-    private final MatchResultRepository matchResultRepository;
+    private final RespostaRepository respostaRepository;
+    private final MatchService matchService;
     private final NotificacaoService notificacaoService;
+    private final AcessoService acessoService;
 
     // Voluntário se candidata
-    public Candidatura criarCandidatura(CandidaturaCreateDTO dto) {
-        Voluntario voluntario = voluntarioRepository.findByUsuarioId(dto.getVoluntarioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Perfil de voluntário não encontrado. Complete seu cadastro antes de se candidatar."));
+    @Transactional
+    public Candidatura criarCandidatura(Integer estudoId, Usuario usuario) {
+        Voluntario voluntario = acessoService.voluntarioDo(usuario);
 
-        // 2. Valida duplicidade usando o ID real do voluntário encontrado
-        if (candidatureRepository.existsByVoluntarioIdAndEstudoId(voluntario.getId(), dto.getEstudoId())) {
+        if (!respostaRepository.existsByVoluntarioIdAndQuestaoFormularioId(voluntario.getId(), Formulario.ID_FORMULARIO_PERFIL)) {
+            throw new BusinessException("Preencha o formulário de perfil antes de se candidatar a um estudo.");
+        }
+
+        Estudo estudo = estudoRepository.findById(estudoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estudo não encontrado."));
+
+        if (!StatusRecrutamento.RECRUTANDO.getRotulo().equalsIgnoreCase(estudo.getRecruitmentStatus())) {
+            throw new BusinessException("Este estudo não está recrutando voluntários no momento.");
+        }
+        if (candidaturaRepository.existsByVoluntarioIdAndEstudoId(voluntario.getId(), estudo.getId())) {
             throw new BusinessException("Voluntário já se candidatou a este estudo.");
         }
-        Estudo estudo = estudoRepository.findById(dto.getEstudoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estudo não encontrado"));
 
         Candidatura candidatura = new Candidatura();
         candidatura.setVoluntario(voluntario);
         candidatura.setEstudo(estudo);
         candidatura.setStatus(StatusCandidatura.PENDENTE);
+        Candidatura salva = candidaturaRepository.save(candidatura);
 
-        Candidatura candidaturaSalva = candidatureRepository.save(candidatura);
+        notificacaoService.notificar(usuarioDoPesquisador(estudo), "Novo Candidato", NotificacaoService.TIPO_INFO,
+                "O voluntário " + voluntario.getNomeFicticio() + " se candidatou ao estudo " + estudo.getPublicTitle() + ".");
+        notificacaoService.notificar(usuario.getId(), "Candidatura Enviada", NotificacaoService.TIPO_SUCESSO,
+                "Sua candidatura para " + estudo.getPublicTitle() + " foi enviada com sucesso.");
 
-        try {
-            // NOTIFICAR PESQUISADOR
-            Integer idPesquisador = candidaturaSalva.getEstudo().getPesquisador().getUsuario().getId();
-            notificacaoService.criarNotificacao(
-                    idPesquisador,
-                    "Novo Candidato",
-                    "info",
-                    "O voluntário " + candidaturaSalva.getVoluntario().getNomeFicticio() + " aplicou para o estudo " + candidaturaSalva.getEstudo().getPublicTitle()
-
-            );
-
-            // NOTIFICAR VOLUNTÁRIO
-            notificacaoService.criarNotificacao(
-                    candidaturaSalva.getVoluntario().getUsuario().getId(),
-                    "Candidatura Enviada",
-                    "success",
-                    "Sua candidatura para " + candidaturaSalva.getEstudo().getPublicTitle() + " foi enviada com sucesso."
-
-            );
-        } catch (Exception e) {
-            System.err.println("Erro ao enviar notificação: " + e.getMessage());
-        }
-
-        return candidaturaSalva;
+        return salva;
     }
 
-    // Pesquisador aprova (ou recusa)
-    public Candidatura processarPeloPesquisador(Integer id, boolean aprovado) {
-        Candidatura candidatura = candidatureRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Candidatura não encontrada"));
+    // Pesquisador aprova (ou recusa) a candidatura inicial
+    @Transactional
+    public Candidatura processarPeloPesquisador(Integer id, boolean aprovado, Usuario usuario) {
+        Candidatura candidatura = buscar(id);
+        acessoService.exigirDonoDoEstudo(usuario, candidatura.getEstudo());
 
         if (candidatura.getStatus() != StatusCandidatura.PENDENTE) {
             throw new BusinessException("Esta candidatura não está pendente de análise.");
         }
 
+        Integer usuarioVoluntario = candidatura.getVoluntario().getUsuario().getId();
+        String titulo = candidatura.getEstudo().getPublicTitle();
         if (aprovado) {
-            // Muda para o estado intermediário: Esperando o voluntário confirmar
+            // Estado intermediário: aguarda a confirmação do voluntário
             candidatura.setStatus(StatusCandidatura.ACEITO_PELO_PESQUISADOR);
+            notificacaoService.notificar(usuarioVoluntario, "Candidatura Aprovada", NotificacaoService.TIPO_SUCESSO,
+                    "O pesquisador aprovou sua candidatura ao estudo " + titulo + ". Confirme sua participação em Meus Estudos.");
         } else {
             candidatura.setStatus(StatusCandidatura.RECUSADO);
+            notificacaoService.notificar(usuarioVoluntario, "Candidatura Não Aprovada", NotificacaoService.TIPO_INFO,
+                    "Sua candidatura ao estudo " + titulo + " não foi aprovada pelo pesquisador.");
         }
-
-        return candidatureRepository.save(candidatura);
+        return candidaturaRepository.save(candidatura);
     }
 
-    // Voluntário confirma participação (Finaliza e Gera Match)
-    @Transactional // Importante para garantir que salva a candidatura e o match juntos
-    public Candidatura confirmarPeloVoluntario(Integer id, boolean aceito) {
-        Candidatura candidatura = candidatureRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Candidatura não encontrada"));
+    // Voluntário confirma participação (finaliza e gera o match)
+    @Transactional // candidatura e match são gravados juntos
+    public Candidatura confirmarPeloVoluntario(Integer id, boolean aceito, Usuario usuario) {
+        Candidatura candidatura = buscar(id);
+        Voluntario voluntario = acessoService.voluntarioDo(usuario);
+        if (!candidatura.getVoluntario().getId().equals(voluntario.getId())) {
+            throw new ForbiddenException("Você só pode responder às suas próprias candidaturas.");
+        }
 
         // Só pode confirmar se o pesquisador já tiver aceitado
         if (candidatura.getStatus() != StatusCandidatura.ACEITO_PELO_PESQUISADOR) {
             throw new BusinessException("Esta candidatura não está aguardando confirmação do voluntário.");
         }
 
+        Integer usuarioPesquisador = usuarioDoPesquisador(candidatura.getEstudo());
+        String titulo = candidatura.getEstudo().getPublicTitle();
         if (aceito) {
             candidatura.setStatus(StatusCandidatura.CONCLUIDO);
-            candidatureRepository.save(candidatura);
-
-            gerarMatchResult(candidatura);
-
+            candidaturaRepository.save(candidatura);
+            matchService.registrarMatch(candidatura);
+            notificacaoService.notificar(usuarioPesquisador, "Participação Confirmada", NotificacaoService.TIPO_SUCESSO,
+                    "O voluntário " + voluntario.getNomeFicticio() + " confirmou participação no estudo " + titulo
+                            + ". O chat entre vocês está liberado.");
+            notificacaoService.notificar(usuario.getId(), "Match Confirmado", NotificacaoService.TIPO_SUCESSO,
+                    "Sua participação no estudo " + titulo + " foi confirmada. O chat com o pesquisador está liberado.");
         } else {
             candidatura.setStatus(StatusCandidatura.RECUSADO);
-            candidatureRepository.save(candidatura);
+            candidaturaRepository.save(candidatura);
+            notificacaoService.notificar(usuarioPesquisador, "Convite Recusado", NotificacaoService.TIPO_INFO,
+                    "O voluntário " + voluntario.getNomeFicticio() + " recusou a participação no estudo " + titulo + ".");
         }
-
         return candidatura;
     }
 
-    public List<CandidatoDetalhadoDTO> listarPorPesquisador(Integer pesquisadorId) {
-        List<Candidatura> candidaturas = candidatureRepository.findByPesquisadorId(pesquisadorId);
-
-        return candidaturas.stream().map(c -> {
-            CandidatoDetalhadoDTO dto = new CandidatoDetalhadoDTO();
-            dto.setCandidaturaId(c.getId());
-
-            Usuario user = c.getVoluntario().getUsuario();
-
-            dto.setVoluntarioId(c.getVoluntario().getNomeFicticio()); // Ou gere o ID composto aqui
-            dto.setNomeFicticio(c.getVoluntario().getNomeFicticio());
-
-            // Calcular Idade
-            if (user.getDataNascimento() != null) {
-                dto.setIdade(Period.between(user.getDataNascimento(), LocalDate.now()).getYears());
-            }
-
-            // Sexo
-            if (user.getSexo() != null) {
-                dto.setSexo(user.getSexo().toString()); // MASCULINO, FEMININO
-            }
-            if (user.getCep() != null && user.getCep().length() >= 5) {
-                dto.setLocalizacao(user.getCep().substring(0, 5));
-            } else {
-                dto.setLocalizacao(user.getCep());
-            }
-            dto.setEstudoId(c.getEstudo().getId());
-            dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
-            dto.setStatus(c.getStatus().toString());
-
-            // Descrição fictícia ou dados reais se tiver
-            dto.setDescricao("Candidato interessado no estudo " + c.getEstudo().getScientificTitle());
-
-            dto.setVoluntarioIdReal(c.getVoluntario().getUsuario().getId());
-
-            return dto;
-        }).collect(Collectors.toList());
+    @Transactional(readOnly = true)
+    public List<CandidatoDetalhadoDTO> listarPorPesquisador(Integer pesquisadorId, Usuario usuario) {
+        Pesquisador pesquisador = acessoService.pesquisadorDo(usuario);
+        if (!pesquisador.getId().equals(pesquisadorId)) {
+            throw new ForbiddenException("Você só pode consultar candidatos dos seus próprios estudos.");
+        }
+        return candidaturaRepository.findByPesquisadorId(pesquisadorId).stream()
+                .map(this::toCandidatoDetalhado)
+                .toList();
     }
 
-    private void gerarMatchResult(Candidatura candidatura) {
-        MatchResult match = new MatchResult();
-        match.setVoluntario(candidatura.getVoluntario());
-        match.setEstudo(candidatura.getEstudo());
-
-        // Como foi um match manual via candidatura, a justificativa é automática
-        match.setJustificativa("Match confirmado via processo de candidatura manual.");
-
-        // Podemos calcular os critérios ou definir um valor padrão.
-        // Como o pesquisador aprovou manualmente, assume-se 100% de interesse.
-        match.setCriteriosAtendidos(1);
-
-        matchResultRepository.save(match);
+    @Transactional(readOnly = true)
+    public List<Candidatura> listarPorEstudo(Integer estudoId, Usuario usuario) {
+        Estudo estudo = estudoRepository.findById(estudoId)
+                .orElseThrow(() -> new ResourceNotFoundException("Estudo não encontrado."));
+        acessoService.exigirDonoDoEstudo(usuario, estudo);
+        return candidaturaRepository.findByEstudoId(estudoId);
     }
 
-    public List<Candidatura> listarPorEstudo(Integer estudoId) {
-        return candidatureRepository.findByEstudoId(estudoId);
+    @Transactional(readOnly = true)
+    public List<Candidatura> listarPorVoluntario(Integer voluntarioId, Usuario usuario) {
+        Voluntario voluntario = acessoService.voluntarioDo(usuario);
+        if (!voluntario.getId().equals(voluntarioId)) {
+            throw new ForbiddenException("Você só pode consultar as suas próprias candidaturas.");
+        }
+        return candidaturaRepository.findByVoluntarioId(voluntarioId);
     }
 
-    public List<Candidatura> listarPorVoluntario(Integer voluntarioId) {
-        return candidatureRepository.findByVoluntarioId(voluntarioId);
+    /**
+     * Dados pseudonimizados do candidato: nome fictício, idade, sexo e os cinco primeiros dígitos do CEP.
+     */
+    private CandidatoDetalhadoDTO toCandidatoDetalhado(Candidatura c) {
+        Usuario user = c.getVoluntario().getUsuario();
+        CandidatoDetalhadoDTO dto = new CandidatoDetalhadoDTO();
+        dto.setCandidaturaId(c.getId());
+        dto.setVoluntarioId(c.getVoluntario().getId());
+        dto.setVoluntarioUsuarioId(user.getId());
+        dto.setNomeFicticio(c.getVoluntario().getNomeFicticio());
+        if (user.getDataNascimento() != null) {
+            dto.setIdade(Period.between(user.getDataNascimento(), LocalDate.now()).getYears());
+        }
+        if (user.getSexo() != null) {
+            dto.setSexo(user.getSexo().name());
+        }
+        if (user.getCep() != null) {
+            dto.setLocalizacao(user.getCep().length() >= 5 ? user.getCep().substring(0, 5) : user.getCep());
+        }
+        dto.setEstudoId(c.getEstudo().getId());
+        dto.setEstudoTitulo(c.getEstudo().getPublicTitle());
+        dto.setStatus(c.getStatus());
+        return dto;
+    }
+
+    private Candidatura buscar(Integer id) {
+        return candidaturaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Candidatura não encontrada."));
+    }
+
+    private Integer usuarioDoPesquisador(Estudo estudo) {
+        return estudo.getPesquisador().getUsuario().getId();
     }
 }

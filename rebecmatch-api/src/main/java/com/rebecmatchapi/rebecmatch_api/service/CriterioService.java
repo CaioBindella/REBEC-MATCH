@@ -4,11 +4,15 @@ import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioCreateDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioUpdateDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.Criterio;
 import com.rebecmatchapi.rebecmatch_api.entity.Estudo;
+import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.GeneroElegivel;
+import com.rebecmatchapi.rebecmatch_api.exception.BadRequestException;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.CriterioRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -18,53 +22,63 @@ public class CriterioService {
 
     private final CriterioRepository criterioRepository;
     private final EstudoRepository estudoRepository;
+    private final AcessoService acessoService;
+    private final ElegibilidadeService elegibilidadeService;
 
-    public Criterio createCriterio(CriterioCreateDTO dto) {
+    @Transactional
+    public Criterio createCriterio(CriterioCreateDTO dto, Usuario usuario) {
         Estudo estudo = estudoRepository.findById(dto.getEstudoId())
                 .orElseThrow(() -> new ResourceNotFoundException("Estudo com ID " + dto.getEstudoId() + " não encontrado."));
+        acessoService.exigirDonoDoEstudo(usuario, estudo);
+
         Criterio novoCriterio = new Criterio();
-
-        novoCriterio.setInclusionCriteria(dto.getInclusionCriteria());
-        novoCriterio.setAgeMin(dto.getAgeMin());
-        novoCriterio.setAgeMax(dto.getAgeMax());
-        novoCriterio.setGender(dto.getGender());
-        novoCriterio.setExclusionCriteria(dto.getExclusionCriteria());
         novoCriterio.setEstudo(estudo);
-
+        preencher(novoCriterio, dto.getInclusionCriteria(), dto.getExclusionCriteria(), dto.getAgeMin(), dto.getAgeMax(), dto.getGender());
         return criterioRepository.save(novoCriterio);
     }
 
+    @Transactional(readOnly = true)
     public Criterio getCriterioById(Integer id) {
         return criterioRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Critério com ID " + id + " não encontrado."));
     }
 
-    public List<Criterio> getAllCriterios() {
-        return criterioRepository.findAll();
+    @Transactional(readOnly = true)
+    public List<Criterio> getCriteriosDoEstudo(Integer estudoId) {
+        return criterioRepository.findByEstudoId(estudoId);
     }
 
-    public Criterio updateCriterio(Integer id, CriterioUpdateDTO dto) {
+    @Transactional
+    public Criterio updateCriterio(Integer id, CriterioUpdateDTO dto, Usuario usuario) {
         Criterio criterioExistente = getCriterioById(id);
-
-        if (dto.getEstudoId() != null) {
-            Estudo novoEstudo = estudoRepository.findById(dto.getEstudoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Novo Estudo com ID " + dto.getEstudoId() + " não encontrado."));
-            criterioExistente.setEstudo(novoEstudo);
-        }
-
-        criterioExistente.setInclusionCriteria(dto.getInclusionCriteria());
-        criterioExistente.setAgeMin(dto.getAgeMin());
-        criterioExistente.setAgeMax(dto.getAgeMax());
-        criterioExistente.setGender(dto.getGender());
-        criterioExistente.setExclusionCriteria(dto.getExclusionCriteria());
-
+        acessoService.exigirDonoDoEstudo(usuario, criterioExistente.getEstudo());
+        preencher(criterioExistente, dto.getInclusionCriteria(), dto.getExclusionCriteria(), dto.getAgeMin(), dto.getAgeMax(), dto.getGender());
         return criterioRepository.save(criterioExistente);
     }
 
-    public void deleteCriterio(Integer id) {
-        if (!criterioRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Critério com ID " + id + " não encontrado para exclusão.");
+    @Transactional
+    public void deleteCriterio(Integer id, Usuario usuario) {
+        Criterio criterio = getCriterioById(id);
+        acessoService.exigirDonoDoEstudo(usuario, criterio.getEstudo());
+        criterioRepository.delete(criterio);
+    }
+
+    /**
+     * Valida os limites etários no formato ICTRP e normaliza o sexo para o domínio da aplicação,
+     * garantindo que critérios cadastrados manualmente sejam avaliados da mesma forma que os importados.
+     */
+    private void preencher(Criterio criterio, String inclusao, String exclusao, String idadeMin, String idadeMax, String genero) {
+        if (!elegibilidadeService.idadeValida(idadeMin) || !elegibilidadeService.idadeValida(idadeMax)) {
+            throw new BadRequestException("Idade em formato inválido. Use um número seguido da unidade: Y (anos), M (meses), W (semanas), D (dias) ou H (horas). Ex.: 18Y.");
         }
-        criterioRepository.deleteById(id);
+        criterio.setInclusionCriteria(textoOuVazio(inclusao));
+        criterio.setExclusionCriteria(textoOuVazio(exclusao));
+        criterio.setAgeMin(textoOuVazio(idadeMin).toUpperCase());
+        criterio.setAgeMax(textoOuVazio(idadeMax).toUpperCase());
+        criterio.setGender(GeneroElegivel.normalizar(genero));
+    }
+
+    private static String textoOuVazio(String texto) {
+        return texto == null ? "" : texto.trim();
     }
 }

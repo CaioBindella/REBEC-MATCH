@@ -2,6 +2,8 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -14,10 +16,14 @@ public class MatchResult {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "voluntario_id", nullable = false)
     private Voluntario voluntario;
 
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "estudo_id", nullable = false)
     private Estudo estudo;

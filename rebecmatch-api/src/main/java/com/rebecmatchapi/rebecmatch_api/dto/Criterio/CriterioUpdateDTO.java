@@ -2,11 +2,9 @@ package com.rebecmatchapi.rebecmatch_api.dto.Criterio;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
+
 @Data
 public class CriterioUpdateDTO {
-    @JsonProperty("estudo_id")
-    private Integer estudoId;
-
     @JsonProperty("inclusion_criteria")
     private String inclusionCriteria;
 

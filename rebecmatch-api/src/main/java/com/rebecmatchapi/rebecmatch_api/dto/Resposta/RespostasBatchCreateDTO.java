@@ -1,33 +1,36 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Resposta;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
 import java.util.List;
 
+/**
+ * Envio, em uma única requisição, de todas as respostas de um formulário.
+ * O voluntário é identificado pelo token de autenticação.
+ */
 @Data
 public class RespostasBatchCreateDTO {
-
-    @JsonProperty("voluntario_id")
-    private Integer voluntarioId;
-
+    @NotNull(message = "o formulário é obrigatório")
     @JsonProperty("formulario_id")
     private Integer formularioId;
 
-    // Supondo que o frontend enviará as respostas para uma única busca por vez
-    @JsonProperty("busca_id")
-    private Integer buscaId;
-
+    @NotEmpty(message = "envie ao menos uma resposta")
+    @Valid
     private List<RespostaIndividualDTO> respostas;
 
     @Data
     public static class RespostaIndividualDTO {
+        @NotNull(message = "a questão é obrigatória")
         @JsonProperty("questao_id")
         private Integer questaoId;
 
         private String conteudo;
 
-        // Marcado pode ser opcional, dependendo da sua lógica de negócio
+        // Utilizado nas questões de múltipla escolha
         private boolean marcado = false;
     }
 }

@@ -27,6 +27,8 @@ public class Pesquisador {
     private String nomeFicticio;
 
     // Relação 1-para-N com Estudo. Um pesquisador pode ter vários estudos.
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "pesquisador", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Estudo> estudos;
 

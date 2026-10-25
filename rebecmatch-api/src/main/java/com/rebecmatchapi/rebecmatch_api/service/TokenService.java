@@ -8,46 +8,61 @@ import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 
 @Service
 public class TokenService {
 
-    @Value("${api.security.token.secret}")
-    private String secret;
+    private static final String ISSUER = "rebec-match-api";
+    static final int TAMANHO_MINIMO_SEGREDO = 32;
 
-    public String generateToken(Usuario usuario){
+    private final Algorithm algorithm;
+    private final Duration validade;
+
+    /**
+     * O segredo é lido exclusivamente da variável de ambiente API_SECURITY_TOKEN_SECRET (via
+     * application.properties). Não há valor padrão no código: sem um segredo forte a aplicação
+     * não inicia.
+     */
+    public TokenService(@Value("${api.security.token.secret}") String secret,
+                        @Value("${api.security.token.expiration-hours:1}") long horasDeValidade) {
+        if (secret == null || secret.isBlank() || secret.length() < TAMANHO_MINIMO_SEGREDO) {
+            throw new IllegalStateException("A variável API_SECURITY_TOKEN_SECRET deve ser definida com pelo menos "
+                    + TAMANHO_MINIMO_SEGREDO + " caracteres.");
+        }
+        this.algorithm = Algorithm.HMAC256(secret);
+        this.validade = Duration.ofHours(horasDeValidade);
+    }
+
+    public String generateToken(Usuario usuario) {
         try {
-            Algorithm algorithm = Algorithm.HMAC256(secret);
-            String token = JWT.create()
-                    .withIssuer("rebec-match-api")
+            Instant agora = Instant.now();
+            return JWT.create()
+                    .withIssuer(ISSUER)
                     .withSubject(usuario.getLogin())
-                    .withExpiresAt(genExpirationDate())
+                    .withIssuedAt(agora)
+                    .withExpiresAt(agora.plus(validade))
                     .sign(algorithm);
-
-            return token;
-        } catch (JWTCreationException exception){
-            throw new RuntimeException("Erro ao gerar o token", exception);
+        } catch (JWTCreationException exception) {
+            throw new IllegalStateException("Erro ao gerar o token", exception);
         }
     }
 
-    public String validateToken(String token){
+    /**
+     * Valida assinatura, emissor e expiração do token.
+     *
+     * @return o login do usuário (subject) ou {@code null} se o token for inválido ou expirado.
+     */
+    public String validateToken(String token) {
         try {
-            Algorithm algorithm = Algorithm.HMAC256(secret);
             return JWT.require(algorithm)
-                    .withIssuer("rebec-match-api")
+                    .withIssuer(ISSUER)
                     .build()
                     .verify(token)
                     .getSubject();
-        } catch (JWTVerificationException exception){
-            return "";
+        } catch (JWTVerificationException exception) {
+            return null;
         }
-    }
-
-    private Instant genExpirationDate(){
-        // Token expira em 1 horas
-        return LocalDateTime.now().plusHours(1).toInstant(ZoneOffset.of("-03:00"));
     }
 }

@@ -11,4 +11,5 @@ public class QuestaoResponseDTO {
     private TipoQuestao tipo;
     private String opcoes; // Retorna o JSON como uma String
     private boolean obrigatorio;
+    private String secao;
 }

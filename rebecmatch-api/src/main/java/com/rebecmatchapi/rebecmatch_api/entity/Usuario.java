@@ -2,7 +2,6 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 
 import com.rebecmatchapi.rebecmatch_api.entity.enums.Sexo;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
-import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoUsuario;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -36,12 +35,8 @@ public class Usuario implements UserDetails {
     private String email;
 
     @Column(nullable = false)
+    @ToString.Exclude
     private String senha;
-
-    // Este campo foi removido da V2 do banco de dados, mas é usado para o Spring Security
-    // A role será definida com base na lógica da aplicação, não persistida diretamente da mesma forma.
-    @Transient // Para não ser mapeado no banco
-    private TipoUsuario tipo = TipoUsuario.USER;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "tipoEspecifico")
@@ -77,10 +72,16 @@ public class Usuario implements UserDetails {
     @EqualsAndHashCode.Exclude
     private Voluntario voluntario;
 
+    /**
+     * As autoridades do Spring Security derivam do perfil persistido em tipo_especifico
+     * (ROLE_VOLUNTARIO ou ROLE_PESQUISADOR), usadas nas regras de acesso do SecurityConfig.
+     */
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        if(this.tipo == TipoUsuario.ADMIN) return List.of(new SimpleGrantedAuthority("ROLE_ADMIN"), new SimpleGrantedAuthority("ROLE_USER"));
-        else return List.of(new SimpleGrantedAuthority("ROLE_USER"));
+        if (tipoEspecifico == null) {
+            return List.of();
+        }
+        return List.of(new SimpleGrantedAuthority("ROLE_" + tipoEspecifico.name()));
     }
     @Override
     public String getPassword() {

@@ -1,6 +1,7 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Criterio;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.GeneroElegivel;
 import lombok.Data;
 
 @Data
@@ -19,7 +20,7 @@ public class CriterioResponseDTO {
     @JsonProperty("agemax")
     private String ageMax;
 
-    private String gender;
+    private GeneroElegivel gender;
 
     @JsonProperty("exclusion_criteria")
     private String exclusionCriteria;

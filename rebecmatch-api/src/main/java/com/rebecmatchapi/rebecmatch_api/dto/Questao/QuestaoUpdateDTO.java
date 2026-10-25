@@ -9,4 +9,5 @@ public class QuestaoUpdateDTO {
     private TipoQuestao tipo;
     private String opcoes;
     private boolean obrigatorio;
+    private String secao;
 }

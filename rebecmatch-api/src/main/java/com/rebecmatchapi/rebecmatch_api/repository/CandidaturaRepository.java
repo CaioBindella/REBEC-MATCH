@@ -16,6 +16,9 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, Intege
     // Para evitar candidatura duplicada
     boolean existsByVoluntarioIdAndEstudoId(Integer voluntarioId, Integer estudoId);
 
+    // Um pesquisador só acessa o perfil de um voluntário que se candidatou a um de seus estudos
+    boolean existsByVoluntarioIdAndEstudoPesquisadorId(Integer voluntarioId, Integer pesquisadorId);
+
     @Query("SELECT c FROM Candidatura c WHERE c.estudo.pesquisador.id = :pesquisadorId")
     List<Candidatura> findByPesquisadorId(@Param("pesquisadorId") Integer pesquisadorId);
 }

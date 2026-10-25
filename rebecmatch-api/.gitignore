@@ -32,5 +32,5 @@ build/
 ### VS Code ###
 .vscode/
 
-# Arquivos de configuração sensíveis
-/src/main/resources/application.properties
+# Variaveis de ambiente locais (credenciais). Use .env.example como modelo.
+.env

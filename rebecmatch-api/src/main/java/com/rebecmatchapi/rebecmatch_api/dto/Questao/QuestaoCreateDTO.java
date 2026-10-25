@@ -12,4 +12,5 @@ public class QuestaoCreateDTO {
     private TipoQuestao tipo;
     private String opcoes; // Recebe o JSON como uma String
     private boolean obrigatorio;
+    private String secao;
 }

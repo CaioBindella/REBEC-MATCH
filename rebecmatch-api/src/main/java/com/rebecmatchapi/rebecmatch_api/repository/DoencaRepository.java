@@ -10,8 +10,8 @@ import java.util.Optional;
 @Repository
 public interface DoencaRepository extends JpaRepository<Doenca, Long> {
     Optional<Doenca> findByCodigo(String codigo);
-    boolean existsByCodigo(String codigo);
 
-    // Busca por nome popular OU científico que contenha o termo (ignorando maiúsculas/minúsculas)
-    List<Doenca> findByNomePopularContainingIgnoreCaseOrNomeCientificoContainingIgnoreCase(String nomePopular, String nomeCientifico);
+    // Sugestões do autocompletar: nome popular OU científico que contenha o termo (ignorando maiúsculas/minúsculas)
+    List<Doenca> findTop20ByNomePopularContainingIgnoreCaseOrNomeCientificoContainingIgnoreCaseOrderByNomePopularAsc(
+            String nomePopular, String nomeCientifico);
 }

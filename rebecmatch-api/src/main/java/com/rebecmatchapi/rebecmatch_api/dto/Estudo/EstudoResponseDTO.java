@@ -12,8 +12,8 @@ import java.util.List;
 public class EstudoResponseDTO {
     private Integer id;
     private Integer pesquisadorId;
-    private String publicTitle;
     private PesquisadorResponseDTO pesquisador;
+    private String publicTitle;
     private String scientificTitle;
     private String recruitmentStatus;
     private String studyType;
@@ -23,8 +23,10 @@ public class EstudoResponseDTO {
     private String url;
     private String primarySponsor;
     private String hcFreetext;
+
     @JsonProperty("iFreetext")
     private String iFreetext;
+
     private String approvalDate;
     private String secId;
     private String trialId;

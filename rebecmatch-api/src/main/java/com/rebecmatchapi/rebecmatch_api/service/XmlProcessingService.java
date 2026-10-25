@@ -4,210 +4,239 @@ import com.fasterxml.jackson.dataformat.xml.XmlMapper;
 import com.rebecmatchapi.rebecmatch_api.dto.Xml.Trial;
 import com.rebecmatchapi.rebecmatch_api.dto.Xml.Trials;
 import com.rebecmatchapi.rebecmatch_api.entity.*;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.GeneroElegivel;
+import com.rebecmatchapi.rebecmatch_api.entity.enums.StatusRecrutamento;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import com.rebecmatchapi.rebecmatch_api.repository.DoencaRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.PesquisadorRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
-import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.IOException;
+import java.security.SecureRandom;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Importação dos ensaios clínicos do extrato do ReBEC no formato ICTRP.
+ * <p>
+ * Para cada ensaio ainda não cadastrado (identificado pelo trial_id) são criados o Estudo, seu Critério
+ * de elegibilidade e as associações com o vocabulário controlado de doenças. Cada ensaio é gravado em
+ * uma transação própria, de modo que um registro inconsistente na fonte é contabilizado como falha
+ * sem interromper a importação dos demais.
+ */
 @Service
 public class XmlProcessingService {
 
     private static final Logger logger = LoggerFactory.getLogger(XmlProcessingService.class);
+    private static final DateTimeFormatter FORMATO_DATA = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    private static final int TAMANHO_ENDERECO = 255;
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private final RestTemplate restTemplate;
+    private final EstudoRepository estudoRepository;
+    private final UsuarioRepository usuarioRepository;
+    private final PesquisadorRepository pesquisadorRepository;
+    private final DoencaRepository doencaRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final UsuarioService usuarioService;
+    private final TransactionTemplate transacaoPorEnsaio;
+    private final XmlMapper xmlMapper = new XmlMapper();
+    private final SecureRandom random = new SecureRandom();
 
-    @Autowired
-    private EstudoRepository estudoRepository;
-
-    @Autowired
-    private UsuarioRepository usuarioRepository;
-
-    @Autowired
-    private PesquisadorRepository pesquisadorRepository;
-
-    @Autowired
-    private DoencaRepository doencaRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-    @Autowired
-    private CepService cepService;
-
-    @Transactional
-    public void processXmlFromUrl(String url) {
-        try {
-            String xmlContent = restTemplate.getForObject(url, String.class);
-            XmlMapper xmlMapper = new XmlMapper();
-            Trials trialsWrapper = xmlMapper.readValue(xmlContent, Trials.class);
-
-            if (trialsWrapper != null && trialsWrapper.getTrials() != null) {
-
-                // --- CÓDIGO ORIGINAL (PRODUÇÃO) ---
-                /*
-                for (Trial trial : trialsWrapper.getTrials()) {
-                    if (trial.getMain() != null && !estudoRepository.existsByTrialId(trial.getMain().getTrialId())) {
-                        logger.info("New trial found: {}. Processing...", trial.getMain().getTrialId());
-                        saveNewTrial(trial);
-                    } else {
-                        logger.info("Trial with ID {} already exists or has no main data. Skipping.", trial.getTrialId());
-                    }
-                }
-                */
-
-                // --- CÓDIGO TEMPORÁRIO (DESENVOLVIMENTO: LIMITADO A 100) ---
-                List<Trial> allTrials = trialsWrapper.getTrials();
-                int limit = Math.min(allTrials.size(), 100); // Garante que não quebre se tiver menos de 100
-
-                logger.info("Processing limited to first {} trials for development.", limit);
-
-                for (int i = 0; i < limit; i++) {
-                    Trial trial = allTrials.get(i);
-                    if (trial.getMain() != null && !estudoRepository.existsByTrialId(trial.getMain().getTrialId())) {
-                        logger.info("New trial found: {}. Processing...", trial.getMain().getTrialId());
-                        saveNewTrial(trial);
-                    } else {
-                        logger.info("Trial with ID {} already exists or has no main data. Skipping.", trial.getTrialId());
-                    }
-                }
-                // ------------------------------------------------------------
-            }
-            logger.info("Finished processing trials from XML.");
-        } catch (Exception e) {
-            logger.error("Failed to process XML from URL: " + url, e);
-        }
+    /** Contagens de uma execução da importação. */
+    public record ResumoImportacao(int total, int novos, int existentes, int ignorados, int falhas,
+                                   int codigosDoencaNaoEncontrados) {
     }
 
-    private void saveNewTrial(Trial trial) {
-        // Criar ou encontrar o Pesquisador
-        Pesquisador pesquisador = createOrFindPesquisador(trial.getScientificContact());
-        if (pesquisador == null) {
-            logger.warn("Could not create or find researcher for trial {}. Skipping trial.", trial.getMain().getTrialId());
-            return;
+    public XmlProcessingService(RestTemplate restTemplate, EstudoRepository estudoRepository,
+                                UsuarioRepository usuarioRepository, PesquisadorRepository pesquisadorRepository,
+                                DoencaRepository doencaRepository, PasswordEncoder passwordEncoder,
+                                UsuarioService usuarioService, PlatformTransactionManager transactionManager) {
+        this.restTemplate = restTemplate;
+        this.estudoRepository = estudoRepository;
+        this.usuarioRepository = usuarioRepository;
+        this.pesquisadorRepository = pesquisadorRepository;
+        this.doencaRepository = doencaRepository;
+        this.passwordEncoder = passwordEncoder;
+        this.usuarioService = usuarioService;
+        this.transacaoPorEnsaio = new TransactionTemplate(transactionManager);
+    }
+
+    public ResumoImportacao processXmlFromUrl(String url) throws IOException {
+        String xmlContent = restTemplate.getForObject(url, String.class);
+        if (xmlContent == null || xmlContent.isBlank()) {
+            throw new IOException("O extrato XML em " + url + " está vazio.");
+        }
+        return processXml(xmlContent);
+    }
+
+    public ResumoImportacao processXml(String xmlContent) throws IOException {
+        Trials trialsWrapper = xmlMapper.readValue(xmlContent, Trials.class);
+        List<Trial> trials = trialsWrapper == null || trialsWrapper.getTrials() == null ? List.of() : trialsWrapper.getTrials();
+
+        int novos = 0, existentes = 0, ignorados = 0, falhas = 0;
+        AtomicInteger codigosNaoEncontrados = new AtomicInteger();
+
+        for (Trial trial : trials) {
+            String trialId = trial.getTrialId() == null ? null : trial.getTrialId().trim();
+            if (trialId == null || trialId.isEmpty()) {
+                ignorados++;
+                continue;
+            }
+            if (estudoRepository.existsByTrialId(trialId)) {
+                existentes++;
+                continue;
+            }
+            try {
+                Boolean salvo = transacaoPorEnsaio.execute(status -> salvarNovoEstudo(trial, trialId, codigosNaoEncontrados));
+                if (Boolean.TRUE.equals(salvo)) {
+                    novos++;
+                } else {
+                    ignorados++;
+                }
+            } catch (RuntimeException e) {
+                falhas++;
+                logger.warn("Falha ao importar o ensaio {}: {}", trialId, e.getMessage());
+            }
         }
 
-        // Criar o Estudo
+        ResumoImportacao resumo = new ResumoImportacao(trials.size(), novos, existentes, ignorados, falhas, codigosNaoEncontrados.get());
+        logger.info("Importação do ReBEC concluída: {} ensaios no extrato, {} novos, {} já cadastrados, {} ignorados "
+                        + "(sem identificador ou sem contato científico), {} falhas, {} códigos de condição de saúde fora do vocabulário.",
+                resumo.total(), resumo.novos(), resumo.existentes(), resumo.ignorados(), resumo.falhas(),
+                resumo.codigosDoencaNaoEncontrados());
+        return resumo;
+    }
+
+    private boolean salvarNovoEstudo(Trial trial, String trialId, AtomicInteger codigosNaoEncontrados) {
+        Optional<Pesquisador> pesquisador = obterPesquisador(trial.getScientificContact());
+        if (pesquisador.isEmpty()) {
+            logger.debug("Ensaio {} sem contato científico com e-mail utilizável. Ignorado.", trialId);
+            return false;
+        }
+
+        Trial.Main main = trial.getMain();
         Estudo novoEstudo = new Estudo();
-        novoEstudo.setTrialId(trial.getMain().getTrialId());
-        novoEstudo.setPublicTitle(trial.getMain().getPublicTitle());
-        novoEstudo.setScientificTitle(trial.getMain().getScientificTitle());
-        novoEstudo.setRecruitmentStatus(trial.getMain().getRecruitmentStatus());
-        novoEstudo.setStudyType(trial.getMain().getStudyType());
-        novoEstudo.setPhase(trial.getMain().getPhase());
-        novoEstudo.setUrl(trial.getMain().getUrl());
-        novoEstudo.setPrimarySponsor(trial.getMain().getPrimarySponsor());
-        novoEstudo.setHcFreetext(trial.getMain().getHcFreeText());
-        novoEstudo.setIFreetext(trial.getMain().getIFreeText());
-        novoEstudo.setPesquisador(pesquisador);
-
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-        if (trial.getMain().getDateRegistration() != null && !trial.getMain().getDateRegistration().isEmpty()) {
-            novoEstudo.setDateRegistration(LocalDate.parse(trial.getMain().getDateRegistration(), formatter));
+        novoEstudo.setTrialId(trialId);
+        novoEstudo.setPesquisador(pesquisador.get());
+        novoEstudo.setPublicTitle(texto(main.getPublicTitle()));
+        novoEstudo.setScientificTitle(texto(main.getScientificTitle()));
+        // O extrato mistura "Recruiting" e "recruiting": grava-se sempre o rótulo padronizado
+        novoEstudo.setRecruitmentStatus(StatusRecrutamento.deTextoOuOutro(main.getRecruitmentStatus()).getRotulo());
+        novoEstudo.setStudyType(texto(main.getStudyType()));
+        novoEstudo.setPhase(texto(main.getPhase()));
+        novoEstudo.setUrl(texto(main.getUrl()));
+        novoEstudo.setPrimarySponsor(texto(main.getPrimarySponsor()));
+        novoEstudo.setHcFreetext(texto(main.getHcFreeText()));
+        novoEstudo.setIFreetext(texto(main.getIFreeText()));
+        novoEstudo.setDateRegistration(LocalDate.parse(texto(main.getDateRegistration()), FORMATO_DATA));
+        if (!texto(main.getDateEnrolment()).isEmpty()) {
+            novoEstudo.setDateEnrolment(LocalDate.parse(main.getDateEnrolment().trim(), FORMATO_DATA));
         }
-        if (trial.getMain().getDateEnrolment() != null && !trial.getMain().getDateEnrolment().isEmpty()) {
-            novoEstudo.setDateEnrolment(LocalDate.parse(trial.getMain().getDateEnrolment(), formatter));
-        }
-
         if (trial.getEthicsReviews() != null && !trial.getEthicsReviews().isEmpty()) {
             novoEstudo.setApprovalDate(trial.getEthicsReviews().get(0).getApprovalDate());
         }
-
         if (trial.getSecondaryIds() != null && !trial.getSecondaryIds().isEmpty()) {
             novoEstudo.setSecId(trial.getSecondaryIds().get(0).getSecId());
         }
 
+        // Classificação temática pelo vocabulário controlado (DeCS/CID-10). Códigos fora do vocabulário
+        // são contabilizados no resumo; o estudo continua alcançável pela busca através do hc_freetext.
         if (trial.getHealthConditionCodes() != null) {
             for (String code : trial.getHealthConditionCodes()) {
-                String cleanCode = code.trim();
-                // Log para debug
-                logger.info("Processando código de doença: {}", cleanCode);
-
-                Optional<Doenca> doencaOpt = doencaRepository.findByCodigo(cleanCode);
-
-                if (doencaOpt.isPresent()) {
-                    novoEstudo.addDoenca(doencaOpt.get());
-                } else {
-                    // Log se não achar no banco
-                    logger.warn("Doença não encontrada no banco para o código: {}", cleanCode);
+                String codigo = texto(code);
+                if (codigo.isEmpty()) {
+                    continue;
                 }
+                doencaRepository.findByCodigo(codigo).ifPresentOrElse(novoEstudo::addDoenca, () -> {
+                    codigosNaoEncontrados.incrementAndGet();
+                    logger.debug("Código de condição de saúde {} do ensaio {} não consta no vocabulário.", codigo, trialId);
+                });
             }
-        } else {
-            logger.warn("Lista de códigos de doença VAZIA para o trial {}", trial.getMain().getTrialId());
         }
 
-        estudoRepository.save(novoEstudo);
-        logger.info("Estudo salvo com sucesso: {}", novoEstudo.getTrialId());
-
-        // Criar o Critério
         if (trial.getCriteria() != null) {
-            List<Criterio> listaCriterios = new ArrayList<>();
-
+            Trial.Criteria origem = trial.getCriteria();
             Criterio criterio = new Criterio();
-            criterio.setInclusionCriteria(trial.getCriteria().getInclusionCriteria());
-            criterio.setAgeMin(trial.getCriteria().getAgeMin());
-            criterio.setAgeMax(trial.getCriteria().getAgeMax());
-            criterio.setGender(trial.getCriteria().getGender());
-            criterio.setExclusionCriteria(trial.getCriteria().getExclusionCriteria());
             criterio.setEstudo(novoEstudo);
-
-            listaCriterios.add(criterio);
-            novoEstudo.setCriterios(listaCriterios);
+            criterio.setInclusionCriteria(texto(origem.getInclusionCriteria()));
+            criterio.setExclusionCriteria(texto(origem.getExclusionCriteria()));
+            criterio.setAgeMin(texto(origem.getAgeMin()).toUpperCase());
+            criterio.setAgeMax(texto(origem.getAgeMax()).toUpperCase());
+            // "F"/"M" viram FEMININO/MASCULINO e as duas grafias de "sem restrição" ("-" e "B") viram AMBOS
+            criterio.setGender(GeneroElegivel.normalizar(origem.getGender()));
+            novoEstudo.setCriterios(List.of(criterio));
         }
 
         estudoRepository.save(novoEstudo);
-        logger.info("Successfully saved new study with trial ID: {}", novoEstudo.getTrialId());
+        return true;
     }
 
-    private Pesquisador createOrFindPesquisador(Trial.Contact contact) {
-        if (contact == null || contact.getEmail() == null || contact.getEmail().isEmpty()) {
+    /**
+     * Localiza o pesquisador pelo e-mail do contato científico ou provisiona uma nova conta para ele.
+     * A conta provisionada recebe uma senha aleatória, desconhecida por qualquer pessoa: ela representa o
+     * responsável registrado no ReBEC e não pode ser acessada com dados públicos do registro.
+     */
+    private Optional<Pesquisador> obterPesquisador(Trial.Contact contact) {
+        if (contact == null || texto(contact.getEmail()).isEmpty()) {
+            return Optional.empty();
+        }
+        String email = contact.getEmail().trim();
+
+        Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(email);
+        if (usuarioExistente.isPresent()) {
+            Optional<Pesquisador> pesquisador = pesquisadorRepository.findByUsuarioId(usuarioExistente.get().getId());
+            if (pesquisador.isEmpty()) {
+                logger.warn("O e-mail do contato científico {} pertence a uma conta que não é de pesquisador.", email);
+            }
+            return pesquisador;
+        }
+
+        Usuario novoUsuario = new Usuario();
+        novoUsuario.setNome(contact.getFirstname());
+        novoUsuario.setSobrenome(contact.getLastname());
+        novoUsuario.setEmail(email);
+        novoUsuario.setLogin(email);
+        novoUsuario.setTelefone(contact.getTelephone());
+        novoUsuario.setTipoEspecifico(TipoEspecifico.PESQUISADOR);
+        novoUsuario.setSenha(passwordEncoder.encode(senhaAleatoria()));
+        String cep = texto(contact.getZip()).replaceAll("\\D", "");
+        novoUsuario.setCep(cep.isEmpty() ? null : cep);
+        novoUsuario.setEndereco(endereco(contact));
+
+        Usuario salvo = usuarioRepository.save(novoUsuario);
+        usuarioService.criarPerfil(salvo);
+        return Optional.ofNullable(salvo.getPesquisador());
+    }
+
+    private String senhaAleatoria() {
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+    }
+
+    private static String endereco(Trial.Contact contact) {
+        String endereco = String.join(", ", List.of(texto(contact.getAddress()), texto(contact.getCity())).stream()
+                .filter(parte -> !parte.isEmpty())
+                .toList());
+        if (endereco.isEmpty()) {
             return null;
         }
-
-        Optional<Usuario> usuarioExistente = usuarioRepository.findByEmail(contact.getEmail());
-
-        if (usuarioExistente.isPresent()) {
-            return usuarioExistente.get().getPesquisador();
-        } else {
-            Usuario novoUsuario = new Usuario();
-            novoUsuario.setNome(contact.getFirstname());
-            novoUsuario.setSobrenome(contact.getLastname());
-            novoUsuario.setEmail(contact.getEmail());
-            novoUsuario.setLogin(contact.getEmail());
-            novoUsuario.setTelefone(contact.getTelephone());
-            novoUsuario.setTipoEspecifico(TipoEspecifico.PESQUISADOR);
-            novoUsuario.setSenha(passwordEncoder.encode(contact.getEmail()));
-            novoUsuario.setCep(contact.getZip());
-            novoUsuario.setEndereco(String.format("%s, %s", contact.getAddress(), contact.getCity()));
-
-            Usuario savedUsuario = usuarioRepository.save(novoUsuario);
-
-            Pesquisador pesquisador = new Pesquisador();
-            pesquisador.setUsuario(savedUsuario);
-            pesquisador.setNomeFicticio(generateFictionalName(savedUsuario));
-
-            return pesquisadorRepository.save(pesquisador);
-        }
+        return endereco.length() > TAMANHO_ENDERECO ? endereco.substring(0, TAMANHO_ENDERECO) : endereco;
     }
 
-    private String generateFictionalName(Usuario usuario) {
-        String prefix = usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR ? "PS" : "VOL";
-        String idPart = String.valueOf(usuario.getId());
-        String suffix = cepService.getStateAbbreviation(usuario.getCep());
-        return prefix + idPart + suffix;
+    private static String texto(String valor) {
+        return valor == null ? "" : valor.trim();
     }
 }

@@ -1,63 +1,58 @@
+# Ambiente de desenvolvimento: banco MySQL, API principal e phpMyAdmin.
+# As credenciais vêm do arquivo rebecmatch-api/.env (modelo em rebecmatch-api/.env.example):
+#   docker compose --env-file rebecmatch-api/.env up --build
+# O esquema do banco é criado pelas migrações Flyway na primeira inicialização da API.
 services:
-  # Serviço 1: O Banco de Dados MySQL
   db:
     image: mysql:8.0
     container_name: rebecmatch-mysql
-    # Variáveis de ambiente para configurar o MySQL
     environment:
-      MYSQL_ROOT_PASSWORD: rootpassword # Defina uma senha forte aqui
-      MYSQL_DATABASE: rebecmatch-db # O nome do seu banco de dados
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no arquivo .env}
+      MYSQL_DATABASE: match_v2
     ports:
-      # Mapeia a porta 3306 do contentor para a 3306 da sua máquina
       - "3306:3306"
     volumes:
-      # Volume para persistir os dados do banco de dados
       - mysql-data:/var/lib/mysql
-      # Monta o nosso ficheiro .sql para inicializar o banco de dados na primeira vez
-      - ./docker-data/mysql:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
     networks:
       - rebecmatch-net
 
-  # Serviço 2: A sua API Java (Spring Boot)
   api:
-    build: ./rebecmatch-api  # CORRIGIDO: Agora aponta para a pasta onde o Dockerfile realmente está
+    build: ./rebecmatch-api
     container_name: rebecmatch-api
     ports:
-      # Mapeia a porta 8080 do contentor para a 8080 da sua máquina
       - "8080:8080"
-    # A API depende do banco de dados. Ela só irá iniciar depois que o 'db' estiver pronto.
     depends_on:
-      - db
-    # Variáveis de ambiente que a sua API irá usar
+      db:
+        condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/rebecmatch-db
-      SPRING_DATASOURCE_USERNAME: root
-      SPRING_DATASOURCE_PASSWORD: rootpassword
+      DB_URL: jdbc:mysql://db:3306/match_v2?allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      API_SECURITY_TOKEN_SECRET: ${API_SECURITY_TOKEN_SECRET:?defina API_SECURITY_TOKEN_SECRET no arquivo .env}
     networks:
       - rebecmatch-net
 
-  # Serviço 3: O phpMyAdmin
   phpmyadmin:
     image: phpmyadmin/phpmyadmin
     container_name: rebecmatch-pma
     ports:
-      # Mapeia a porta 8081 da sua máquina para a porta 80 do contentor
       - "8081:80"
-    # O phpMyAdmin também depende do banco de dados
     depends_on:
       - db
-    # Variáveis de ambiente para o phpMyAdmin
     environment:
-      PMA_HOST: db # Diz ao phpMyAdmin para se conectar ao serviço 'db'
+      PMA_HOST: db
       PMA_PORT: 3306
     networks:
       - rebecmatch-net
 
-# Define a rede que os contentores irão usar para comunicar entre si
 networks:
   rebecmatch-net:
     driver: bridge
 
-# Define o volume para persistência dos dados do MySQL
 volumes:
   mysql-data:

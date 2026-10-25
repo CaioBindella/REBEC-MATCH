@@ -9,4 +9,8 @@ import java.util.List;
 @Repository
 public interface RespostaRepository extends JpaRepository<Resposta, Integer> {
     List<Resposta> findByVoluntarioId(Integer voluntarioId);
+
+    List<Resposta> findByVoluntarioIdAndQuestaoFormularioId(Integer voluntarioId, Integer formularioId);
+
+    boolean existsByVoluntarioIdAndQuestaoFormularioId(Integer voluntarioId, Integer formularioId);
 }
