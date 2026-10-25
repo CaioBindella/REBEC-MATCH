@@ -1,0 +1,10 @@
+# IDE
+.idea/
+*.iml
+
+# Build e dados locais
+target/
+docker-data/
+
+# Variaveis de ambiente locais
+.env
