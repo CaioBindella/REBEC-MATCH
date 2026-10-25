@@ -2,23 +2,28 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Header from '@/components/reusable/Header';
-import { apiService } from '@/services/api/apiClient';
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
+import { RespostaResponseDTO } from '@/types/types';
+import { sexoLabel } from '@/utils/formatters';
 
-// Interface para tipar as respostas vindas do backend atualizado
-interface RespostaDTO {
-    id: number;
-    questaoTexto: string;
-    conteudo: string;
-    marcado: boolean;
-}
+const primeiro = (valor: string | string[] | undefined) => (Array.isArray(valor) ? valor[0] : valor);
 
 export default function VolunteerDetailsScreen() {
   const router = useRouter();
   
-  const { id, voluntarioId, nomeFicticio } = useLocalSearchParams(); 
+  // id = candidatura; voluntarioId = perfil do voluntário; demais dados já pseudonimizados pela API
+  const params = useLocalSearchParams();
+  const id = primeiro(params.id);
+  const voluntarioId = primeiro(params.voluntarioId);
+  const nomeDisplay = primeiro(params.nomeFicticio);
+  const estudoTitulo = primeiro(params.estudoTitulo);
+  const idade = primeiro(params.idade);
+  const sexo = primeiro(params.sexo);
+  const uf = primeiro(params.uf);
 
-  const [respostas, setRespostas] = useState<RespostaDTO[]>([]);
+  const [respostas, setRespostas] = useState<RespostaResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
     async function loadData() {
@@ -32,8 +37,7 @@ export default function VolunteerDetailsScreen() {
             const data = await apiService.resposta.getByVoluntario(Number(voluntarioId));
             setRespostas(data);
         } catch (error) {
-            console.error(error);
-            Alert.alert("Erro", "Não foi possível carregar as respostas.");
+            Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar as respostas.'));
         } finally {
             setLoading(false);
         }
@@ -41,21 +45,24 @@ export default function VolunteerDetailsScreen() {
     loadData();
   }, [voluntarioId]);
 
+  // A aprovação não conclui o match: ela envia um convite que o voluntário ainda precisa confirmar
   const handleAnalise = async (aprovado: boolean) => {
       try {
+          setEnviando(true);
           await apiService.candidatura.analisePesquisador(Number(id), aprovado);
-          
           Alert.alert(
-              "Sucesso", 
-              aprovado ? "Candidato Aprovado e Match Confirmado!" : "Candidato Recusado.",
-              [{ text: "OK", onPress: () => router.push('/(protected)/home/page') }]
+              'Sucesso',
+              aprovado
+                ? 'Candidato aprovado! O voluntário foi notificado e o chat será liberado quando ele confirmar a participação.'
+                : 'Candidatura recusada. O voluntário foi notificado.',
+              [{ text: 'OK', onPress: () => router.back() }]
           );
       } catch (error) {
-          Alert.alert("Erro", "Falha ao processar análise.");
+          Alert.alert('Erro', getErrorMessage(error, 'Falha ao processar a análise.'));
+      } finally {
+          setEnviando(false);
       }
   };
-
-  const nomeDisplay = Array.isArray(nomeFicticio) ? nomeFicticio[0] : nomeFicticio;
 
   return (
     <View style={styles.container}>
@@ -66,6 +73,10 @@ export default function VolunteerDetailsScreen() {
             <View style={styles.candidateHeader}>
                 <Text style={styles.candidateLabel}>Candidato:</Text>
                 <Text style={styles.candidateName}>{nomeDisplay || 'Não informado'}</Text>
+                <Text style={styles.candidateInfo}>
+                    {idade ? `${idade} anos` : 'Idade não informada'} · {sexoLabel(sexo)} · {uf || 'BR'}
+                </Text>
+                {!!estudoTitulo && <Text style={styles.candidateInfo}>Estudo: {estudoTitulo}</Text>}
             </View>
             
             <View style={styles.divider} />
@@ -82,9 +93,7 @@ export default function VolunteerDetailsScreen() {
                         <Text style={styles.question}>
                             {resp.questaoTexto || "Pergunta não identificada"}
                         </Text>
-                        <Text style={styles.answer}>
-                            {resp.conteudo || (resp.marcado ? "Sim" : "Não")}
-                        </Text>
+                        <Text style={styles.answer}>{resp.conteudo || 'Sem resposta'}</Text>
                     </View>
                 ))
             )}
@@ -95,15 +104,16 @@ export default function VolunteerDetailsScreen() {
                     <TouchableOpacity 
                         style={[styles.btn, styles.btnReject]} 
                         onPress={() => handleAnalise(false)}
+                        disabled={enviando}
                         activeOpacity={0.8}
                     >
-                        {/* APLICA ESTILO VERMELHO NO TEXTO AQUI */}
                         <Text style={[styles.btnText, styles.btnTextReject]}>Recusar</Text>
                     </TouchableOpacity>
                     
                     <TouchableOpacity 
                         style={[styles.btn, styles.btnApprove]} 
                         onPress={() => handleAnalise(true)}
+                        disabled={enviando}
                         activeOpacity={0.8}
                     >
                         <Text style={styles.btnText}>Aprovar</Text>
@@ -134,6 +144,12 @@ const styles = StyleSheet.create({
         color: '#666',
         textTransform: 'uppercase',
         letterSpacing: 1,
+    },
+    candidateInfo: {
+        fontSize: 14,
+        color: '#555',
+        marginTop: 4,
+        textAlign: 'center',
     },
     candidateName: {
         fontSize: 26,

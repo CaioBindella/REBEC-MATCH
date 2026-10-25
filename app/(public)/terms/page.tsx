@@ -73,7 +73,7 @@ export default function TermsOfScienceScreen() {
             Levamos a LGPD (Lei Geral de Proteção de Dados) a sério.
           </Text>
           <Text style={[styles.paragraph, { marginTop: 10 }]}>
-            Seus dados sensíveis são armazenados de forma segura. O compartilhamento com pesquisadores ocorre apenas após o "Match" (aceite mútuo) para fins exclusivos da realização do estudo. É proibido aos pesquisadores compartilhar dados dos voluntários com terceiros sem consentimento explícito.
+            Seus dados sensíveis são armazenados de forma segura e você é identificado na plataforma por um nome fictício. Ao se candidatar a um estudo, suas respostas do formulário de perfil, sua idade, seu sexo e sua região tornam-se visíveis apenas ao pesquisador responsável por aquele estudo; o canal de conversa só é liberado após o "Match" (aceite mútuo). É proibido aos pesquisadores compartilhar dados dos voluntários com terceiros sem consentimento explícito. Você pode excluir sua conta e seus dados a qualquer momento em Configurações.
           </Text>
         </View>
 

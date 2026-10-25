@@ -15,7 +15,7 @@ import ManageStudyCard, { StudySummary } from '@/components/researcherComponents
 
 // Imports de Lógica
 import { useAuth } from '@/context/AuthContext';
-import { apiService } from '@/services/api/apiClient'; // Ajuste o caminho conforme sua pasta real
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
 
 export default function ManageStudiesPage() {
   const router = useRouter();
@@ -25,38 +25,32 @@ export default function ManageStudiesPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   // Função para buscar dados na API
-  const fetchStudies = async () => {
-    if (!user?.id) return;
+  const fetchStudies = useCallback(async () => {
+    if (!user?.perfilId) return;
 
     try {
       setIsLoading(true);
-      
-      // Chama a nova função que criamos no apiService
-      const rawData = await apiService.estudo.getByPesquisador(user.id);
-
-      // MAPEAMENTO:
-      // O banco retorna "public_title" e "recruitment_status".
-      // O componente espera "titulo" e "status".
-      const formattedData: StudySummary[] = rawData.map((item: any) => ({
+      // Estudos do perfil de pesquisador (perfilId devolvido no login)
+      const rawData = await apiService.estudo.getByPesquisador(user.perfilId);
+      const formattedData: StudySummary[] = rawData.map((item) => ({
         id: item.id,
-        titulo: item.publicTitle,       // Mapeia do banco para o front
-        status: item.recruitmentStatus, // Mapeia do banco para o front
+        titulo: item.publicTitle,
+        status: item.recruitmentStatus,
       }));
 
       setStudies(formattedData);
     } catch (error) {
-      console.error("Erro ao buscar estudos:", error);
-      Alert.alert("Erro", "Não foi possível carregar seus estudos.");
+      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar seus estudos.'));
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user?.perfilId]);
 
-  // Recarrega a lista toda vez que a tela ganha foco (ex: ao voltar de 'Criar Estudo')
+  // Recarrega a lista toda vez que a tela ganha foco (ex.: ao voltar de 'Criar Estudo')
   useFocusEffect(
     useCallback(() => {
       fetchStudies();
-    }, [user?.id])
+    }, [fetchStudies])
   );
 
   if (isLoading) {
@@ -79,8 +73,13 @@ export default function ManageStudiesPage() {
           </Text>
         </View>
         
-        <Text style={styles.pageTitle}>Gerenciar Meus Estudos</Text>
-        
+        <View style={styles.titleRow}>
+          <Text style={styles.pageTitle}>Gerenciar Meus Estudos</Text>
+          <TouchableOpacity style={styles.newButton} onPress={() => router.push('/(protected)/researcher/create-study/page')}>
+            <Text style={styles.newButtonText}>+ Novo</Text>
+          </TouchableOpacity>
+        </View>
+
         {studies.length > 0 ? (
           <FlatList
             data={studies}
@@ -119,7 +118,10 @@ export default function ManageStudiesPage() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
   content: { flex: 1, padding: 16 },
-  pageTitle: { fontSize: 24, fontWeight: 'bold', color: '#212529', marginBottom: 20 },
+  pageTitle: { fontSize: 24, fontWeight: 'bold', color: '#212529', flex: 1 },
+  titleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  newButton: { backgroundColor: '#15715A', paddingVertical: 8, paddingHorizontal: 14, borderRadius: 20 },
+  newButtonText: { color: '#fff', fontWeight: 'bold' },
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 },
   emptyText: { fontSize: 16, color: '#6c757d', textAlign: 'center', marginBottom: 20 },
   createButton: { backgroundColor: '#15715A', paddingVertical: 12, paddingHorizontal: 24, borderRadius: 8 },

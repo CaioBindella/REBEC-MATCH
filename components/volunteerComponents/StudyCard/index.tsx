@@ -1,28 +1,27 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-// Interface para os dados do estudo que o card da lista precisa
+import { estaRecrutando, statusRecrutamentoLabel } from '@/utils/formatters';
+
+// Dados do estudo exibidos no card da lista
 export interface StudySummary {
   id: number;
   titulo: string;
   informacoesGerais: string;
-  status: string; // 'EM_ANDAMENTO', 'RECRUTANDO', etc.
+  status: string; // rótulo ICTRP (ex.: "Recruiting")
+  doencas?: string[];
+  compativel?: boolean;
 }
 
 interface StudyCardProps {
   study: StudySummary;
-  onPress: () => void; // Função para navegar
+  onPress: () => void;
 }
 
 export function StudyCard({ study, onPress }: StudyCardProps) {
-  const statusMap = {
-    EM_ANDAMENTO: { text: 'Em Andamento', style: styles.tagOngoing, textStyle: styles.tagTextOngoing },
-    RECRUTANDO: { text: 'Recrutando', style: styles.tagRecruiting, textStyle: styles.tagTextRecruiting },
-    DEFAULT: { text: 'Verificar', style: styles.tagDefault, textStyle: styles.tagTextDefault },
-  };
+  const recrutando = estaRecrutando(study.status);
 
-  const statusInfo = statusMap[study.status as keyof typeof statusMap] || statusMap.DEFAULT;
-  
   const briefDescription = study.informacoesGerais.length > 100
     ? `${study.informacoesGerais.substring(0, 100)}...`
     : study.informacoesGerais;
@@ -30,13 +29,27 @@ export function StudyCard({ study, onPress }: StudyCardProps) {
   return (
     <View style={styles.cardContainer}>
       <Text style={styles.cardTitle}>{study.titulo}</Text>
-      
-      <View style={[styles.tagBase, statusInfo.style]}>
-        <Text style={statusInfo.textStyle}>{statusInfo.text}</Text>
+
+      <View style={styles.tagsRow}>
+        <View style={[styles.tagBase, recrutando ? styles.tagRecruiting : styles.tagDefault]}>
+          <Text style={recrutando ? styles.tagTextRecruiting : styles.tagTextDefault}>{statusRecrutamentoLabel(study.status)}</Text>
+        </View>
+        {study.compativel && (
+          <View style={[styles.tagBase, styles.tagCompatible]}>
+            <Ionicons name="checkmark-done" size={13} color="#004A7F" style={{ marginRight: 4 }} />
+            <Text style={styles.tagTextCompatible}>Compatível com seu perfil</Text>
+          </View>
+        )}
       </View>
 
       <Text style={styles.cardDescription}>{briefDescription}</Text>
-      
+
+      {!!study.doencas?.length && (
+        <Text style={styles.doencas} numberOfLines={2}>
+          Condições: {study.doencas.join(', ')}
+        </Text>
+      )}
+
       <TouchableOpacity style={styles.participateButton} onPress={onPress}>
         <Text style={styles.buttonText}>Ver Detalhes</Text>
       </TouchableOpacity>
@@ -62,23 +75,35 @@ const styles = StyleSheet.create({
     color: '#212529',
     marginBottom: 8,
   },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 12,
+  },
   tagBase: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingVertical: 5,
     paddingHorizontal: 12,
     borderRadius: 15,
-    alignSelf: 'flex-start',
-    marginBottom: 12,
   },
   tagRecruiting: { backgroundColor: '#E0F5EB' },
   tagTextRecruiting: { color: '#15715A', fontWeight: 'bold', fontSize: 12 },
-  tagOngoing: { backgroundColor: '#DCEEFF' },
-  tagTextOngoing: { color: '#004A7F', fontWeight: 'bold', fontSize: 12 },
+  tagCompatible: { backgroundColor: '#DCEEFF' },
+  tagTextCompatible: { color: '#004A7F', fontWeight: 'bold', fontSize: 12 },
   tagDefault: { backgroundColor: '#E9ECEF' },
   tagTextDefault: { color: '#495057', fontWeight: 'bold', fontSize: 12 },
   cardDescription: {
     fontSize: 14,
     color: '#555',
     lineHeight: 21,
+    marginBottom: 8,
+  },
+  doencas: {
+    fontSize: 13,
+    color: '#6c757d',
+    fontStyle: 'italic',
     marginBottom: 16,
   },
   participateButton: {
@@ -86,6 +111,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 8,
     alignItems: 'center',
+    marginTop: 8,
   },
   buttonText: {
     color: '#ffffff',

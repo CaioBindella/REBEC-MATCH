@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { 
   SafeAreaView, 
   View, 
@@ -13,17 +13,48 @@ import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/reusable/Header';
 import { useAuth } from '@/context/AuthContext';
-import { push } from 'expo-router/build/global-state/routing';
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
+import { preferencias } from '@/services/preferences';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { logOut } = useAuth();
-  
-  // Estados para os Switches
-  const [pushEnabled, setPushEnabled] = useState(true);
-  const [emailEnabled, setEmailEnabled] = useState(false);
-  const [darkMode, setDarkMode] = useState(false);
-  const [biometrics, setBiometrics] = useState(true);
+  const { user, logOut } = useAuth();
+  const [alertasAtivos, setAlertasAtivos] = useState(true);
+
+  useEffect(() => {
+    preferencias.alertasAtivos().then(setAlertasAtivos);
+  }, []);
+
+  const alterarAlertas = async (ativos: boolean) => {
+    setAlertasAtivos(ativos);
+    await preferencias.definirAlertas(ativos);
+  };
+
+  // Direito de exclusão dos dados (LGPD): remove a conta e, em cascata, perfil, respostas,
+  // candidaturas, matches, notificações e mensagens
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      'Excluir conta',
+      'Esta ação é permanente: sua conta e todos os seus dados (perfil, respostas, candidaturas e mensagens) serão removidos. Deseja continuar?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            if (!user) return;
+            try {
+              await apiService.usuario.delete(user.id);
+              Alert.alert('Conta excluída', 'Seus dados foram removidos da plataforma.');
+              await logOut();
+            } catch (error) {
+              Alert.alert('Erro', getErrorMessage(error, 'Não foi possível excluir a conta.'));
+            }
+          },
+        },
+      ]
+    );
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -34,11 +65,7 @@ export default function SettingsPage() {
         { 
           text: "Sair", 
           style: "destructive", 
-          onPress: async () => {
-             await logOut(); 
-             // router.replace('/login');
-             router.replace('/(auth)/login');
-          } 
+          onPress: logOut
         }
       ]
     );
@@ -67,7 +94,7 @@ export default function SettingsPage() {
         <View style={styles.iconContainer}>
           <Ionicons name={icon} size={22} color="#15715A" />
         </View>
-        <Text style={styles.itemTitle}>{title}</Text>
+        <Text style={[styles.itemTitle, { flexShrink: 1 }]}>{title}</Text>
       </View>
       <Switch 
         trackColor={{ false: "#767577", true: "#a7f3d0" }}
@@ -92,7 +119,7 @@ export default function SettingsPage() {
           <SettingItem 
             icon="person-outline" 
             title="Dados Pessoais" 
-            subtitle="Nome, e-mail e telefone"
+            subtitle="Nome fictício, login e e-mail"
             onPress={() => router.push('/(protected)/profile/page')} 
           />
           <SettingItem 
@@ -106,11 +133,11 @@ export default function SettingsPage() {
         {/* Seção de Preferências */}
         <Text style={styles.sectionHeader}>Preferências</Text>
         <View style={styles.sectionContainer}>
-          <SettingToggle 
-            icon="notifications-outline" 
-            title="Notificações Push" 
-            value={pushEnabled} 
-            onValueChange={setPushEnabled} 
+          <SettingToggle
+            icon="notifications-outline"
+            title="Alertas de novas notificações"
+            value={alertasAtivos}
+            onValueChange={alterarAlertas}
           />
         </View>
 
@@ -133,6 +160,10 @@ export default function SettingsPage() {
 
         <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
           <Text style={styles.logoutText}>Sair da Conta</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.deleteButton} onPress={handleDeleteAccount}>
+          <Text style={styles.deleteText}>Excluir minha conta e meus dados</Text>
         </TouchableOpacity>
 
         <Text style={styles.footerText}>ReBEC Match © 2026</Text>
@@ -206,6 +237,19 @@ const styles = StyleSheet.create({
     color: '#ef4444',
     fontWeight: 'bold',
     fontSize: 16,
+  },
+  deleteButton: {
+    marginTop: 12,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  deleteText: {
+    color: '#ef4444',
+    fontWeight: '600',
+    fontSize: 15,
   },
   footerText: {
     textAlign: 'center',

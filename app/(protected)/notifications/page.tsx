@@ -1,21 +1,22 @@
 import React, { useState, useCallback } from 'react';
 import { 
-  SafeAreaView, View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator 
+  SafeAreaView, View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert 
 } from 'react-native';
 import { Stack, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/reusable/Header';
 import { useAuth } from '@/context/AuthContext';
-import { apiService } from '@/services/api/apiClient';
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
+import { formatDateTime } from '@/utils/formatters';
 
-// Tipo de dado (adaptado para o retorno do backend)
+// Notificação exibida na central (a partir do NotificacaoResponseDTO da API)
 interface NotificationItem {
-  id: string;
+  id: number;
   title: string;
   description: string;
   time: string;
   read: boolean;
-  type: 'info' | 'success' | 'warning';
+  type: string; // 'info' | 'success'
 }
 
 export default function NotificationsPage() {
@@ -23,61 +24,51 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // useFocusEffect garante que a lista recarregue sempre que o usuário entrar na tela
-  useFocusEffect(
-    useCallback(() => {
-      fetchNotifications();
-    }, [user])
-  );
-
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!user) return;
     try {
       const data = await apiService.notificacao.listar(user.id);
-      
-      const formatted = data.map((n: any) => {
-        let dateObj;
-
-        // CORREÇÃO: Verifica se a data veio como Array do Java [ano, mes, dia, hora, min]
-        if (Array.isArray(n.dataCriacao)) {
-            const [year, month, day, hour = 0, minute = 0, second = 0] = n.dataCriacao;
-            // Importante: No JavaScript o mês começa em 0 (Janeiro=0), mas no Java começa em 1.
-            dateObj = new Date(year, month - 1, day, hour, minute, second);
-        } else {
-            // Caso venha como string ISO futuramente
-            dateObj = new Date(n.dataCriacao);
-        }
-
-        return {
-            id: String(n.id),
-            title: n.titulo,
-            description: n.mensagem,
-            time: dateObj.toLocaleDateString('pt-BR', { 
-                day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' 
-            }), 
-            read: n.lida,
-            type: n.tipo || 'info',
-        };
-      });
-      
-      setNotifications(formatted);
+      setNotifications(
+        data.map((n) => ({
+          id: n.id,
+          title: n.titulo,
+          description: n.mensagem,
+          time: formatDateTime(n.dataCriacao),
+          read: n.lida,
+          type: n.tipo || 'info',
+        }))
+      );
     } catch (error) {
-      console.error("Erro ao buscar notificações:", error);
+      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar as notificações.'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
+
+  // Recarrega a lista sempre que o usuário entra na tela
+  useFocusEffect(
+    useCallback(() => {
+      fetchNotifications();
+    }, [fetchNotifications])
+  );
 
   const markAllAsRead = async () => {
     if (!user) return;
     try {
-      // Chama o endpoint de marcar todas como lidas
-      await apiService.notificacao.marcarLidas(user.id);
-      
-      // Atualiza o estado local para refletir a mudança instantaneamente
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      await apiService.notificacao.marcarTodasLidas(user.id);
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (error) {
-      console.error("Erro ao marcar como lidas:", error);
+      Alert.alert('Erro', getErrorMessage(error));
+    }
+  };
+
+  const markAsRead = async (item: NotificationItem) => {
+    if (item.read) return;
+    try {
+      await apiService.notificacao.marcarLida(item.id);
+      setNotifications((prev) => prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)));
+    } catch (error) {
+      Alert.alert('Erro', getErrorMessage(error));
     }
   };
 
@@ -91,10 +82,6 @@ export default function NotificationsPage() {
       iconName = 'checkmark-circle';
       iconColor = '#15715A';
       bgColor = '#d1fae5';
-    } else if (item.type === 'warning') {
-      iconName = 'alert-circle';
-      iconColor = '#d97706';
-      bgColor = '#fef3c7';
     } else {
       // Tipo 'info' ou padrão
       iconName = 'chatbubble-ellipses';
@@ -103,7 +90,7 @@ export default function NotificationsPage() {
     }
 
     return (
-      <TouchableOpacity style={[styles.card, !item.read && styles.unreadCard]}>
+      <TouchableOpacity style={[styles.card, !item.read && styles.unreadCard]} onPress={() => markAsRead(item)}>
         <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
           <Ionicons name={iconName} size={24} color={iconColor} />
         </View>
@@ -137,7 +124,7 @@ export default function NotificationsPage() {
         ) : (
             <FlatList
             data={notifications}
-            keyExtractor={item => item.id}
+            keyExtractor={item => String(item.id)}
             renderItem={renderNotification}
             contentContainerStyle={{ paddingBottom: 20 }}
             ListEmptyComponent={

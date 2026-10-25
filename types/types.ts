@@ -1,149 +1,132 @@
-// src/services/types.ts
+// Tipos que espelham os DTOs da API principal (Java/Spring Boot) e do serviço de chat (Node.js).
 
 // --- ENUMS ---
-export type TipoUsuario = 'ADMIN' | 'USER';
 export type TipoEspecifico = 'PESQUISADOR' | 'VOLUNTARIO';
 export type Sexo = 'MASCULINO' | 'FEMININO' | 'OUTRO' | 'NAO_INFORMADO';
+export type GeneroElegivel = 'MASCULINO' | 'FEMININO' | 'AMBOS';
 export type TipoQuestao = 'TEXTO' | 'OPCOES';
 export type StatusCandidatura = 'PENDENTE' | 'ACEITO_PELO_PESQUISADOR' | 'CONCLUIDO' | 'RECUSADO';
+
+// Rótulos ICTRP gravados em estudo.recruitment_status
+export type StatusRecrutamento =
+  | 'Recruiting'
+  | 'Not yet recruiting'
+  | 'Recruitment completed'
+  | 'Data analysis completed'
+  | 'Suspended'
+  | 'Terminated'
+  | 'Withdrawn'
+  | 'Other';
+
+// Corpo de erro padronizado pelo RestExceptionHandler
+export interface ApiErrorDTO {
+  timestamp?: string;
+  status: number;
+  error?: string;
+  message: string;
+  path?: string;
+}
 
 // --- AUTH ---
 export interface LoginResponseDTO {
   token: string;
   usuario: UsuarioResponseDTO;
   nomeFicticio: string | null;
-  perfilId: number;
+  perfilId: number | null;
 }
 
 // --- USUÁRIO ---
 export interface UsuarioCreateDTO {
-  nome: string;
-  sobrenome: string;
-  login: string;
-  email: string;
-  senha?: string;
-  tipoEspecifico: TipoEspecifico;
-  sexo: Sexo;
-  dataNascimento: string; // YYYY-MM-DD
-  telefone: string;
-  cep: string;
-  endereco: string;
-  documento: string;
-}
-
-export interface UsuarioUpdateDTO {
   nome?: string;
   sobrenome?: string;
-  login?: string;
-  email?: string;
-  senha?: string;
-  tipoEspecifico?: TipoEspecifico;
+  login: string;
+  email: string;
+  senha: string;
+  tipoEspecifico: TipoEspecifico;
   sexo?: Sexo;
-  dataNascimento?: string;
+  dataNascimento?: string; // AAAA-MM-DD
   telefone?: string;
-  cep?: string;
+  cep?: string;            // 8 dígitos
   endereco?: string;
   documento?: string;
 }
 
 export interface UsuarioResponseDTO {
   id: number;
-  nome: string;
-  sobrenome: string;
+  nome: string | null;
+  sobrenome: string | null;
   login: string;
   email: string;
-  tipo: TipoUsuario;
   tipoEspecifico: TipoEspecifico;
-  sexo: Sexo;
+  sexo: Sexo | null;
   tester: boolean;
 }
 
-// --- PESQUISADOR ---
-export interface PesquisadorCreateDTO {
-  usuarioId: number;
-  nomeFicticio: string;
+export interface ChangePasswordDTO {
+  senhaAtual: string;
+  novaSenha: string;
 }
 
-export interface PesquisadorUpdateDTO {
-  nomeFicticio: string;
-}
-
+// --- PERFIS (pseudonimizados) ---
 export interface PesquisadorResponseDTO {
   id: number;
-  usuario: UsuarioResponseDTO;
-  nomeFicticio: string;
-}
-
-// --- VOLUNTÁRIO ---
-export interface VoluntarioCreateDTO {
   usuarioId: number;
-  distancia: number;
-  nomeFicticio: string;
-}
-
-export interface VoluntarioUpdateDTO {
-  distancia: number;
-  nomeFicticio: string;
-}
-
-export interface VoluntarioResponseDTO {
-  id: number;
-  usuario: UsuarioResponseDTO;
-  distancia: number;
   nomeFicticio: string;
 }
 
 // --- ESTUDO ---
 export interface EstudoCreateDTO {
-  pesquisador_id: number;
   publicTitle: string;
   scientificTitle: string;
-  recruitmentStatus: string;
-  studyType: string;
-  phase: string;
-  dateRegistration: string;
-  dateEnrolment?: string;
-  url: string;
-  primarySponsor: string;
-  hcFreetext: string;
-  iFreetext: string;
-  approvalDate?: string;
-  secId?: string;
+  recruitmentStatus: StatusRecrutamento;
+  studyType?: string;
+  phase?: string;
+  dateRegistration: string;  // AAAA-MM-DD
+  dateEnrolment?: string | null;
+  url?: string;
+  primarySponsor?: string;
+  hcFreetext?: string;
+  iFreetext?: string;
+  approvalDate?: string | null;
+  secId?: string | null;
   trialId: string;
 }
 
-export interface EstudoUpdateDTO extends Partial<EstudoCreateDTO> {}
+export type EstudoUpdateDTO = EstudoCreateDTO;
 
 export interface EstudoResponseDTO {
   id: number;
   pesquisadorId: number;
+  pesquisador: PesquisadorResponseDTO | null;
   publicTitle: string;
-  pesquisador: PesquisadorResponseDTO;
   scientificTitle: string;
   recruitmentStatus: string;
   studyType: string;
   phase: string;
   dateRegistration: string;
-  dateEnrolment: string;
+  dateEnrolment: string | null;
   url: string;
   primarySponsor: string;
   hcFreetext: string;
   iFreetext: string;
-  approvalDate: string;
-  secId: string;
+  approvalDate: string | null;
+  secId: string | null;
   trialId: string;
   criterios: CriterioResponseDTO[];
+  nomesDoencas: string[];
 }
 
 // --- CRITÉRIO ---
 export interface CriterioCreateDTO {
   estudo_id: number;
   inclusion_criteria: string;
-  agemin: string;
+  agemin: string;  // formato ICTRP: número + unidade (Y, M, W, D, H). Ex.: 18Y
   agemax: string;
-  gender: string;
+  gender: GeneroElegivel;
   exclusion_criteria: string;
 }
+
+export type CriterioUpdateDTO = Omit<CriterioCreateDTO, 'estudo_id'>;
 
 export interface CriterioResponseDTO {
   id: number;
@@ -151,64 +134,122 @@ export interface CriterioResponseDTO {
   inclusion_criteria: string;
   agemin: string;
   agemax: string;
-  gender: string;
+  gender: GeneroElegivel;
   exclusion_criteria: string;
 }
 
-// --- FORMULÁRIO & QUESTÕES ---
-export interface FormularioResponseDTO {
+// --- DOENÇAS (vocabulário controlado) ---
+export interface DoencaResponseDTO {
   id: number;
-  estudoId: number;
-  titulo: string;
-  textoParaRespostaLivre: string;
-  dataCriacao: string;
+  codigo: string;
+  nomeCientifico: string;
+  nomePopular: string;
+  vocabulario: string;
 }
 
+// --- FORMULÁRIO & QUESTÕES ---
 export interface QuestaoResponseDTO {
   id: number;
   formularioId: number;
   texto: string;
   tipo: TipoQuestao;
-  opcoes: string; // JSON String
+  opcoes: string | null; // JSON com a lista de opções (questões OPCOES)
   obrigatorio: boolean;
+  secao: string | null;
 }
 
 // --- RESPOSTAS ---
-export interface RespostasBatchCreateDTO {
-  voluntario_id: number;
-  formulario_id: number;
-  busca_id?: number;
-  respostas: {
-    questao_id: number;
-    conteudo: string;
-    marcado?: boolean;
-  }[];
+export interface RespostaIndividualDTO {
+  questao_id: number;
+  conteudo: string;
+  marcado: boolean;
 }
 
-// --- MATCH ---
-export interface MatchResultResponseDTO {
+export interface RespostasBatchCreateDTO {
+  formulario_id: number;
+  respostas: RespostaIndividualDTO[];
+}
+
+export interface RespostaResponseDTO {
   id: number;
   voluntarioId: number;
-  voluntarioNomeFicticio: string;
-  estudoId: number;
-  estudoPublicTitle: string;
-  criteriosAtendidos: number;
-  dataMatch: string;
-  justificativa: string;
+  questaoId: number;
+  questaoTexto: string;
+  conteudo: string;
+  marcado: boolean;
 }
 
-// --- CANDIDATURA (Novo Fluxo) ---
+// --- CANDIDATURA ---
 export interface CandidaturaCreateDTO {
-  voluntarioId: number;
   estudoId: number;
 }
 
 export interface CandidaturaResponseDTO {
   id: number;
   voluntarioId: number;
+  voluntarioUsuarioId: number;
   voluntarioNome: string;
   estudoId: number;
   estudoTitulo: string;
+  pesquisadorId: number;
+  pesquisadorUsuarioId: number;
+  pesquisadorNomeFicticio: string;
   status: StatusCandidatura;
   dataCandidatura: string;
+}
+
+export interface CandidatoDetalhadoDTO {
+  candidaturaId: number;
+  voluntarioId: number;
+  voluntarioUsuarioId: number;
+  nomeFicticio: string;
+  idade: number | null;
+  sexo: Sexo | null;
+  localizacao: string | null; // cinco primeiros dígitos do CEP
+  estudoId: number;
+  estudoTitulo: string;
+  status: StatusCandidatura;
+}
+
+// --- MATCH ---
+export interface MatchResultResponseDTO {
+  id: number;
+  voluntarioId: number;
+  voluntarioUsuarioId: number;
+  voluntarioNomeFicticio: string;
+  estudoId: number;
+  estudoPublicTitle: string;
+  pesquisadorUsuarioId: number;
+  pesquisadorNomeFicticio: string;
+  criteriosAtendidos: number;
+  dataMatch: string;
+  justificativa: string;
+}
+
+// --- NOTIFICAÇÕES ---
+export interface NotificacaoResponseDTO {
+  id: number;
+  titulo: string;
+  mensagem: string;
+  tipo: string; // 'info' | 'success'
+  lida: boolean;
+  dataCriacao: string;
+  usuarioId: number;
+}
+
+// --- CHAT (serviço Node.js) ---
+export interface MensagemDTO {
+  id: number;
+  autor_id: number;
+  leitor_id: number;
+  estudo_id: number;
+  conteudo: string;
+  data_envio: string;
+  data_leitura: string | null;
+}
+
+export interface MensagemCreateDTO {
+  leitorId: number;
+  estudoId: number;
+  conteudo: string;
 }

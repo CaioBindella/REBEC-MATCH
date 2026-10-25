@@ -1,29 +1,30 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
-// Tipo de dados para este card
-export interface SelectedStudy {
-  id: number;
-  titulo: string;
-  pesquisador: {
-    nomeFicticio: string;
-    avatarUrl?: string; // URL da foto do pesquisador (opcional)
-  };
-}
-
-interface SelectedStudyCardProps {
-  study: SelectedStudy;
+interface AccessChatProps {
+  tituloEstudo: string;
+  nomeContato: string; // nome fictício do voluntário
+  detalhe?: string;
   onChatPress: () => void;
 }
 
-export function AccessChat({ study, onChatPress }: SelectedStudyCardProps) {
+/** Card de acesso ao chat com um voluntário de participação confirmada (match). */
+export function AccessChat({ tituloEstudo, nomeContato, detalhe, onChatPress }: AccessChatProps) {
   return (
     <View style={styles.cardContainer}>
-      <View style={styles.infoContainer}>
-        <Text style={styles.title}>{study.titulo}</Text>
-        <Text style={styles.researcher}>Voluntário: {study.pesquisador.nomeFicticio}</Text>
+      <View style={styles.header}>
+        <View style={styles.avatar}>
+          <Ionicons name="person" size={22} color="#fff" />
+        </View>
+        <View style={styles.infoContainer}>
+          <Text style={styles.name}>{nomeContato}</Text>
+          <Text style={styles.title} numberOfLines={2}>{tituloEstudo}</Text>
+          {!!detalhe && <Text style={styles.detail}>{detalhe}</Text>}
+        </View>
       </View>
       <TouchableOpacity style={styles.chatButton} onPress={onChatPress}>
+        <Ionicons name="chatbubble-ellipses-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
         <Text style={styles.chatButtonText}>Acessar Chat</Text>
       </TouchableOpacity>
     </View>
@@ -36,31 +37,46 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
-    flexDirection: 'column',
-    alignItems: 'stretch',
-    justifyContent: 'space-between',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
   },
-  infoContainer: {
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  title: {
-    fontSize: 16,
+  avatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#15715A',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  infoContainer: {
+    flex: 1,
+  },
+  name: {
+    fontSize: 17,
     fontWeight: 'bold',
     color: '#212529',
-    marginBottom: 4,
-    textAlign: 'left',
   },
-  researcher: {
+  title: {
     fontSize: 14,
     color: '#6c757d',
-    textAlign: 'left',
+    marginTop: 2,
+  },
+  detail: {
+    fontSize: 12,
+    color: '#999',
+    marginTop: 4,
   },
   chatButton: {
+    flexDirection: 'row',
     backgroundColor: '#15715A',
     paddingVertical: 12,
     borderRadius: 8,

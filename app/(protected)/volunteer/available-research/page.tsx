@@ -1,143 +1,155 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { 
-  ActivityIndicator, 
-  FlatList, 
-  SafeAreaView, 
-  StyleSheet, 
-  Text, 
-  View, 
-  TextInput, 
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
   TouchableOpacity,
   ScrollView,
   Keyboard,
+  Switch,
+  Alert,
 } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import debounce from 'lodash.debounce';
 
 import Header from '@/components/reusable/Header';
 import { StudyCard, StudySummary } from '@/components/volunteerComponents/StudyCard';
-import { apiService } from '@/services/api/apiClient'; 
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { useAuth } from '@/context/AuthContext';
+import { DoencaResponseDTO, EstudoResponseDTO } from '@/types/types';
 
-interface Doenca {
-  id: number;
-  nomeCientifico: string;
-  nomePopular?: string;
-}
+type StudyData = StudySummary & { jaCandidatou: boolean };
+type TabOption = 'available' | 'applied';
 
-type StudyData = StudySummary & { 
-    doencas?: string[];
-    jaCandidatou?: boolean; 
-};
-
-type TabOption = 'available' | 'applied'; // Controle de Abas
+const TAMANHO_MINIMO_BUSCA = 3;
 
 export default function AvailableStudiesScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  
-  const [allStudies, setAllStudies] = useState<StudyData[]>([]);
-  const [activeTab, setActiveTab] = useState<TabOption>('available'); // Aba ativa
-  const [visibleCount, setVisibleCount] = useState(10); 
-  
+
+  const [recrutando, setRecrutando] = useState<EstudoResponseDTO[]>([]);
+  const [compativeisIds, setCompativeisIds] = useState<Set<number>>(new Set());
+  const [candidatadosIds, setCandidatadosIds] = useState<Set<number>>(new Set());
+  const [resultadosBusca, setResultadosBusca] = useState<EstudoResponseDTO[] | null>(null);
+
+  const [activeTab, setActiveTab] = useState<TabOption>('available');
+  const [apenasCompativeis, setApenasCompativeis] = useState(true);
+  const [visibleCount, setVisibleCount] = useState(10);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
-  const [suggestedDoencas, setSuggestedDoencas] = useState<Doenca[]>([]); 
-  const [isSearchingDoenca, setIsSearchingDoenca] = useState(false);
-
+  const [suggestedDoencas, setSuggestedDoencas] = useState<DoencaResponseDTO[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Busca dados e cruza com os já candidatados
-  useEffect(() => {
-    async function loadData() {
-      try {
-        setLoading(true);
-        const voluntarioId = user?.perfilId;
-        
-        const [estudosData, candidaturasData] = await Promise.all([
-            apiService.estudo.listRecruiting(),
-            voluntarioId ? apiService.candidatura.listarPorVoluntario(voluntarioId) : Promise.resolve([])
-        ]);
-        
-        const estudosCandidatadosIds = new Set(candidaturasData.map((c: any) => c.estudoId));
-        
-        const formatted = estudosData.map((item: any) => ({
-            id: item.id,
-            titulo: item.publicTitle,
-            informacoesGerais: item.scientificTitle || 'Ver detalhes.',
-            status: 'RECRUTANDO',
-            doencas: item.nomesDoencas || [],
-            jaCandidatou: estudosCandidatadosIds.has(item.id) 
-        }));
-
-        setAllStudies(formatted);
-      } catch (err) {
-        console.error("Erro ao carregar estudos:", err);
-      } finally {
-        setLoading(false);
-      }
+  // Estudos em recrutamento, estudos compatíveis com o perfil (filtragem por regras da API)
+  // e candidaturas do voluntário, cruzadas no cliente para separar as abas
+  const loadData = useCallback(async () => {
+    if (!user?.perfilId) return;
+    try {
+      const [estudos, compativeis, candidaturas] = await Promise.all([
+        apiService.estudo.listRecruiting(),
+        apiService.match.estudosCompativeis(),
+        apiService.candidatura.listarPorVoluntario(user.perfilId),
+      ]);
+      setRecrutando(estudos);
+      setCompativeisIds(new Set(compativeis.map((e) => e.id)));
+      setCandidatadosIds(new Set(candidaturas.map((c) => c.estudoId)));
+    } catch (error) {
+      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar os estudos.'));
+    } finally {
+      setLoading(false);
     }
-    loadData();
-  }, [user]);
+  }, [user?.perfilId]);
 
-  const searchDoencasApi = useCallback(
-    debounce(async (text: string) => {
-      if (text.length < 3) {
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  // Busca com debounce: sugestões do vocabulário controlado e estudos encontrados pela API
+  const buscar = useMemo(
+    () =>
+      debounce(async (texto: string) => {
+        if (texto.trim().length < TAMANHO_MINIMO_BUSCA) {
           setSuggestedDoencas([]);
+          setResultadosBusca(null);
           return;
-      }
-      try {
-        setIsSearchingDoenca(true);
-        const results = await apiService.doenca.search(text);
-        setSuggestedDoencas(results);
-        setShowDropdown(true);
-      } catch (error) {
-        console.error("Erro na busca", error);
-      } finally {
-        setIsSearchingDoenca(false);
-      }
-    }, 500), 
+        }
+        try {
+          setIsSearching(true);
+          const [doencas, estudos] = await Promise.all([
+            apiService.doenca.search(texto.trim()),
+            apiService.estudo.searchByDoenca(texto.trim()),
+          ]);
+          setSuggestedDoencas(doencas);
+          setResultadosBusca(estudos);
+          setShowDropdown(true);
+        } catch (error) {
+          console.error('Erro na busca', error);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 500),
     []
   );
 
+  useEffect(() => () => buscar.cancel(), [buscar]);
+
   const handleSearchChange = (text: string) => {
     setSearchTerm(text);
-    searchDoencasApi(text);
     setVisibleCount(10);
+    buscar(text);
   };
 
-  const selectDoenca = (doenca: Doenca) => {
-      const nome = doenca.nomePopular || doenca.nomeCientifico;
-      setSearchTerm(nome);
-      setShowDropdown(false);
-      Keyboard.dismiss();
-      setVisibleCount(10);
+  const selectDoenca = async (doenca: DoencaResponseDTO) => {
+    const nome = doenca.nomePopular || doenca.nomeCientifico;
+    setSearchTerm(nome);
+    setShowDropdown(false);
+    Keyboard.dismiss();
+    setVisibleCount(10);
+    try {
+      setIsSearching(true);
+      setResultadosBusca(await apiService.estudo.searchByDoenca(nome));
+    } catch (error) {
+      Alert.alert('Erro', getErrorMessage(error));
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  // Lógica principal de Filtro (Abas + Busca Textual)
-  const getDisplayList = () => {
-      // 1. Filtra pela Aba Ativa
-      let baseList = allStudies;
-      if (activeTab === 'available') {
-          baseList = allStudies.filter(s => !s.jaCandidatou); // Apenas novos
-      } else {
-          baseList = allStudies.filter(s => s.jaCandidatou);  // Apenas inscritos
-      }
-
-      // 2. Filtra pela Busca (se houver texto)
-      if (searchTerm.trim() !== '') {
-          const lower = searchTerm.toLowerCase();
-          baseList = baseList.filter(s => 
-              s.titulo.toLowerCase().includes(lower) || 
-              s.doencas?.some(d => d.toLowerCase().includes(lower))
-          );
-      }
-
-      return baseList;
+  const limparBusca = () => {
+    buscar.cancel();
+    setSearchTerm('');
+    setSuggestedDoencas([]);
+    setResultadosBusca(null);
+    setShowDropdown(false);
   };
 
-  const displayList = getDisplayList();
+  // Lista exibida: resultado da busca (ou todos em recrutamento), separado por aba e,
+  // na aba de novos estudos, opcionalmente restrito aos compatíveis com o perfil
+  const displayList: StudyData[] = useMemo(() => {
+    const base = resultadosBusca ?? recrutando;
+    return base
+      .map((item) => ({
+        id: item.id,
+        titulo: item.publicTitle,
+        informacoesGerais: item.scientificTitle || 'Ver detalhes.',
+        status: item.recruitmentStatus,
+        doencas: item.nomesDoencas,
+        compativel: compativeisIds.has(item.id),
+        jaCandidatou: candidatadosIds.has(item.id),
+      }))
+      .filter((s) =>
+        activeTab === 'applied' ? s.jaCandidatou : !s.jaCandidatou && (!apenasCompativeis || s.compativel)
+      );
+  }, [resultadosBusca, recrutando, compativeisIds, candidatadosIds, activeTab, apenasCompativeis]);
 
   if (loading) {
     return <View style={styles.centered}><ActivityIndicator size="large" color="#15715A" /></View>;
@@ -150,116 +162,108 @@ export default function AvailableStudiesScreen() {
 
       <View style={[styles.searchWrapper, { zIndex: 100 }]}>
         <View style={styles.inputContainer}>
-            <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
-            <TextInput
-                style={styles.input}
-                placeholder="Busque por doença (min 3 letras)..."
-                placeholderTextColor="#999"
-                value={searchTerm}
-                onChangeText={handleSearchChange}
-                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
-            />
-            {searchTerm.length > 0 && (
-                <TouchableOpacity onPress={() => { setSearchTerm(''); }}>
-                    <Ionicons name="close-circle" size={18} color="#ccc" />
-                </TouchableOpacity>
-            )}
+          <Ionicons name="search" size={20} color="#666" style={{ marginRight: 8 }} />
+          <TextInput
+            style={styles.input}
+            placeholder="Busque por doença (mín. 3 letras)..."
+            placeholderTextColor="#999"
+            value={searchTerm}
+            onChangeText={handleSearchChange}
+            onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+          />
+          {isSearching && <ActivityIndicator size="small" color="#15715A" style={{ marginRight: 8 }} />}
+          {searchTerm.length > 0 && (
+            <TouchableOpacity onPress={limparBusca}>
+              <Ionicons name="close-circle" size={18} color="#ccc" />
+            </TouchableOpacity>
+          )}
         </View>
 
-        {showDropdown && (
-            <View style={styles.dropdown}>
-                {isSearchingDoenca ? (
-                    <ActivityIndicator size="small" color="#15715A" style={{ margin: 20 }} />
-                ) : (
-                    <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 200 }}>
-                        {suggestedDoencas.length > 0 ? (
-                            suggestedDoencas.map((d, index) => (
-                                <TouchableOpacity key={index} style={styles.dropdownItem} onPress={() => selectDoenca(d)}>
-                                    <Text style={styles.ddMainText}>{d.nomePopular || d.nomeCientifico}</Text>
-                                    {d.nomePopular && <Text style={styles.ddSubText}>{d.nomeCientifico}</Text>}
-                                </TouchableOpacity>
-                            ))
-                        ) : (
-                            <Text style={{ padding: 15, color: '#999', fontStyle: 'italic', textAlign: 'center' }}>
-                                Nenhuma doença encontrada.
-                            </Text>
-                        )}
-                    </ScrollView>
-                )}
-            </View>
+        {showDropdown && suggestedDoencas.length > 0 && (
+          <View style={styles.dropdown}>
+            <ScrollView keyboardShouldPersistTaps="handled" style={{ maxHeight: 200 }}>
+              {suggestedDoencas.map((d) => (
+                <TouchableOpacity key={d.id} style={styles.dropdownItem} onPress={() => selectDoenca(d)}>
+                  <Text style={styles.ddMainText}>{d.nomePopular || d.nomeCientifico}</Text>
+                  {d.nomePopular !== d.nomeCientifico && <Text style={styles.ddSubText}>{d.nomeCientifico}</Text>}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
         )}
       </View>
 
       {/* --- ABAS DE NAVEGAÇÃO --- */}
       <View style={styles.tabsContainer}>
-        <TouchableOpacity 
-            style={[styles.tabButton, activeTab === 'available' && styles.activeTabButton]}
-            onPress={() => { setActiveTab('available'); setVisibleCount(10); }}
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'available' && styles.activeTabButton]}
+          onPress={() => { setActiveTab('available'); setVisibleCount(10); }}
         >
-            <Text style={[styles.tabText, activeTab === 'available' && styles.activeTabText]}>
-                Novos Estudos
-            </Text>
+          <Text style={[styles.tabText, activeTab === 'available' && styles.activeTabText]}>Novos Estudos</Text>
         </TouchableOpacity>
-
-        <TouchableOpacity 
-            style={[styles.tabButton, activeTab === 'applied' && styles.activeTabButton]}
-            onPress={() => { setActiveTab('applied'); setVisibleCount(10); }}
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'applied' && styles.activeTabButton]}
+          onPress={() => { setActiveTab('applied'); setVisibleCount(10); }}
         >
-            <Text style={[styles.tabText, activeTab === 'applied' && styles.activeTabText]}>
-                Já Inscritos
-            </Text>
+          <Text style={[styles.tabText, activeTab === 'applied' && styles.activeTabText]}>Já Inscritos</Text>
         </TouchableOpacity>
       </View>
+
+      {activeTab === 'available' && (
+        <View style={styles.compatRow}>
+          <Text style={styles.compatText}>Somente compatíveis com minha idade e sexo</Text>
+          <Switch
+            value={apenasCompativeis}
+            onValueChange={(v) => { setApenasCompativeis(v); setVisibleCount(10); }}
+            trackColor={{ false: '#ccc', true: '#a7f3d0' }}
+            thumbColor={apenasCompativeis ? '#15715A' : '#f4f3f4'}
+          />
+        </View>
+      )}
 
       <FlatList
         data={displayList.slice(0, visibleCount)}
         keyExtractor={(item) => String(item.id)}
         renderItem={({ item }) => (
-          <View style={[styles.cardContainer, item.jaCandidatou && styles.cardContainerApplied]}>
-             
-             {item.jaCandidatou && (
-                 <View style={styles.appliedBadge}>
-                     <Ionicons name="checkmark-circle" size={16} color="#856404" />
-                     <Text style={styles.appliedText}>Você já se candidatou para este estudo</Text>
-                 </View>
-             )}
-
-             <StudyCard
-               study={item}
-               onPress={() => {
-                   // NAVEGAÇÃO LIVRE: Ele pode acessar os detalhes mesmo se for inscrito
-                   router.push({
-                       pathname: "/(protected)/volunteer/available-research/[id]",
-                       params: { id: item.id },
-                   });
-               }}
-             />
+          <View style={styles.cardContainer}>
+            {item.jaCandidatou && (
+              <View style={styles.appliedBadge}>
+                <Ionicons name="checkmark-circle" size={16} color="#856404" />
+                <Text style={styles.appliedText}>Você já se candidatou para este estudo</Text>
+              </View>
+            )}
+            <StudyCard
+              study={item}
+              onPress={() =>
+                router.push({ pathname: '/(protected)/volunteer/available-research/[id]', params: { id: item.id } })
+              }
+            />
           </View>
         )}
         contentContainerStyle={styles.listContent}
         ListEmptyComponent={
-            <View style={styles.emptyContainer}>
-                <Ionicons name="document-text-outline" size={48} color="#ccc" style={{ marginBottom: 12 }} />
-                <Text style={styles.emptyText}>
-                    {activeTab === 'available' 
-                        ? 'Nenhum estudo novo encontrado.' 
-                        : 'Você ainda não se candidatou a nenhum estudo.'}
-                </Text>
-            </View>
+          <View style={styles.emptyContainer}>
+            <Ionicons name="document-text-outline" size={48} color="#ccc" style={{ marginBottom: 12 }} />
+            <Text style={styles.emptyText}>
+              {activeTab === 'available'
+                ? apenasCompativeis
+                  ? 'Nenhum estudo compatível encontrado. Desative o filtro para ver todos.'
+                  : 'Nenhum estudo novo encontrado.'
+                : 'Você ainda não se candidatou a nenhum estudo.'}
+            </Text>
+          </View>
         }
         ListFooterComponent={
-            <View style={styles.footer}>
-                {displayList.length > visibleCount ? (
-                    <TouchableOpacity style={styles.showMoreButton} onPress={() => setVisibleCount(v => v + 10)}>
-                        <Text style={styles.showMoreText}>Ver mais resultados</Text>
-                        <Ionicons name="chevron-down" size={16} color="#15715A" />
-                    </TouchableOpacity>
-                ) : (
-                    !loading && displayList.length > 0 && (
-                        <Text style={styles.endText}>Você viu todos os resultados.</Text>
-                    )
-                )}
-            </View>
+          <View style={styles.footer}>
+            {displayList.length > visibleCount ? (
+              <TouchableOpacity style={styles.showMoreButton} onPress={() => setVisibleCount((v) => v + 10)}>
+                <Text style={styles.showMoreText}>Ver mais resultados</Text>
+                <Ionicons name="chevron-down" size={16} color="#15715A" />
+              </TouchableOpacity>
+            ) : (
+              displayList.length > 0 && <Text style={styles.endText}>Você viu todos os resultados.</Text>
+            )}
+          </View>
         }
       />
     </SafeAreaView>
@@ -281,63 +285,16 @@ const styles = StyleSheet.create({
   showMoreButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#15715A', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
   showMoreText: { color: '#15715A', fontWeight: 'bold', marginRight: 5 },
   endText: { color: '#adb5bd', fontSize: 14 },
-  emptyContainer: { alignItems: 'center', marginTop: 50 },
-  emptyText: { color: '#adb5bd', fontSize: 16 },
-
-  // Estilos das Abas
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 4,
-    marginHorizontal: 16,
-    marginTop: 16,
-    borderWidth: 1,
-    borderColor: '#eee',
-  },
-  tabButton: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: 'center',
-    borderRadius: 6,
-  },
-  activeTabButton: {
-    backgroundColor: '#E0F2F1', 
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6c757d',
-  },
-  activeTabText: {
-    color: '#15715A',
-    fontWeight: 'bold',
-  },
-
-  cardContainer: {
-    marginBottom: 16,
-  },
-  cardContainerApplied: {
-    opacity: 0.9, 
-  },
-  appliedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff3cd', 
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderTopLeftRadius: 12, 
-    borderTopRightRadius: 12,
-    borderWidth: 1,
-    borderColor: '#ffeeba',
-    borderBottomWidth: 0,
-    marginBottom: -5, 
-    zIndex: 1,
-  },
-  appliedText: {
-    marginLeft: 6,
-    color: '#856404',
-    fontSize: 13,
-    fontWeight: 'bold',
-  },
+  emptyContainer: { alignItems: 'center', marginTop: 50, paddingHorizontal: 24 },
+  emptyText: { color: '#adb5bd', fontSize: 16, textAlign: 'center' },
+  tabsContainer: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8, padding: 4, marginHorizontal: 16, marginTop: 16, borderWidth: 1, borderColor: '#eee' },
+  tabButton: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 6 },
+  activeTabButton: { backgroundColor: '#E0F2F1' },
+  tabText: { fontSize: 14, fontWeight: '600', color: '#6c757d' },
+  activeTabText: { color: '#15715A', fontWeight: 'bold' },
+  compatRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 12 },
+  compatText: { fontSize: 14, color: '#495057', flex: 1, marginRight: 8 },
+  cardContainer: { marginBottom: 16 },
+  appliedBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff3cd', paddingVertical: 8, paddingHorizontal: 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderColor: '#ffeeba', borderBottomWidth: 0, marginBottom: -5, zIndex: 1 },
+  appliedText: { marginLeft: 6, color: '#856404', fontSize: 13, fontWeight: 'bold' },
 });

@@ -23,9 +23,9 @@ export const TermsModal: React.FC<TermsModalProps> = ({ visible, onClose, onAcce
             {"\n\n"}
             Seus dados pessoais, como informações de contato e perfil de saúde, serão coletados e armazenados de forma segura em nossa plataforma. Estes dados serão utilizados exclusivamente para conectar você a estudos e pesquisas científicas compatíveis com seu perfil.
             {"\n\n"}
-            As informações poderão ser compartilhadas de forma anonimizada com pesquisadores responsáveis pelos estudos. Garantimos a confidencialidade e a segurança dos seus dados, em conformidade com a Lei Geral de Proteção de Dados (LGPD).
+            Seu nome civil, e-mail, telefone e documento nunca são exibidos a pesquisadores: você é identificado por um nome fictício. Ao se candidatar a um estudo, apenas o pesquisador responsável por ele passa a ver suas respostas do formulário de perfil, sua idade, seu sexo e sua região. O chat só é liberado após a confirmação mútua de interesse (match). O tratamento dos dados segue a Lei Geral de Proteção de Dados (LGPD).
             {"\n\n"}
-            Você pode solicitar a exclusão dos seus dados a qualquer momento através do seu perfil.
+            Você pode excluir sua conta e todos os seus dados a qualquer momento em Configurações.
           </Text>
         </ScrollView>
         <View style={styles.modalButtonContainer}>

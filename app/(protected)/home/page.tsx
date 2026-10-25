@@ -15,10 +15,9 @@ import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashbo
 
 const checkVolunteerFormStatus = async (voluntarioId: number): Promise<boolean> => {
   try {
-    console.log(`Verificando respostas para o voluntário ID: ${voluntarioId}...`);
+    // O painel é liberado quando o voluntário já respondeu ao formulário de perfil inicial
     const respostas = await apiService.resposta.getByVoluntario(voluntarioId);
-    
-    return respostas && respostas.length > 0;
+    return respostas.length > 0;
   } catch (error) {
     console.error("Erro ao verificar status do formulário:", error);
     return false;

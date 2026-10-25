@@ -5,7 +5,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  TouchableOpacity,
   ActivityIndicator
 } from 'react-native';
 import { Stack } from 'expo-router';

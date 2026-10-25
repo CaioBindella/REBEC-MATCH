@@ -9,7 +9,8 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Picker } from '@react-native-picker/picker';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { apiService } from '@/services/api/apiClient'; 
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
+import { dataBrParaIso } from '@/utils/formatters';
 
 type FormData = {
   nome: string;
@@ -27,24 +28,29 @@ type FormData = {
   documento?: string | null;
 };
 
+// Regras alinhadas às validações da API (UsuarioCreateDTO)
 const schema: Yup.ObjectSchema<FormData> = Yup.object({
-  nome: Yup.string().required(),
-  sobrenome: Yup.string().required(),
-  login: Yup.string().required(),
-  email: Yup.string().email().required(),
-  senha: Yup.string().min(6).required(),
+  nome: Yup.string().trim().max(50, 'Máximo de 50 caracteres.').required('Informe o seu nome.'),
+  sobrenome: Yup.string().trim().max(50, 'Máximo de 50 caracteres.').required('Informe o seu sobrenome.'),
+  login: Yup.string().trim().max(50, 'Máximo de 50 caracteres.').required('Crie um nome de usuário.'),
+  email: Yup.string().trim().email('Informe um e-mail válido.').max(100, 'Máximo de 100 caracteres.').required('Informe o seu e-mail.'),
+  senha: Yup.string().min(6, 'A senha deve ter ao menos 6 caracteres.').required('Crie uma senha.'),
   confirmarSenha: Yup.string()
-    .oneOf([Yup.ref('senha')])
-    .required(),
+    .oneOf([Yup.ref('senha')], 'As senhas não coincidem.')
+    .required('Confirme a senha.'),
   sexo: Yup.mixed<'FEMININO' | 'MASCULINO' | 'OUTRO'>()
-    .oneOf(['FEMININO', 'MASCULINO', 'OUTRO'])
-    .required(),
+    .oneOf(['FEMININO', 'MASCULINO', 'OUTRO'], 'Selecione o sexo.')
+    .required('Selecione o sexo.'),
+  // Data de nascimento e sexo são usados na compatibilidade automática com os estudos
   data_nascimento: Yup.string()
-    .matches(/^\d{4}-\d{2}-\d{2}$/)
-    .required(),
-  telefone: Yup.string().required(),
-  cep: Yup.string().length(8).required(),
-  endereco: Yup.string().required(),
+    .required('Informe a data de nascimento.')
+    .test('data-valida', 'Use o formato DD/MM/AAAA com uma data passada.', (valor) => {
+      const iso = valor ? dataBrParaIso(valor) : null;
+      return !!iso && new Date(iso) < new Date();
+    }),
+  telefone: Yup.string().trim().max(25, 'Máximo de 25 caracteres.').required('Informe o telefone.'),
+  cep: Yup.string().matches(/^\d{8}$/, 'O CEP deve conter 8 dígitos.').required('Informe o CEP.'),
+  endereco: Yup.string().trim().max(255, 'Máximo de 255 caracteres.').required('Informe o endereço.'),
   tipo_especifico: Yup.mixed<'VOLUNTARIO'>().optional(),
   documento: Yup.string().nullable().optional(),
 });
@@ -74,19 +80,19 @@ export default function RegisterForm() {
 
     try {
       // Monta o payload conforme a Entity do Java
+      // Monta o payload conforme o UsuarioCreateDTO da API
       const payload = {
-        nome: data.nome,
-        sobrenome: data.sobrenome,
-        login: data.login,
-        email: data.email,
+        nome: data.nome.trim(),
+        sobrenome: data.sobrenome.trim(),
+        login: data.login.trim(),
+        email: data.email.trim(),
         senha: data.senha,
         tipoEspecifico: 'VOLUNTARIO' as const,
-        sexo: data.sexo as "FEMININO" | "MASCULINO" | "OUTRO",
-        dataNascimento: data.data_nascimento, 
-        telefone: data.telefone,
+        sexo: data.sexo as 'FEMININO' | 'MASCULINO' | 'OUTRO',
+        dataNascimento: dataBrParaIso(data.data_nascimento) ?? undefined,
+        telefone: data.telefone.trim(),
         cep: data.cep,
-        endereco: data.endereco,
-        documento: '',
+        endereco: data.endereco.trim(),
       };
 
       await apiService.usuario.create(payload);
@@ -95,10 +101,8 @@ export default function RegisterForm() {
         { text: 'OK', onPress: () => router.replace('/(auth)/login') }
       ]);
 
-    } catch (error: any) {
-      console.error(error);
-      const errorMessage = error.response?.data?.message || 'Ocorreu um erro ao realizar o cadastro.';
-      Alert.alert('Erro', errorMessage);
+    } catch (error) {
+      Alert.alert('Erro', getErrorMessage(error, 'Ocorreu um erro ao realizar o cadastro.'));
     } finally {
       setLoading(false);
     }
@@ -241,11 +245,12 @@ export default function RegisterForm() {
         render={({ field: { onChange, onBlur, value } }) => (
           <TextInput
             style={styles.input}
-            placeholder="AAAA-MM-DD"
+            placeholder="DD/MM/AAAA"
             onBlur={onBlur}
             onChangeText={onChange}
             value={value}
             keyboardType="numbers-and-punctuation"
+            maxLength={10}
           />
         )}
       />

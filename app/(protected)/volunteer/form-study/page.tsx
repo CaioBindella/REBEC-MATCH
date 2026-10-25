@@ -1,86 +1,86 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
+
 import Header from '@/components/reusable/Header';
-import { TextInputQuestion, RadioQuestion } from '@/components/volunteerComponents/FormQuestionsTypes';
-import { volunteerFormConfig } from '@/components/volunteerComponents/FormQuestionsTypes/formConfig';
+import { DynamicQuestion } from '@/components/volunteerComponents/FormQuestionsTypes';
+import { apiService, getErrorMessage, ID_FORMULARIO_PERFIL } from '@/services/api/apiClient';
+import { QuestaoResponseDTO } from '@/types/types';
 
-// Hooks e API
-import { useAuth } from '@/context/AuthContext';
-import { apiService } from '@/services/api/apiClient';
-
+/**
+ * Formulário de perfil inicial (triagem). As questões, seus tipos, opções, seções e a obrigatoriedade
+ * vêm do banco de dados (formulário global id = 1), e as respostas são enviadas em uma única requisição.
+ */
 export default function VolunteerFormPage() {
   const router = useRouter();
-  const { user } = useAuth(); // Agora usamos o usuário real
-  const [answers, setAnswers] = useState<{ [key: string]: any }>({});
+  const [questoes, setQuestoes] = useState<QuestaoResponseDTO[]>([]);
+  const [answers, setAnswers] = useState<Record<number, string>>({});
+  const [errors, setErrors] = useState<Record<number, string>>({});
+  const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleAnswerChange = (questionId: string, value: any) => {
-    setAnswers(prev => ({ ...prev, [questionId]: value }));
+  useEffect(() => {
+    apiService.questao
+      .listarPorFormulario(ID_FORMULARIO_PERFIL)
+      .then(setQuestoes)
+      .catch((error) => Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar o formulário.')))
+      .finally(() => setLoading(false));
+  }, []);
+
+  // Agrupa as questões pela seção temática, preservando a ordem do formulário
+  const secoes = useMemo(() => {
+    const grupos: { titulo: string; questoes: QuestaoResponseDTO[] }[] = [];
+    for (const questao of questoes) {
+      const titulo = questao.secao || 'Questões';
+      let grupo = grupos.find((g) => g.titulo === titulo);
+      if (!grupo) {
+        grupo = { titulo, questoes: [] };
+        grupos.push(grupo);
+      }
+      grupo.questoes.push(questao);
+    }
+    return grupos;
+  }, [questoes]);
+
+  const handleAnswerChange = (questaoId: number, value: string) => {
+    setAnswers((prev) => ({ ...prev, [questaoId]: value }));
+    setErrors((prev) => ({ ...prev, [questaoId]: '' }));
   };
 
   const handleSubmit = async () => {
-    if (!user) return; // Segurança
+    // Validação local das questões obrigatórias (a API aplica a mesma regra)
+    const pendentes: Record<number, string> = {};
+    for (const questao of questoes) {
+      if (questao.obrigatorio && !(answers[questao.id] ?? '').trim()) {
+        pendentes[questao.id] = 'Esta questão é obrigatória.';
+      }
+    }
+    if (Object.keys(pendentes).length > 0) {
+      setErrors(pendentes);
+      Alert.alert('Atenção', `Responda às ${Object.keys(pendentes).length} questões obrigatórias destacadas.`);
+      return;
+    }
 
     setIsSubmitting(true);
-
     try {
-      // 1. Transforma as respostas no formato do DTO Java (RespostasBatchCreateDTO)
-      const respostasFormatadas = Object.keys(answers).map(key => ({
-        questao_id: Number(key), // Converte ID da questão para numero
-        conteudo: String(answers[key]), // Garante que é string
-        marcado: true, // Define como marcado pois foi respondida
-      }));
-
-      // 2. Monta o Payload Completo
-      const payload = {
-        voluntario_id: user.id, // ID do Usuário (que o backend usa para achar o voluntário)
-        formulario_id: 1,       // ID do Formulário Padrão (ajuste se tiver mais de um)
-        respostas: respostasFormatadas
-      };
-
-      console.log('Enviando:', JSON.stringify(payload));
-
-      // 3. Chama a API
-      await apiService.resposta.criarEmLote(payload);
+      await apiService.resposta.criarEmLote({
+        formulario_id: ID_FORMULARIO_PERFIL,
+        respostas: questoes
+          .filter((q) => (answers[q.id] ?? '').trim() !== '')
+          .map((q) => ({
+            questao_id: q.id,
+            conteudo: answers[q.id].trim(),
+            marcado: q.tipo === 'OPCOES',
+          })),
+      });
 
       Alert.alert('Sucesso', 'Formulário enviado! Agora você tem acesso ao painel completo.');
-      
-      // Redireciona para a Home (onde a verificação vai rodar novamente e liberar o acesso)
+      // A home verifica novamente as respostas e libera o painel do voluntário
       router.replace('/(protected)/home/page');
-
     } catch (error) {
-      console.error('Erro ao enviar formulário:', error);
-      Alert.alert('Erro', 'Não foi possível salvar suas respostas. Tente novamente.');
+      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível salvar suas respostas. Tente novamente.'));
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const renderQuestion = (question: any) => {
-    switch (question.type) {
-      case 'text':
-        return (
-          <TextInputQuestion
-            key={question.id}
-            label={question.label}
-            placeholder={question.placeholder}
-            value={answers[question.id] || ''}
-            onValueChange={(value) => handleAnswerChange(String(question.id), value)}
-          />
-        );
-      case 'radio':
-        return (
-          <RadioQuestion
-            key={question.id}
-            label={question.label}
-            options={question.options}
-            value={answers[question.id]}
-            onValueChange={(value) => handleAnswerChange(String(question.id), value)}
-          />
-        );
-      default:
-        return null;
     }
   };
 
@@ -88,31 +88,35 @@ export default function VolunteerFormPage() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.pageTitle}>Formulário do Voluntário</Text>
-        <Text style={styles.pageSubtitle}>
-          Responda as perguntas abaixo para completarmos seu perfil de pesquisa.
-        </Text>
+      {loading ? (
+        <ActivityIndicator size="large" color="#15715A" style={{ marginTop: 50 }} />
+      ) : (
+        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+          <Text style={styles.pageTitle}>Formulário do Voluntário</Text>
+          <Text style={styles.pageSubtitle}>
+            Responda as perguntas abaixo para completarmos seu perfil de pesquisa. Os campos com * são obrigatórios.
+          </Text>
 
-        {volunteerFormConfig.map(section => (
-          <View key={section.id} style={styles.sectionContainer}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            {section.questions.map(renderQuestion)}
-          </View>
-        ))}
+          {secoes.map((secao) => (
+            <View key={secao.titulo} style={styles.sectionContainer}>
+              <Text style={styles.sectionTitle}>{secao.titulo}</Text>
+              {secao.questoes.map((questao) => (
+                <DynamicQuestion
+                  key={questao.id}
+                  questao={questao}
+                  value={answers[questao.id] ?? ''}
+                  onValueChange={(value) => handleAnswerChange(questao.id, value)}
+                  error={errors[questao.id]}
+                />
+              ))}
+            </View>
+          ))}
 
-        <TouchableOpacity 
-          style={styles.submitButton} 
-          onPress={handleSubmit}
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.submitButtonText}>Enviar Respostas</Text>
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting || questoes.length === 0}>
+            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Enviar Respostas</Text>}
+          </TouchableOpacity>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 }

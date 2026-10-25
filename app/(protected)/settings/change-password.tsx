@@ -19,7 +19,7 @@ import * as Yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 
 import { useAuth } from '@/context/AuthContext';
-import { apiService } from '@/services/api/apiClient'; 
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
 
 const schema = Yup.object().shape({
   senhaAtual: Yup.string().required('A senha atual é obrigatória'),
@@ -63,10 +63,8 @@ export default function ChangePasswordScreen() {
       ]);
       reset();
 
-    } catch (error: any) {
-      console.error(error);
-      const errorMessage = error.response?.data?.message || "Não foi possível alterar a senha. Verifique sua senha atual.";
-      Alert.alert("Erro", errorMessage);
+    } catch (error) {
+      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível alterar a senha. Verifique sua senha atual.'));
     } finally {
       setLoading(false);
     }

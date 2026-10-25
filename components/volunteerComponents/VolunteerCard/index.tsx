@@ -46,7 +46,7 @@ export default function VolunteerCard({
         <Text style={styles.label}>Estudo:</Text>
         <Text style={styles.studyText} numberOfLines={1}>{studyApplied}</Text>
         
-        <Text style={[styles.label, { marginTop: 8 }]}>Sobre:</Text>
+        <Text style={[styles.label, { marginTop: 8 }]}>Perfil:</Text>
         <Text style={styles.descriptionText} numberOfLines={2}>
           {description}
         </Text>

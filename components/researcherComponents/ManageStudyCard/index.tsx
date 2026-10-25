@@ -2,11 +2,13 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
+import { estaRecrutando, statusRecrutamentoLabel } from '@/utils/formatters';
+
 // Interface para os dados que este card vai mostrar
 export interface StudySummary {
   id: number;
   titulo: string;
-  status: string;
+  status: string; // rótulo ICTRP (ex.: "Recruiting")
 }
 
 interface ManageStudyCardProps {
@@ -15,13 +17,13 @@ interface ManageStudyCardProps {
 }
 
 export default function ManageStudyCard({ study, onEdit }: ManageStudyCardProps) {
-  const isRecruiting = study.status === 'RECRUTANDO';
+  const isRecruiting = estaRecrutando(study.status);
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={onEdit}>
       <View style={styles.infoContainer}>
         <Text style={styles.title} numberOfLines={2}>{study.titulo}</Text>
         <View style={[styles.statusBadge, isRecruiting ? styles.recruiting : styles.ongoing]}>
-          <Text style={styles.statusText}>{study.status.replace('_', ' ')}</Text>
+          <Text style={styles.statusText}>{statusRecrutamentoLabel(study.status)}</Text>
         </View>
       </View>
       <Ionicons name="chevron-forward" size={24} color="#6c757d" />

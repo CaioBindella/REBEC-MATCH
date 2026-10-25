@@ -1,7 +1,7 @@
 import { SelectedStudyCard } from '@/components/volunteerComponents/SelectedStudyCard';
 import Header from '@/components/reusable/Header';
-import { Stack, useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { Stack, useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import { 
   ActivityIndicator, 
   FlatList, 
@@ -13,9 +13,8 @@ import {
   View, 
   Alert 
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 
-import { apiService } from '@/services/api/apiClient';
+import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { useAuth } from '@/context/AuthContext';
 
 interface StudyData {
@@ -23,7 +22,7 @@ interface StudyData {
   estudoId: number;     
   titulo: string;
   pesquisador: { nomeFicticio: string };
-  pesquisadorId: number;
+  pesquisadorUsuarioId: number; // usado pelo serviço de chat
   status: string;
 }
 
@@ -45,11 +44,7 @@ export default function MyStudiesScreen() {
   // Loading específico para ações de botão (aceitar/recusar)
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  useEffect(() => {
-    fetchMyStudies();
-  }, []);
-
-  const fetchMyStudies = async () => {
+  const fetchMyStudies = useCallback(async () => {
     try {
       setLoading(true);
       
@@ -61,20 +56,18 @@ export default function MyStudiesScreen() {
       const response = await apiService.candidatura.listarPorVoluntario(user.perfilId);
 
       // Mapeia os dados brutos para o formato da tela
-      const allStudies = response.map((item: any) => ({
+      const allStudies: StudyData[] = response.map((item) => ({
         id: item.id,
         estudoId: item.estudoId,
         titulo: item.estudoTitulo,
-        pesquisador: { 
-            nomeFicticio: item.pesquisadorNomeFicticio || 'Pesquisador' 
-        },
-        pesquisadorId: item.pesquisadorId,
-        status: item.status
+        pesquisador: { nomeFicticio: item.pesquisadorNomeFicticio || 'Pesquisador' },
+        pesquisadorUsuarioId: item.pesquisadorUsuarioId,
+        status: item.status,
       }));
 
       // Filtra e separa por status
-      const invitesList = allStudies.filter((s: StudyData) => s.status === 'ACEITO_PELO_PESQUISADOR');
-      const ongoingList = allStudies.filter((s: StudyData) => s.status === 'CONCLUIDO');
+      const invitesList = allStudies.filter((s) => s.status === 'ACEITO_PELO_PESQUISADOR');
+      const ongoingList = allStudies.filter((s) => s.status === 'CONCLUIDO');
 
       setInvites(invitesList);
       setOngoing(ongoingList);
@@ -87,12 +80,17 @@ export default function MyStudiesScreen() {
       }
 
     } catch (error) {
-      console.error("Erro ao buscar meus estudos:", error);
-      Alert.alert("Erro", "Não foi possível carregar seus estudos.");
+      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar seus estudos.'));
     } finally {
       setLoading(false);
     }
-  };
+  }, [user?.perfilId]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchMyStudies();
+    }, [fetchMyStudies])
+  );
 
   // Lógica para Aceitar ou Recusar o convite
   const handleResponse = async (candidaturaId: number, aceito: boolean) => {
@@ -103,7 +101,7 @@ export default function MyStudiesScreen() {
       await apiService.candidatura.confirmacaoVoluntario(candidaturaId, aceito);
 
       if (aceito) {
-        Alert.alert("Sucesso", "Você entrou no estudo! Acesse a aba 'Em Andamento' para ver o chat.");
+        Alert.alert('Match confirmado', "Você entrou no estudo! O chat com o pesquisador está liberado na aba 'Em Andamento'.");
         
         // Move o item da lista de convites para a lista de andamento localmente
         const study = invites.find(s => s.id === candidaturaId);
@@ -119,8 +117,7 @@ export default function MyStudiesScreen() {
       }
 
     } catch (error) {
-      console.error("Erro ao responder convite:", error);
-      Alert.alert("Erro", "Falha ao processar sua resposta.");
+      Alert.alert('Erro', getErrorMessage(error, 'Falha ao processar sua resposta.'));
     } finally {
       setActionLoading(null);
     }
@@ -238,8 +235,8 @@ export default function MyStudiesScreen() {
                             router.push({
                                 pathname: "/(protected)/chat/[id]", 
                                 params: { 
-                                    id: item.estudoId, 
-                                    pesquisadorId: item.pesquisadorId,
+                                    id: item.estudoId,
+                                    contatoUsuarioId: item.pesquisadorUsuarioId,
                                     nomeContato: item.pesquisador.nomeFicticio,
                                     tituloEstudo: item.titulo 
                                 },

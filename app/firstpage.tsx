@@ -1,7 +1,7 @@
 import { Text, View, StyleSheet, ImageBackground, Image, ActivityIndicator } from 'react-native';
 import { useRouter, Href } from 'expo-router';
 import { useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
+import { storage, STORAGE_KEYS } from '@/services/storage';
 
 // Contexto
 import { useAuth } from '@/context/AuthContext';
@@ -36,7 +36,7 @@ export default function HomeScreen() {
 
       // Verifica LGPD
       try {
-        const accepted = await SecureStore.getItemAsync('lgpd_accepted');
+        const accepted = await storage.getItem(STORAGE_KEYS.LGPD);
         if (accepted === 'true') {
           setLgpdAccepted(true); // Marca que já aceitou
         } else {
@@ -50,7 +50,7 @@ export default function HomeScreen() {
     }
 
     initCheck();
-  }, [isReady, user]);
+  }, [isReady, user, router]);
 
   // --- Lógica Inteligente dos Botões ---
   const handlePress = (path: string) => {
@@ -67,7 +67,7 @@ export default function HomeScreen() {
   // Aceite vindo do Modal de Navegação (Login/Cadastro)
   const handleAcceptNavigation = async () => {
     try {
-      await SecureStore.setItemAsync('lgpd_accepted', 'true'); // Salva
+      await storage.setItem(STORAGE_KEYS.LGPD, 'true'); // Salva
       setLgpdAccepted(true); // Atualiza estado
     } catch (e) { console.log(e); }
 
@@ -85,7 +85,7 @@ export default function HomeScreen() {
   // Aceite vindo do Modal Inicial (Ao abrir o app)
   const handleAcceptLGPD = async () => {
     try {
-      await SecureStore.setItemAsync('lgpd_accepted', 'true'); // Salva
+      await storage.setItem(STORAGE_KEYS.LGPD, 'true'); // Salva
       setLgpdAccepted(true); // Atualiza estado
       setShowLGPD(false);
     } catch (error) {
@@ -113,10 +113,10 @@ export default function HomeScreen() {
         <Image source={require('../assets/images/MatchLogo.png')} style={{ marginBottom: 20 }} />
         <Image source={require('../assets/images/LineLogin.png')} style={{ marginBottom: 20 }} />
 
-        <Text style={styles.title}>Precisa de Voluntários?</Text>
+        <Text style={styles.title}>Pesquisa clínica perto de você</Text>
         <Text style={styles.text}>
-          Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dolor vel accusamus recusandae! 
-          Sapiente eius harum veniam magnam libero ab quia labore possimus.
+          Encontre estudos clínicos registrados no ReBEC que estão recrutando voluntários, candidate-se
+          com segurança e converse com o pesquisador responsável após a confirmação mútua de interesse.
         </Text>
 
         <InitialButton 

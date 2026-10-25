@@ -1,200 +1,122 @@
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import React from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 
-// Context
 import { useAuth } from '@/context/AuthContext';
+import { getErrorMessage } from '@/services/api/apiClient';
 
-// Tipos
 type FormData = {
   login: string;
   senha: string;
 };
 
-type User = {
-    id: string;
-    name: string;
-    userType: 'VOLUNTARIO' | 'PESQUISADOR';
-};
-
 const schema = Yup.object().shape({
-  login: Yup.string().required('O campo Usuário é obrigatório'),
-  senha: Yup.string().required('O campo Senha é obrigatório'),
+  login: Yup.string().trim().required('Informe o seu nome de usuário.'),
+  senha: Yup.string().required('Informe a sua senha.'),
 });
 
+/**
+ * Formulário de credenciais (usuário e senha) reaproveitável. Valida os campos com React Hook Form
+ * e Yup e autentica pelo AuthContext, que obtém o token JWT da API.
+ */
 export default function LoginCredentials() {
-  const { logIn } = useAuth();
+  const { logIn, isLoading } = useAuth();
 
   const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: yupResolver(schema),
-    defaultValues: {
-        login: '',
-        senha: '',
-    }
+    defaultValues: { login: '', senha: '' },
   });
 
-  // --- FUNÇÃO 1: Para o formulário real ---
-  // Esta função recebe os dados do formulário e faria a chamada para a API.
-  const handleFormSubmit = (data: FormData) => {
-    console.log('Enviando para a API:', data);
-    //
-    // AQUI VOCÊ FARIA A CHAMADA PARA A API REAL
-    // Ex: const user = await api.login(data.login, data.senha);
-    // logIn(user);
-    //
-    Alert.alert('Login Real', 'Funcionalidade de API a ser implementada.');
-  };
-
-  // --- FUNÇÃO 2: Para os botões de desenvolvimento ---
-  // Esta função cria um usuário mock e faz o login direto.
-  const handleDevLogin = (userType: 'VOLUNTARIO' | 'PESQUISADOR') => {
-    const devUser: User = {
-      id: userType === 'VOLUNTARIO' ? 'vol-dev-01' : 'pesq-dev-02',
-      name: userType === 'VOLUNTARIO' ? 'Dev Voluntário' : 'Dev Pesquisador',
-      userType: userType,
-    };
-    logIn(devUser);
+  const onSubmit = async (data: FormData) => {
+    try {
+      await logIn({ login: data.login.trim(), senha: data.senha });
+    } catch (error) {
+      Alert.alert('Erro de login', getErrorMessage(error, 'Não foi possível entrar. Verifique as suas credenciais.'));
+    }
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Text style={styles.title}>Acessar conta</Text>
+    <View>
+      <Text style={styles.title}>Acessar Conta</Text>
 
-        {/* --- Formulário Real --- */}
-        <Text style={styles.label}>Usuário</Text>
-        <Controller
-          control={control}
-          name="login"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[styles.input, errors.login && styles.inputError]}
-              placeholder="Digite seu nome de usuário"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-            />
-          )}
-        />
-        {errors.login && <Text style={styles.errorText}>{errors.login.message}</Text>}
-
-        <Text style={styles.label}>Senha</Text>
-        <Controller
-          control={control}
-          name="senha"
-          render={({ field: { onChange, onBlur, value } }) => (
-            <TextInput
-              style={[styles.input, errors.senha && styles.inputError]}
-              placeholder="Digite sua senha"
-              onBlur={onBlur}
-              onChangeText={onChange}
-              value={value}
-              secureTextEntry
-            />
-          )}
-        />
-        {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
-      </View>
-
-      {/* Botão de "Entrar" para o formulário real, agora conectado à função correta */}
-      <TouchableOpacity style={styles.button} onPress={handleSubmit(handleFormSubmit)}>
-        <Text style={styles.buttonText}>Entrar</Text>
-      </TouchableOpacity>
-
-      {/* Botões de desenvolvimento, conectados à função de dev */}
-      {__DEV__ && (
-            <View style={styles.devLoginContainer}>
-                <Text style={styles.devLoginTitle}>Acesso Rápido (Dev)</Text>
-                <TouchableOpacity
-                    style={[styles.devButton, { backgroundColor: '#007bff' }]}
-                    onPress={() => handleDevLogin('VOLUNTARIO')}
-                >
-                    <Text style={styles.buttonText}>Logar como Voluntário</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.devButton, { backgroundColor: '#28a745' }]}
-                    onPress={() => handleDevLogin('PESQUISADOR')}
-                >
-                    <Text style={styles.buttonText}>Logar como Pesquisador</Text>
-                </TouchableOpacity>
-            </View>
+      <Controller
+        control={control}
+        name="login"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <TextInput
+            style={[styles.input, errors.login && styles.inputError]}
+            placeholder="Nome de usuário"
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
         )}
+      />
+      {errors.login && <Text style={styles.errorText}>{errors.login.message}</Text>}
+
+      <Controller
+        control={control}
+        name="senha"
+        render={({ field: { onChange, onBlur, value } }) => (
+          <TextInput
+            style={[styles.input, errors.senha && styles.inputError]}
+            placeholder="Senha"
+            onBlur={onBlur}
+            onChangeText={onChange}
+            value={value}
+            secureTextEntry
+          />
+        )}
+      />
+      {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
+
+      <TouchableOpacity style={[styles.button, isLoading && { opacity: 0.7 }]} onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+        {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
+      </TouchableOpacity>
     </View>
   );
 }
 
-// Seus estilos permanecem os mesmos
 const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-    backgroundColor: '#fff',
-    flex: 1,
-    justifyContent: 'space-evenly',
-  },
-  content: {
-    flex: 1,
-  },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#161C2D',
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    color: '#161C2D',
-    marginBottom: 8,
-    marginLeft: 2,
+    color: '#212529',
+    marginBottom: 24,
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ccc',
+    backgroundColor: '#f0f2f5',
+    height: 50,
     borderRadius: 8,
     paddingHorizontal: 15,
-    paddingVertical: 12,
     fontSize: 16,
-    marginBottom: 5,
-    backgroundColor: '#fff',
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#ced4da',
   },
   inputError: {
-    borderColor: 'red',
+    borderColor: '#dc3545',
+  },
+  errorText: {
+    color: '#dc3545',
+    marginTop: -10,
+    marginBottom: 12,
+    marginLeft: 4,
   },
   button: {
-    backgroundColor: '#166865',
-    padding: 18,
-    borderRadius: 50,
+    backgroundColor: '#15715A',
+    padding: 16,
+    borderRadius: 8,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 8,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
-  errorText: {
-    color: 'red',
-    marginBottom: 10,
-    marginLeft: 5,
-  },
-  devLoginContainer: {
-        marginTop: 30,
-        paddingTop: 20,
-        borderTopWidth: 1,
-        borderColor: '#eee',
-        alignItems: 'center',
-    },
-    devLoginTitle: {
-        fontSize: 16,
-        color: 'gray',
-        marginBottom: 10,
-    },
-    devButton: {
-        width: '100%',
-        padding: 15,
-        borderRadius: 50,
-        alignItems: 'center',
-        marginTop: 10,
-    },
 });

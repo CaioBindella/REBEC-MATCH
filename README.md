@@ -1,50 +1,62 @@
-# Welcome to your Expo app 👋
+# ReBEC-Match — Aplicativo móvel (branch `frontend`)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Aplicativo do ReBEC-Match, feito em **React Native com Expo e TypeScript**. Ele conecta
+voluntários a estudos clínicos registrados no ReBEC e atende os dois perfis da plataforma.
 
-## Get started
+**Voluntário:**
+- aceite dos Termos de Uso (LGPD) e cadastro;
+- formulário de perfil de saúde, montado dinamicamente a partir da API;
+- busca de estudos por doença, com sugestões do vocabulário DeCS/CID e filtro de compatibilidade
+  por idade e sexo;
+- candidatura e confirmação de convites;
+- chat com o pesquisador após o *match*.
 
-1. Install dependencies
+**Pesquisador:**
+- cadastro e edição de estudos e critérios de elegibilidade;
+- análise das candidaturas, com dados pseudonimizados e exportação em planilha;
+- lista de voluntários com participação confirmada e chat.
 
-   ```bash
-   npm install
-   ```
+**Comum aos dois perfis:** notificações, perfil, alteração de senha e exclusão da conta.
 
-2. Start the app
+## Serviços utilizados
 
-   ```bash
-   npx expo start
-   ```
+| Serviço | Branch | Porta padrão |
+|---|---|---|
+| API principal (Java/Spring Boot) | `java-api` | 8080 |
+| Serviço de chat (Node.js/Socket.IO) | `chat-service` | 4000 |
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## Configuração
 
 ```bash
-npm run reset-project
+npm install
+cp .env.example .env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+| Variável | Descrição |
+|---|---|
+| `EXPO_PUBLIC_API_URL` | URL da API principal (no emulador Android: `http://10.0.2.2:8080`) |
+| `EXPO_PUBLIC_CHAT_URL` | URL do serviço de chat (no emulador Android: `http://10.0.2.2:4000`) |
 
-## Learn more
+## Execução
 
-To learn more about developing your project with Expo, look at the following resources:
+```bash
+npx expo start
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+Verificações de código:
 
-## Join the community
+```bash
+npx tsc --noEmit
+npx expo lint
+```
 
-Join our community of developers creating universal apps.
+## Estrutura
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```
+app/                 # telas (Expo Router): (public), (auth) e (protected)
+components/          # reusable, researcherComponents e volunteerComponents
+context/AuthContext  # sessão do usuário (token JWT no Expo SecureStore)
+services/            # apiClient (API e chat), storage e preferências
+types/               # tipos que espelham os DTOs da API
+utils/               # formatação (status, idade, datas, CEP/UF) e montagem de payloads
+```

@@ -1,39 +1,41 @@
-// src/services/storage.ts
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
 
+// Chaves usadas no armazenamento seguro do dispositivo
+export const STORAGE_KEYS = {
+  TOKEN: 'user_token',
+  USER: 'user_data',
+  LGPD: 'lgpd_accepted',
+  ALERTAS: 'alertas_notificacoes',
+} as const;
+
 const isWeb = Platform.OS === 'web';
 
+/**
+ * Armazenamento da sessão: no Android/iOS usa o Expo SecureStore (Keystore/Keychain, criptografado);
+ * na versão web, onde o SecureStore não existe, usa o localStorage do navegador.
+ */
 export const storage = {
   getItem: async (key: string): Promise<string | null> => {
     if (isWeb) {
-      // Na web usamos o localStorage padrão do navegador
-      if (typeof localStorage !== 'undefined') {
-        return localStorage.getItem(key);
-      }
-      return null;
+      return typeof localStorage !== 'undefined' ? localStorage.getItem(key) : null;
     }
-    // No mobile usamos o cofre seguro
-    return await SecureStore.getItemAsync(key);
+    return SecureStore.getItemAsync(key);
   },
 
   setItem: async (key: string, value: string): Promise<void> => {
     if (isWeb) {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.setItem(key, value);
-      }
-    } else {
-      await SecureStore.setItemAsync(key, value);
+      if (typeof localStorage !== 'undefined') localStorage.setItem(key, value);
+      return;
     }
+    await SecureStore.setItemAsync(key, value);
   },
 
   removeItem: async (key: string): Promise<void> => {
     if (isWeb) {
-      if (typeof localStorage !== 'undefined') {
-        localStorage.removeItem(key);
-      }
-    } else {
-      await SecureStore.deleteItemAsync(key);
+      if (typeof localStorage !== 'undefined') localStorage.removeItem(key);
+      return;
     }
+    await SecureStore.deleteItemAsync(key);
   },
 };
