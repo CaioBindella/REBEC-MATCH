@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "es2020", // ou uma versão mais recente
+    "module": "commonjs",
+    "lib": ["es2018", "dom"], // 'dom' é importante para Request/Response
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true, // Modo estrito ajuda a pegar erros de tipo
+    "skipLibCheck": true, // Pode ajudar temporariamente a ignorar erros em libs, mas não é uma solução permanente
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
+}
