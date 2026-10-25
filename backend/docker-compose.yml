@@ -1,0 +1,58 @@
+# Ambiente de desenvolvimento: banco MySQL, API principal e phpMyAdmin.
+# As credenciais vêm do arquivo rebecmatch-api/.env (modelo em rebecmatch-api/.env.example):
+#   docker compose --env-file rebecmatch-api/.env up --build
+# O esquema do banco é criado pelas migrações Flyway na primeira inicialização da API.
+services:
+  db:
+    image: mysql:8.0
+    container_name: rebecmatch-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:?defina DB_PASSWORD no arquivo .env}
+      MYSQL_DATABASE: match_v2
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${DB_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - rebecmatch-net
+
+  api:
+    build: ./rebecmatch-api
+    container_name: rebecmatch-api
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:mysql://db:3306/match_v2?allowPublicKeyRetrieval=true&useSSL=false
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD}
+      API_SECURITY_TOKEN_SECRET: ${API_SECURITY_TOKEN_SECRET:?defina API_SECURITY_TOKEN_SECRET no arquivo .env}
+    networks:
+      - rebecmatch-net
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: rebecmatch-pma
+    ports:
+      - "8081:80"
+    depends_on:
+      - db
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    networks:
+      - rebecmatch-net
+
+networks:
+  rebecmatch-net:
+    driver: bridge
+
+volumes:
+  mysql-data:

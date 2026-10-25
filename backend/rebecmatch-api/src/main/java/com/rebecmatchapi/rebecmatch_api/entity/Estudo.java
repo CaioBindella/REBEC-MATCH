@@ -1,0 +1,95 @@
+package com.rebecmatchapi.rebecmatch_api.entity;
+
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
+
+import java.time.LocalDate;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+@Data
+@Entity
+@Table(name = "estudo")
+public class Estudo {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "pesquisador_id", nullable = false)
+    private Pesquisador pesquisador;
+
+    @Column(name = "public_title", nullable = false, columnDefinition = "TEXT")
+    private String publicTitle;
+
+    @Column(name = "scientific_title", nullable = false, columnDefinition = "TEXT")
+    private String scientificTitle;
+
+    @Column(name = "recruitment_status", nullable = false)
+    private String recruitmentStatus;
+
+    @Column(name = "study_type", nullable = false)
+    private String studyType;
+
+    @Column(nullable = false)
+    private String phase;
+
+    @Column(name = "date_registration", nullable = false)
+    private LocalDate dateRegistration;
+
+    @Column(name = "date_enrolment")
+    private LocalDate dateEnrolment;
+
+    @Column(columnDefinition = "TEXT", nullable = false)
+    private String url;
+
+    @Column(name = "primary_sponsor", nullable = false)
+    private String primarySponsor;
+
+    @Column(name = "hc_freetext", nullable = false, columnDefinition = "TEXT")
+    private String hcFreetext;
+
+    @Column(name = "i_freetext", nullable = false, columnDefinition = "TEXT")
+    private String iFreetext;
+
+    @Column(name = "approval_date")
+    private String approvalDate;
+
+    @Column(name = "sec_id")
+    private String secId;
+
+    @Column(name = "trial_id", nullable = false)
+    private String trialId;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
+    private List<Formulario> formularios;
+
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @OneToMany(mappedBy = "estudo", cascade = CascadeType.ALL)
+    private List<Criterio> criterios;
+
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "estudo_doenca",
+            joinColumns = @JoinColumn(name = "estudo_id"),
+            inverseJoinColumns = @JoinColumn(name = "doenca_id")
+    )
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    private Set<Doenca> doencas = new HashSet<>();
+
+    public void addDoenca(Doenca doenca) {
+        if (this.doencas == null) {
+            this.doencas = new HashSet<>();
+        }
+        this.doencas.add(doenca);
+    }
+}
