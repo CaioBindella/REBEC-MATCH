@@ -1,0 +1,4 @@
+# Controle de progresso local do gerar_nomes_populares.py
+infos.xlsx
+.env
+__pycache__/
