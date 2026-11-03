@@ -7,13 +7,15 @@ import { mensagemRouter } from './routes/mensagens.route';
 import { autenticarToken } from './middlewares/auth';
 
 if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
-  throw new Error('Defina JWT_SECRET (o mesmo valor de API_SECURITY_TOKEN_SECRET da API principal, mínimo de 32 caracteres).');
+  throw new Error(
+    'Defina JWT_SECRET (o mesmo valor de API_SECURITY_TOKEN_SECRET da API principal, mínimo de 32 caracteres).'
+  );
 }
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: '*' }
+  cors: { origin: '*' },
 });
 
 // Conexões em tempo real: o token é validado no handshake e o socket entra na sala do próprio usuário,

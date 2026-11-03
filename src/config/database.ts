@@ -11,11 +11,12 @@ const pool = mysql.createPool({
   port: parseInt(process.env.DB_PORT || '3306'),
   waitForConnections: true,
   connectionLimit: 100,
-  queueLimit: 0
+  queueLimit: 0,
 });
 
 // Teste de conexão
-pool.getConnection()
+pool
+  .getConnection()
   .then((conn) => {
     console.log('Conectado à Base de Dados MySQL');
     conn.release();
