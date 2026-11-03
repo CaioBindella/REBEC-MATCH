@@ -1,6 +1,6 @@
-import { Redirect, Stack } from "expo-router";
-import { View, ActivityIndicator } from "react-native";
-import { useAuth } from "@/context/AuthContext";
+import { Redirect, Stack } from 'expo-router';
+import { View, ActivityIndicator } from 'react-native';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ProtectedLayout() {
   const { user, isReady } = useAuth();

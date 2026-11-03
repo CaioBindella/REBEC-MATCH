@@ -1,11 +1,20 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 
 import Header from '@/components/reusable/Header';
 import { DynamicQuestion } from '@/components/volunteerComponents/FormQuestionsTypes';
 import { apiService, getErrorMessage, ID_FORMULARIO_PERFIL } from '@/services/api/apiClient';
 import { QuestaoResponseDTO } from '@/types/types';
+import { avisar } from '@/utils/feedback';
 
 /**
  * Formulário de perfil inicial (triagem). As questões, seus tipos, opções, seções e a obrigatoriedade
@@ -23,7 +32,7 @@ export default function VolunteerFormPage() {
     apiService.questao
       .listarPorFormulario(ID_FORMULARIO_PERFIL)
       .then(setQuestoes)
-      .catch((error) => Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar o formulário.')))
+      .catch((error) => avisar('Erro', getErrorMessage(error, 'Não foi possível carregar o formulário.')))
       .finally(() => setLoading(false));
   }, []);
 
@@ -57,7 +66,7 @@ export default function VolunteerFormPage() {
     }
     if (Object.keys(pendentes).length > 0) {
       setErrors(pendentes);
-      Alert.alert('Atenção', `Responda às ${Object.keys(pendentes).length} questões obrigatórias destacadas.`);
+      avisar('Atenção', `Responda às ${Object.keys(pendentes).length} questões obrigatórias destacadas.`);
       return;
     }
 
@@ -74,11 +83,12 @@ export default function VolunteerFormPage() {
           })),
       });
 
-      Alert.alert('Sucesso', 'Formulário enviado! Agora você tem acesso ao painel completo.');
       // A home verifica novamente as respostas e libera o painel do voluntário
-      router.replace('/(protected)/home/page');
+      avisar('Formulário enviado', 'Seu perfil foi salvo. Agora você tem acesso ao painel completo.', () =>
+        router.replace('/(protected)/home/page')
+      );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível salvar suas respostas. Tente novamente.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível salvar suas respostas. Tente novamente.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -94,7 +104,8 @@ export default function VolunteerFormPage() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           <Text style={styles.pageTitle}>Formulário do Voluntário</Text>
           <Text style={styles.pageSubtitle}>
-            Responda as perguntas abaixo para completarmos seu perfil de pesquisa. Os campos com * são obrigatórios.
+            Responda as perguntas abaixo para completarmos seu perfil de pesquisa. Os campos com * são
+            obrigatórios.
           </Text>
 
           {secoes.map((secao) => (
@@ -112,8 +123,16 @@ export default function VolunteerFormPage() {
             </View>
           ))}
 
-          <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={isSubmitting || questoes.length === 0}>
-            {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Enviar Respostas</Text>}
+          <TouchableOpacity
+            style={styles.submitButton}
+            onPress={handleSubmit}
+            disabled={isSubmitting || questoes.length === 0}
+          >
+            {isSubmitting ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Enviar Respostas</Text>
+            )}
           </TouchableOpacity>
         </ScrollView>
       )}
@@ -127,7 +146,22 @@ const styles = StyleSheet.create({
   pageTitle: { fontSize: 26, fontWeight: 'bold', color: '#212529' },
   pageSubtitle: { fontSize: 16, color: '#6c757d', marginBottom: 30, marginTop: 4 },
   sectionContainer: { backgroundColor: '#fff', borderRadius: 12, padding: 20, marginBottom: 20 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#343a40', marginBottom: 20, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 10 },
-  submitButton: { backgroundColor: '#15715A', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 20, minHeight: 50 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#343a40',
+    marginBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 10,
+  },
+  submitButton: {
+    backgroundColor: '#15715A',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 20,
+    minHeight: 50,
+  },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

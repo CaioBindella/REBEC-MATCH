@@ -1,5 +1,13 @@
 import React from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, TextInputProps } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  TextInputProps,
+} from 'react-native';
 import { useForm, Controller, Control, FieldErrors } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
@@ -7,6 +15,7 @@ import * as Yup from 'yup';
 import FilterPicker from '@/components/reusable/FilterPicker';
 import { GeneroElegivel, StatusRecrutamento } from '@/types/types';
 import { dataBrParaIso, GENERO_ELEGIVEL, IDADE_VALIDA, STATUS_RECRUTAMENTO } from '@/utils/formatters';
+import { avisar } from '@/utils/feedback';
 
 export interface StudyFormValues {
   publicTitle: string;
@@ -16,7 +25,7 @@ export interface StudyFormValues {
   studyType: string;
   phase: string;
   dateRegistration: string; // DD/MM/AAAA
-  dateEnrolment: string;    // DD/MM/AAAA (opcional)
+  dateEnrolment: string; // DD/MM/AAAA (opcional)
   approvalDate: string;
   primarySponsor: string;
   hcFreetext: string;
@@ -66,7 +75,10 @@ const schema: Yup.ObjectSchema<StudyFormValues> = Yup.object({
   scientificTitle: Yup.string().trim().required('Informe o título científico.'),
   trialId: Yup.string().trim().required('Informe o número de registro (ex.: RBR-xxxxxx).'),
   recruitmentStatus: Yup.mixed<StatusRecrutamento>()
-    .oneOf(STATUS_RECRUTAMENTO.map((s) => s.value), 'Selecione o status.')
+    .oneOf(
+      STATUS_RECRUTAMENTO.map((s) => s.value),
+      'Selecione o status.'
+    )
     .required('Selecione o status.'),
   studyType: Yup.string().default(''),
   phase: Yup.string().default(''),
@@ -87,8 +99,17 @@ const schema: Yup.ObjectSchema<StudyFormValues> = Yup.object({
 type Field = keyof StudyFormValues;
 
 const InputField = ({
-  control, errors, name, label, ...props
-}: { control: Control<StudyFormValues>; errors: FieldErrors<StudyFormValues>; name: Field; label: string } & TextInputProps) => (
+  control,
+  errors,
+  name,
+  label,
+  ...props
+}: {
+  control: Control<StudyFormValues>;
+  errors: FieldErrors<StudyFormValues>;
+  name: Field;
+  label: string;
+} & TextInputProps) => (
   <View style={styles.inputGroup}>
     <Text style={styles.label}>{label}</Text>
     <Controller
@@ -120,8 +141,16 @@ interface StudyFormProps {
  * e os critérios de elegibilidade, incluindo os atributos estruturados (idade e sexo) usados na
  * compatibilidade automática.
  */
-export default function StudyForm({ initialValues = STUDY_FORM_DEFAULTS, submitLabel, onSubmit }: StudyFormProps) {
-  const { control, handleSubmit, formState: { errors, isSubmitting } } = useForm<StudyFormValues>({
+export default function StudyForm({
+  initialValues = STUDY_FORM_DEFAULTS,
+  submitLabel,
+  onSubmit,
+}: StudyFormProps) {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<StudyFormValues>({
     resolver: yupResolver(schema),
     defaultValues: initialValues,
   });
@@ -131,9 +160,26 @@ export default function StudyForm({ initialValues = STUDY_FORM_DEFAULTS, submitL
   return (
     <View>
       <Text style={styles.sectionTitle}>Dados do Registro</Text>
-      <InputField {...props} name="publicTitle" label="Título Público" placeholder="Título em linguagem acessível" />
-      <InputField {...props} name="scientificTitle" label="Título Científico" placeholder="Título técnico do protocolo" multiline />
-      <InputField {...props} name="trialId" label="Número de Registro" placeholder="Ex.: RBR-abc123" autoCapitalize="characters" />
+      <InputField
+        {...props}
+        name="publicTitle"
+        label="Título Público"
+        placeholder="Título em linguagem acessível"
+      />
+      <InputField
+        {...props}
+        name="scientificTitle"
+        label="Título Científico"
+        placeholder="Título técnico do protocolo"
+        multiline
+      />
+      <InputField
+        {...props}
+        name="trialId"
+        label="Número de Registro"
+        placeholder="Ex.: RBR-abc123"
+        autoCapitalize="characters"
+      />
 
       <View style={styles.inputGroup}>
         <Controller
@@ -152,27 +198,77 @@ export default function StudyForm({ initialValues = STUDY_FORM_DEFAULTS, submitL
         {errors.recruitmentStatus && <Text style={styles.errorText}>{errors.recruitmentStatus.message}</Text>}
       </View>
 
-      <InputField {...props} name="dateRegistration" label="Data de Registro" placeholder="DD/MM/AAAA" keyboardType="numbers-and-punctuation" maxLength={10} />
-      <InputField {...props} name="dateEnrolment" label="Data de Início da Inclusão (opcional)" placeholder="DD/MM/AAAA" keyboardType="numbers-and-punctuation" maxLength={10} />
-      <InputField {...props} name="approvalDate" label="Data de Aprovação Ética - CEP (opcional)" placeholder="DD/MM/AAAA" />
-      <InputField {...props} name="studyType" label="Tipo de Estudo (opcional)" placeholder="Ex.: Intervention" />
+      <InputField
+        {...props}
+        name="dateRegistration"
+        label="Data de Registro"
+        placeholder="DD/MM/AAAA"
+        keyboardType="numbers-and-punctuation"
+        maxLength={10}
+      />
+      <InputField
+        {...props}
+        name="dateEnrolment"
+        label="Data de Início da Inclusão (opcional)"
+        placeholder="DD/MM/AAAA"
+        keyboardType="numbers-and-punctuation"
+        maxLength={10}
+      />
+      <InputField
+        {...props}
+        name="approvalDate"
+        label="Data de Aprovação Ética - CEP (opcional)"
+        placeholder="DD/MM/AAAA"
+      />
+      <InputField
+        {...props}
+        name="studyType"
+        label="Tipo de Estudo (opcional)"
+        placeholder="Ex.: Intervention"
+      />
       <InputField {...props} name="phase" label="Fase (opcional)" placeholder="Ex.: 3" />
       <InputField {...props} name="primarySponsor" label="Patrocinador Principal (opcional)" />
-      <InputField {...props} name="hcFreetext" label="Condição de Saúde" placeholder="Doença ou condição estudada" multiline />
+      <InputField
+        {...props}
+        name="hcFreetext"
+        label="Condição de Saúde"
+        placeholder="Doença ou condição estudada"
+        multiline
+      />
       <InputField {...props} name="iFreetext" label="Intervenção (opcional)" multiline />
-      <InputField {...props} name="url" label="Link do Registro (opcional)" placeholder="https://ensaiosclinicos.gov.br/rg/..." autoCapitalize="none" />
+      <InputField
+        {...props}
+        name="url"
+        label="Link do Registro (opcional)"
+        placeholder="https://ensaiosclinicos.gov.br/rg/..."
+        autoCapitalize="none"
+      />
 
       <Text style={styles.sectionTitle}>Critérios de Elegibilidade</Text>
       <View style={styles.row}>
         <View style={{ flex: 1 }}>
-          <InputField {...props} name="ageMin" label="Idade Mínima" placeholder="Ex.: 18Y" autoCapitalize="characters" />
+          <InputField
+            {...props}
+            name="ageMin"
+            label="Idade Mínima"
+            placeholder="Ex.: 18Y"
+            autoCapitalize="characters"
+          />
         </View>
         <View style={{ width: 12 }} />
         <View style={{ flex: 1 }}>
-          <InputField {...props} name="ageMax" label="Idade Máxima" placeholder="Ex.: 65Y" autoCapitalize="characters" />
+          <InputField
+            {...props}
+            name="ageMax"
+            label="Idade Máxima"
+            placeholder="Ex.: 65Y"
+            autoCapitalize="characters"
+          />
         </View>
       </View>
-      <Text style={styles.hint}>Deixe em branco para não limitar. Número sem unidade é interpretado em anos.</Text>
+      <Text style={styles.hint}>
+        Deixe em branco para não limitar. Número sem unidade é interpretado em anos.
+      </Text>
 
       <View style={styles.inputGroup}>
         <Text style={styles.label}>Sexo Elegível</Text>
@@ -187,7 +283,9 @@ export default function StudyForm({ initialValues = STUDY_FORM_DEFAULTS, submitL
                   style={[styles.selectorButton, value === g.value && styles.selectorButtonActive]}
                   onPress={() => onChange(g.value)}
                 >
-                  <Text style={[styles.selectorText, value === g.value && styles.selectorTextActive]}>{g.label}</Text>
+                  <Text style={[styles.selectorText, value === g.value && styles.selectorTextActive]}>
+                    {g.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
             </View>
@@ -198,28 +296,74 @@ export default function StudyForm({ initialValues = STUDY_FORM_DEFAULTS, submitL
       <InputField {...props} name="inclusionCriteria" label="Critérios de Inclusão" multiline />
       <InputField {...props} name="exclusionCriteria" label="Critérios de Exclusão (opcional)" multiline />
 
-      <TouchableOpacity style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]} onPress={handleSubmit(onSubmit)} disabled={isSubmitting}>
-        {isSubmitting ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>{submitLabel}</Text>}
+      <TouchableOpacity
+        style={[styles.submitButton, isSubmitting && { opacity: 0.7 }]}
+        onPress={handleSubmit(onSubmit, () =>
+          avisar('Campos inválidos', 'Revise os campos destacados em vermelho antes de salvar.')
+        )}
+        disabled={isSubmitting}
+      >
+        {isSubmitting ? (
+          <ActivityIndicator color="#fff" />
+        ) : (
+          <Text style={styles.submitButtonText}>{submitLabel}</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#343a40', marginTop: 8, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#ddd', paddingBottom: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#343a40',
+    marginTop: 8,
+    marginBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ddd',
+    paddingBottom: 8,
+  },
   inputGroup: { width: '100%', marginBottom: 16 },
   label: { fontSize: 15, fontWeight: '600', color: '#495057', marginBottom: 8 },
-  input: { backgroundColor: '#fff', minHeight: 50, borderWidth: 1, borderColor: '#ced4da', borderRadius: 8, paddingHorizontal: 15, fontSize: 16 },
+  input: {
+    backgroundColor: '#fff',
+    minHeight: 50,
+    borderWidth: 1,
+    borderColor: '#ced4da',
+    borderRadius: 8,
+    paddingHorizontal: 15,
+    fontSize: 16,
+  },
   inputError: { borderColor: '#dc3545' },
   textarea: { height: 110, textAlignVertical: 'top', paddingTop: 12 },
   errorText: { color: '#dc3545', fontSize: 13, marginTop: 4 },
   hint: { fontSize: 12, color: '#6c757d', marginTop: -8, marginBottom: 16 },
   row: { flexDirection: 'row' },
-  selector: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden', borderWidth: 1, borderColor: '#ced4da' },
-  selectorButton: { flex: 1, paddingVertical: 14, alignItems: 'center', borderRightWidth: 1, borderRightColor: '#eee' },
+  selector: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#ced4da',
+  },
+  selectorButton: {
+    flex: 1,
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRightWidth: 1,
+    borderRightColor: '#eee',
+  },
   selectorButtonActive: { backgroundColor: '#15715A' },
   selectorText: { fontSize: 13, fontWeight: 'bold', color: '#6c757d' },
   selectorTextActive: { color: '#fff' },
-  submitButton: { backgroundColor: '#15715A', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 12 },
+  submitButton: {
+    backgroundColor: '#15715A',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
   submitButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
 });

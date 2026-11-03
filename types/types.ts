@@ -46,7 +46,7 @@ export interface UsuarioCreateDTO {
   sexo?: Sexo;
   dataNascimento?: string; // AAAA-MM-DD
   telefone?: string;
-  cep?: string;            // 8 dígitos
+  cep?: string; // 8 dígitos
   endereco?: string;
   documento?: string;
 }
@@ -81,7 +81,7 @@ export interface EstudoCreateDTO {
   recruitmentStatus: StatusRecrutamento;
   studyType?: string;
   phase?: string;
-  dateRegistration: string;  // AAAA-MM-DD
+  dateRegistration: string; // AAAA-MM-DD
   dateEnrolment?: string | null;
   url?: string;
   primarySponsor?: string;
@@ -120,7 +120,7 @@ export interface EstudoResponseDTO {
 export interface CriterioCreateDTO {
   estudo_id: number;
   inclusion_criteria: string;
-  agemin: string;  // formato ICTRP: número + unidade (Y, M, W, D, H). Ex.: 18Y
+  agemin: string; // formato ICTRP: número + unidade (Y, M, W, D, H). Ex.: 18Y
   agemax: string;
   gender: GeneroElegivel;
   exclusion_criteria: string;
@@ -224,6 +224,19 @@ export interface MatchResultResponseDTO {
   criteriosAtendidos: number;
   dataMatch: string;
   justificativa: string;
+}
+
+/** Alertas de possível exclusão calculados a partir do formulário de perfil (AlertaExclusaoService). */
+export type AlertaExclusao = 'GESTACAO' | 'TABAGISMO';
+
+/** Afinidade do voluntário autenticado com um estudo em recrutamento (GET /api/v1/match/afinidade). */
+export interface EstudoAfinidadeDTO {
+  estudoId: number;
+  compativel: boolean;
+  uf: string | null;
+  mesmaUf: boolean;
+  mesmaRegiao: boolean;
+  alertas: AlertaExclusao[];
 }
 
 // --- NOTIFICAÇÕES ---

@@ -1,11 +1,12 @@
 import React from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as Yup from 'yup';
 
 import { useAuth } from '@/context/AuthContext';
 import { getErrorMessage } from '@/services/api/apiClient';
+import { avisar } from '@/utils/feedback';
 
 type FormData = {
   login: string;
@@ -24,7 +25,11 @@ const schema = Yup.object().shape({
 export default function LoginCredentials() {
   const { logIn, isLoading } = useAuth();
 
-  const { control, handleSubmit, formState: { errors } } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: { login: '', senha: '' },
   });
@@ -33,7 +38,10 @@ export default function LoginCredentials() {
     try {
       await logIn({ login: data.login.trim(), senha: data.senha });
     } catch (error) {
-      Alert.alert('Erro de login', getErrorMessage(error, 'Não foi possível entrar. Verifique as suas credenciais.'));
+      avisar(
+        'Erro de login',
+        getErrorMessage(error, 'Não foi possível entrar. Verifique as suas credenciais.')
+      );
     }
   };
 
@@ -74,7 +82,11 @@ export default function LoginCredentials() {
       />
       {errors.senha && <Text style={styles.errorText}>{errors.senha.message}</Text>}
 
-      <TouchableOpacity style={[styles.button, isLoading && { opacity: 0.7 }]} onPress={handleSubmit(onSubmit)} disabled={isLoading}>
+      <TouchableOpacity
+        style={[styles.button, isLoading && { opacity: 0.7 }]}
+        onPress={handleSubmit(onSubmit)}
+        disabled={isLoading}
+      >
         {isLoading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Entrar</Text>}
       </TouchableOpacity>
     </View>

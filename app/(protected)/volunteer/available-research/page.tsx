@@ -11,7 +11,6 @@ import {
   ScrollView,
   Keyboard,
   Switch,
-  Alert,
 } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -21,7 +20,8 @@ import Header from '@/components/reusable/Header';
 import { StudyCard, StudySummary } from '@/components/volunteerComponents/StudyCard';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { useAuth } from '@/context/AuthContext';
-import { DoencaResponseDTO, EstudoResponseDTO } from '@/types/types';
+import { DoencaResponseDTO, EstudoAfinidadeDTO, EstudoResponseDTO } from '@/types/types';
+import { avisar } from '@/utils/feedback';
 
 type StudyData = StudySummary & { jaCandidatou: boolean };
 type TabOption = 'available' | 'applied';
@@ -33,12 +33,13 @@ export default function AvailableStudiesScreen() {
   const { user } = useAuth();
 
   const [recrutando, setRecrutando] = useState<EstudoResponseDTO[]>([]);
-  const [compativeisIds, setCompativeisIds] = useState<Set<number>>(new Set());
+  const [afinidade, setAfinidade] = useState<Map<number, EstudoAfinidadeDTO>>(new Map());
   const [candidatadosIds, setCandidatadosIds] = useState<Set<number>>(new Set());
   const [resultadosBusca, setResultadosBusca] = useState<EstudoResponseDTO[] | null>(null);
 
   const [activeTab, setActiveTab] = useState<TabOption>('available');
   const [apenasCompativeis, setApenasCompativeis] = useState(true);
+  const [apenasMeuEstado, setApenasMeuEstado] = useState(false);
   const [visibleCount, setVisibleCount] = useState(10);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,21 +48,21 @@ export default function AvailableStudiesScreen() {
   const [isSearching, setIsSearching] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Estudos em recrutamento, estudos compatíveis com o perfil (filtragem por regras da API)
-  // e candidaturas do voluntário, cruzadas no cliente para separar as abas
+  // Estudos em recrutamento, afinidade com o perfil (compatibilidade por idade e sexo, proximidade
+  // e alertas de exclusão, calculados pela API) e candidaturas do voluntário, cruzadas no cliente
   const loadData = useCallback(async () => {
     if (!user?.perfilId) return;
     try {
-      const [estudos, compativeis, candidaturas] = await Promise.all([
+      const [estudos, afinidades, candidaturas] = await Promise.all([
         apiService.estudo.listRecruiting(),
-        apiService.match.estudosCompativeis(),
+        apiService.match.afinidade(),
         apiService.candidatura.listarPorVoluntario(user.perfilId),
       ]);
       setRecrutando(estudos);
-      setCompativeisIds(new Set(compativeis.map((e) => e.id)));
+      setAfinidade(new Map(afinidades.map((a) => [a.estudoId, a])));
       setCandidatadosIds(new Set(candidaturas.map((c) => c.estudoId)));
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar os estudos.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível carregar os estudos.'));
     } finally {
       setLoading(false);
     }
@@ -118,7 +119,7 @@ export default function AvailableStudiesScreen() {
       setIsSearching(true);
       setResultadosBusca(await apiService.estudo.searchByDoenca(nome));
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error));
+      avisar('Erro', getErrorMessage(error));
     } finally {
       setIsSearching(false);
     }
@@ -132,27 +133,51 @@ export default function AvailableStudiesScreen() {
     setShowDropdown(false);
   };
 
-  // Lista exibida: resultado da busca (ou todos em recrutamento), separado por aba e,
-  // na aba de novos estudos, opcionalmente restrito aos compatíveis com o perfil
+  // Lista exibida: resultado da busca (ou todos em recrutamento), separado por aba e, na aba de
+  // novos estudos, opcionalmente restrito aos compatíveis e ao estado do voluntário. Os estudos do
+  // mesmo estado vêm primeiro, seguidos dos da mesma região.
   const displayList: StudyData[] = useMemo(() => {
     const base = resultadosBusca ?? recrutando;
+    const proximidade = (s: StudyData) => (s.mesmaUf ? 0 : s.mesmaRegiao ? 1 : 2);
     return base
-      .map((item) => ({
-        id: item.id,
-        titulo: item.publicTitle,
-        informacoesGerais: item.scientificTitle || 'Ver detalhes.',
-        status: item.recruitmentStatus,
-        doencas: item.nomesDoencas,
-        compativel: compativeisIds.has(item.id),
-        jaCandidatou: candidatadosIds.has(item.id),
-      }))
+      .map((item) => {
+        const a = afinidade.get(item.id);
+        return {
+          id: item.id,
+          titulo: item.publicTitle,
+          informacoesGerais: item.scientificTitle || 'Ver detalhes.',
+          status: item.recruitmentStatus,
+          doencas: item.nomesDoencas,
+          compativel: a?.compativel ?? false,
+          uf: a?.uf ?? null,
+          mesmaUf: a?.mesmaUf ?? false,
+          mesmaRegiao: a?.mesmaRegiao ?? false,
+          alertas: a?.alertas ?? [],
+          jaCandidatou: candidatadosIds.has(item.id),
+        };
+      })
       .filter((s) =>
-        activeTab === 'applied' ? s.jaCandidatou : !s.jaCandidatou && (!apenasCompativeis || s.compativel)
-      );
-  }, [resultadosBusca, recrutando, compativeisIds, candidatadosIds, activeTab, apenasCompativeis]);
+        activeTab === 'applied'
+          ? s.jaCandidatou
+          : !s.jaCandidatou && (!apenasCompativeis || s.compativel) && (!apenasMeuEstado || s.mesmaUf)
+      )
+      .sort((x, y) => proximidade(x) - proximidade(y));
+  }, [
+    resultadosBusca,
+    recrutando,
+    afinidade,
+    candidatadosIds,
+    activeTab,
+    apenasCompativeis,
+    apenasMeuEstado,
+  ]);
 
   if (loading) {
-    return <View style={styles.centered}><ActivityIndicator size="large" color="#15715A" /></View>;
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#15715A" />
+      </View>
+    );
   }
 
   return (
@@ -185,7 +210,9 @@ export default function AvailableStudiesScreen() {
               {suggestedDoencas.map((d) => (
                 <TouchableOpacity key={d.id} style={styles.dropdownItem} onPress={() => selectDoenca(d)}>
                   <Text style={styles.ddMainText}>{d.nomePopular || d.nomeCientifico}</Text>
-                  {d.nomePopular !== d.nomeCientifico && <Text style={styles.ddSubText}>{d.nomeCientifico}</Text>}
+                  {d.nomePopular !== d.nomeCientifico && (
+                    <Text style={styles.ddSubText}>{d.nomeCientifico}</Text>
+                  )}
                 </TouchableOpacity>
               ))}
             </ScrollView>
@@ -197,13 +224,21 @@ export default function AvailableStudiesScreen() {
       <View style={styles.tabsContainer}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'available' && styles.activeTabButton]}
-          onPress={() => { setActiveTab('available'); setVisibleCount(10); }}
+          onPress={() => {
+            setActiveTab('available');
+            setVisibleCount(10);
+          }}
         >
-          <Text style={[styles.tabText, activeTab === 'available' && styles.activeTabText]}>Novos Estudos</Text>
+          <Text style={[styles.tabText, activeTab === 'available' && styles.activeTabText]}>
+            Novos Estudos
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'applied' && styles.activeTabButton]}
-          onPress={() => { setActiveTab('applied'); setVisibleCount(10); }}
+          onPress={() => {
+            setActiveTab('applied');
+            setVisibleCount(10);
+          }}
         >
           <Text style={[styles.tabText, activeTab === 'applied' && styles.activeTabText]}>Já Inscritos</Text>
         </TouchableOpacity>
@@ -214,9 +249,27 @@ export default function AvailableStudiesScreen() {
           <Text style={styles.compatText}>Somente compatíveis com minha idade e sexo</Text>
           <Switch
             value={apenasCompativeis}
-            onValueChange={(v) => { setApenasCompativeis(v); setVisibleCount(10); }}
+            onValueChange={(v) => {
+              setApenasCompativeis(v);
+              setVisibleCount(10);
+            }}
             trackColor={{ false: '#ccc', true: '#a7f3d0' }}
             thumbColor={apenasCompativeis ? '#15715A' : '#f4f3f4'}
+          />
+        </View>
+      )}
+
+      {activeTab === 'available' && (
+        <View style={styles.compatRow}>
+          <Text style={styles.compatText}>Somente estudos no meu estado</Text>
+          <Switch
+            value={apenasMeuEstado}
+            onValueChange={(v) => {
+              setApenasMeuEstado(v);
+              setVisibleCount(10);
+            }}
+            trackColor={{ false: '#ccc', true: '#a7f3d0' }}
+            thumbColor={apenasMeuEstado ? '#15715A' : '#f4f3f4'}
           />
         </View>
       )}
@@ -235,7 +288,10 @@ export default function AvailableStudiesScreen() {
             <StudyCard
               study={item}
               onPress={() =>
-                router.push({ pathname: '/(protected)/volunteer/available-research/[id]', params: { id: item.id } })
+                router.push({
+                  pathname: '/(protected)/volunteer/available-research/[id]',
+                  params: { id: item.id },
+                })
               }
             />
           </View>
@@ -246,8 +302,8 @@ export default function AvailableStudiesScreen() {
             <Ionicons name="document-text-outline" size={48} color="#ccc" style={{ marginBottom: 12 }} />
             <Text style={styles.emptyText}>
               {activeTab === 'available'
-                ? apenasCompativeis
-                  ? 'Nenhum estudo compatível encontrado. Desative o filtro para ver todos.'
+                ? apenasCompativeis || apenasMeuEstado
+                  ? 'Nenhum estudo encontrado com os filtros selecionados. Desative-os para ver todos.'
                   : 'Nenhum estudo novo encontrado.'
                 : 'Você ainda não se candidatou a nenhum estudo.'}
             </Text>
@@ -275,26 +331,84 @@ const styles = StyleSheet.create({
   centered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   listContent: { padding: 16, paddingBottom: 40 },
   searchWrapper: { padding: 16, backgroundColor: '#fff', zIndex: 10, paddingBottom: 0 },
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f1f3f5', borderRadius: 8, paddingHorizontal: 12, height: 48 },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f1f3f5',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    height: 48,
+  },
   input: { flex: 1, fontSize: 16, color: '#333' },
-  dropdown: { position: 'absolute', top: 70, left: 16, right: 16, backgroundColor: '#fff', borderRadius: 8, elevation: 5, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 5, shadowOffset: { width: 0, height: 2 }, borderWidth: 1, borderColor: '#e9ecef' },
+  dropdown: {
+    position: 'absolute',
+    top: 70,
+    left: 16,
+    right: 16,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    shadowOffset: { width: 0, height: 2 },
+    borderWidth: 1,
+    borderColor: '#e9ecef',
+  },
   dropdownItem: { padding: 12, borderBottomWidth: 1, borderBottomColor: '#f1f3f5' },
   ddMainText: { fontSize: 16, color: '#212529' },
   ddSubText: { fontSize: 12, color: '#868e96', fontStyle: 'italic' },
   footer: { alignItems: 'center', paddingVertical: 20 },
-  showMoreButton: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderWidth: 1, borderColor: '#15715A', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 20 },
+  showMoreButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#15715A',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+  },
   showMoreText: { color: '#15715A', fontWeight: 'bold', marginRight: 5 },
   endText: { color: '#adb5bd', fontSize: 14 },
   emptyContainer: { alignItems: 'center', marginTop: 50, paddingHorizontal: 24 },
   emptyText: { color: '#adb5bd', fontSize: 16, textAlign: 'center' },
-  tabsContainer: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 8, padding: 4, marginHorizontal: 16, marginTop: 16, borderWidth: 1, borderColor: '#eee' },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 4,
+    marginHorizontal: 16,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
   tabButton: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 6 },
   activeTabButton: { backgroundColor: '#E0F2F1' },
   tabText: { fontSize: 14, fontWeight: '600', color: '#6c757d' },
   activeTabText: { color: '#15715A', fontWeight: 'bold' },
-  compatRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginHorizontal: 16, marginTop: 12 },
+  compatRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 16,
+    marginTop: 12,
+  },
   compatText: { fontSize: 14, color: '#495057', flex: 1, marginRight: 8 },
   cardContainer: { marginBottom: 16 },
-  appliedBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff3cd', paddingVertical: 8, paddingHorizontal: 12, borderTopLeftRadius: 12, borderTopRightRadius: 12, borderWidth: 1, borderColor: '#ffeeba', borderBottomWidth: 0, marginBottom: -5, zIndex: 1 },
+  appliedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3cd',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    borderWidth: 1,
+    borderColor: '#ffeeba',
+    borderBottomWidth: 0,
+    marginBottom: -5,
+    zIndex: 1,
+  },
   appliedText: { marginLeft: 6, color: '#856404', fontSize: 13, fontWeight: 'bold' },
 });

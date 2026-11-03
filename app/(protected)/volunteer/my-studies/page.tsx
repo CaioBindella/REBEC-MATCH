@@ -2,24 +2,24 @@ import { SelectedStudyCard } from '@/components/volunteerComponents/SelectedStud
 import Header from '@/components/reusable/Header';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-import { 
-  ActivityIndicator, 
-  FlatList, 
-  SafeAreaView, 
-  StyleSheet, 
-  Text, 
-  TextInput, 
-  TouchableOpacity, 
-  View, 
-  Alert 
+import {
+  ActivityIndicator,
+  FlatList,
+  SafeAreaView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { useAuth } from '@/context/AuthContext';
+import { avisar, confirmar } from '@/utils/feedback';
 
 interface StudyData {
-  id: number;           
-  estudoId: number;     
+  id: number;
+  estudoId: number;
   titulo: string;
   pesquisador: { nomeFicticio: string };
   pesquisadorUsuarioId: number; // usado pelo serviço de chat
@@ -30,12 +30,12 @@ type TabOption = 'invites' | 'ongoing';
 
 export default function MyStudiesScreen() {
   const router = useRouter();
-  const { user } = useAuth(); 
+  const { user } = useAuth();
 
   // Listas separadas
   const [invites, setInvites] = useState<StudyData[]>([]);
   const [ongoing, setOngoing] = useState<StudyData[]>([]);
-  
+
   // Controle da visualização e busca
   const [activeTab, setActiveTab] = useState<TabOption>('invites');
   const [searchTerm, setSearchTerm] = useState('');
@@ -47,7 +47,7 @@ export default function MyStudiesScreen() {
   const fetchMyStudies = useCallback(async () => {
     try {
       setLoading(true);
-      
+
       if (!user?.perfilId) {
         setLoading(false);
         return;
@@ -78,9 +78,8 @@ export default function MyStudiesScreen() {
       } else {
         setActiveTab('ongoing');
       }
-
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar seus estudos.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível carregar seus estudos.'));
     } finally {
       setLoading(false);
     }
@@ -94,30 +93,42 @@ export default function MyStudiesScreen() {
 
   // Lógica para Aceitar ou Recusar o convite
   const handleResponse = async (candidaturaId: number, aceito: boolean) => {
+    if (
+      !aceito &&
+      !(await confirmar(
+        'Recusar convite',
+        'Deseja recusar o convite para este estudo? Esta ação não pode ser desfeita.',
+        { textoConfirmar: 'Recusar', destrutivo: true }
+      ))
+    ) {
+      return;
+    }
     try {
       setActionLoading(candidaturaId);
-      
+
       // Chama a rota de confirmação
       await apiService.candidatura.confirmacaoVoluntario(candidaturaId, aceito);
 
       if (aceito) {
-        Alert.alert('Match confirmado', "Você entrou no estudo! O chat com o pesquisador está liberado na aba 'Em Andamento'.");
-        
+        avisar(
+          'Match confirmado',
+          "Você entrou no estudo! O chat com o pesquisador está liberado na aba 'Em Andamento'."
+        );
+
         // Move o item da lista de convites para a lista de andamento localmente
-        const study = invites.find(s => s.id === candidaturaId);
+        const study = invites.find((s) => s.id === candidaturaId);
         if (study) {
-          setInvites(prev => prev.filter(s => s.id !== candidaturaId));
-          setOngoing(prev => [...prev, { ...study, status: 'CONCLUIDO' }]);
+          setInvites((prev) => prev.filter((s) => s.id !== candidaturaId));
+          setOngoing((prev) => [...prev, { ...study, status: 'CONCLUIDO' }]);
           setActiveTab('ongoing'); // Muda para a aba de andamento automaticamente
         }
       } else {
-        Alert.alert("Recusado", "Você recusou o convite para este estudo.");
+        avisar('Convite recusado', 'O pesquisador foi notificado de que você recusou o convite.');
         // Apenas remove da lista de convites
-        setInvites(prev => prev.filter(s => s.id !== candidaturaId));
+        setInvites((prev) => prev.filter((s) => s.id !== candidaturaId));
       }
-
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Falha ao processar sua resposta.'));
+      avisar('Erro', getErrorMessage(error, 'Falha ao processar sua resposta.'));
     } finally {
       setActionLoading(null);
     }
@@ -126,31 +137,29 @@ export default function MyStudiesScreen() {
   // Filtra a lista ativa com base no termo de busca
   const getDisplayList = () => {
     const sourceList = activeTab === 'invites' ? invites : ongoing;
-    
+
     if (searchTerm === '') return sourceList;
 
-    return sourceList.filter(study =>
-      study.titulo.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    return sourceList.filter((study) => study.titulo.toLowerCase().includes(searchTerm.toLowerCase()));
   };
 
   const displayList = getDisplayList();
 
   if (loading) {
     return (
-        <View style={styles.centered}>
-            <ActivityIndicator size="large" color="#15715A" />
-        </View>
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#15715A" />
+      </View>
     );
   }
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'Meus Estudos', headerShown: false }} />
       <Header />
       <View style={styles.content}>
         <Text style={styles.screenTitle}>Meus Estudos</Text>
-        
+
         <TextInput
           style={styles.searchInput}
           placeholder="Buscar por título..."
@@ -161,23 +170,23 @@ export default function MyStudiesScreen() {
 
         {/* --- ABAS --- */}
         <View style={styles.tabsContainer}>
-            <TouchableOpacity 
-                style={[styles.tabButton, activeTab === 'invites' && styles.activeTabButton]}
-                onPress={() => setActiveTab('invites')}
-            >
-                <Text style={[styles.tabText, activeTab === 'invites' && styles.activeTabText]}>
-                    Convites ({invites.length})
-                </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'invites' && styles.activeTabButton]}
+            onPress={() => setActiveTab('invites')}
+          >
+            <Text style={[styles.tabText, activeTab === 'invites' && styles.activeTabText]}>
+              Convites ({invites.length})
+            </Text>
+          </TouchableOpacity>
 
-            <TouchableOpacity 
-                style={[styles.tabButton, activeTab === 'ongoing' && styles.activeTabButton]}
-                onPress={() => setActiveTab('ongoing')}
-            >
-                <Text style={[styles.tabText, activeTab === 'ongoing' && styles.activeTabText]}>
-                    Em Andamento ({ongoing.length})
-                </Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'ongoing' && styles.activeTabButton]}
+            onPress={() => setActiveTab('ongoing')}
+          >
+            <Text style={[styles.tabText, activeTab === 'ongoing' && styles.activeTabText]}>
+              Em Andamento ({ongoing.length})
+            </Text>
+          </TouchableOpacity>
         </View>
 
         {/* --- LISTA --- */}
@@ -186,75 +195,76 @@ export default function MyStudiesScreen() {
             data={displayList}
             keyExtractor={(item) => String(item.id)}
             renderItem={({ item }) => {
-                
-                // RENDERIZAÇÃO PARA ABA DE CONVITES
-                if (activeTab === 'invites') {
-                    return (
-                        <View style={styles.inviteCard}>
-                            <View style={styles.inviteHeader}>
-                                <Text style={styles.inviteTitle}>{item.titulo}</Text>
-                                <Text style={styles.inviteResearcher}>Pesquisador: {item.pesquisador.nomeFicticio}</Text>
-                            </View>
-                            
-                            <Text style={styles.inviteStatusText}>
-                                O pesquisador aprovou sua candidatura. Deseja participar?
-                            </Text>
-
-                            <View style={styles.inviteActions}>
-                                {/* Botão Recusar */}
-                                <TouchableOpacity 
-                                    style={[styles.actionBtn, styles.rejectBtn]}
-                                    onPress={() => handleResponse(item.id, false)}
-                                    disabled={actionLoading === item.id}
-                                >
-                                    <Text style={styles.rejectText}>Recusar</Text>
-                                </TouchableOpacity>
-
-                                {/* Botão Aceitar */}
-                                <TouchableOpacity 
-                                    style={[styles.actionBtn, styles.acceptBtn]}
-                                    onPress={() => handleResponse(item.id, true)}
-                                    disabled={actionLoading === item.id}
-                                >
-                                    {actionLoading === item.id ? (
-                                        <ActivityIndicator color="#fff" size="small" />
-                                    ) : (
-                                        <Text style={styles.acceptText}>Aceitar e Participar</Text>
-                                    )}
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    );
-                }
-
-                // RENDERIZAÇÃO PARA ABA EM ANDAMENTO (CARD PADRÃO COM CHAT)
+              // RENDERIZAÇÃO PARA ABA DE CONVITES
+              if (activeTab === 'invites') {
                 return (
-                    <SelectedStudyCard
-                        study={item} 
-                        onChatPress={() =>
-                            router.push({
-                                pathname: "/(protected)/chat/[id]", 
-                                params: { 
-                                    id: item.estudoId,
-                                    contatoUsuarioId: item.pesquisadorUsuarioId,
-                                    nomeContato: item.pesquisador.nomeFicticio,
-                                    tituloEstudo: item.titulo 
-                                },
-                            })
-                        }
-                    />
+                  <View style={styles.inviteCard}>
+                    <View style={styles.inviteHeader}>
+                      <Text style={styles.inviteTitle}>{item.titulo}</Text>
+                      <Text style={styles.inviteResearcher}>
+                        Pesquisador: {item.pesquisador.nomeFicticio}
+                      </Text>
+                    </View>
+
+                    <Text style={styles.inviteStatusText}>
+                      O pesquisador aprovou sua candidatura. Deseja participar?
+                    </Text>
+
+                    <View style={styles.inviteActions}>
+                      {/* Botão Recusar */}
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.rejectBtn]}
+                        onPress={() => handleResponse(item.id, false)}
+                        disabled={actionLoading === item.id}
+                      >
+                        <Text style={styles.rejectText}>Recusar</Text>
+                      </TouchableOpacity>
+
+                      {/* Botão Aceitar */}
+                      <TouchableOpacity
+                        style={[styles.actionBtn, styles.acceptBtn]}
+                        onPress={() => handleResponse(item.id, true)}
+                        disabled={actionLoading === item.id}
+                      >
+                        {actionLoading === item.id ? (
+                          <ActivityIndicator color="#fff" size="small" />
+                        ) : (
+                          <Text style={styles.acceptText}>Aceitar e Participar</Text>
+                        )}
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 );
+              }
+
+              // RENDERIZAÇÃO PARA ABA EM ANDAMENTO (CARD PADRÃO COM CHAT)
+              return (
+                <SelectedStudyCard
+                  study={item}
+                  onChatPress={() =>
+                    router.push({
+                      pathname: '/(protected)/chat/[id]',
+                      params: {
+                        id: item.estudoId,
+                        contatoUsuarioId: item.pesquisadorUsuarioId,
+                        nomeContato: item.pesquisador.nomeFicticio,
+                        tituloEstudo: item.titulo,
+                      },
+                    })
+                  }
+                />
+              );
             }}
             contentContainerStyle={{ paddingBottom: 20 }}
           />
         ) : (
           <View style={styles.centered}>
             <Text style={styles.emptyText}>
-              {searchTerm 
-                ? 'Nenhum estudo encontrado na busca.' 
-                : activeTab === 'invites' 
-                    ? 'Você não tem novos convites.' 
-                    : 'Você ainda não participa de nenhum estudo.'}
+              {searchTerm
+                ? 'Nenhum estudo encontrado na busca.'
+                : activeTab === 'invites'
+                  ? 'Você não tem novos convites.'
+                  : 'Você ainda não participa de nenhum estudo.'}
             </Text>
           </View>
         )}
@@ -267,7 +277,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
   content: { flex: 1, padding: 16 },
   screenTitle: { fontSize: 24, fontWeight: 'bold', color: '#212529', marginBottom: 16 },
-  
+
   searchInput: {
     backgroundColor: '#fff',
     height: 48,

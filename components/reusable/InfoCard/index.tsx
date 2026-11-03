@@ -11,14 +11,22 @@ interface InfoCardProps {
   buttonText: string;
   linkTo: any;
   imageSource?: any; // Torna a imagem opcional
-  icon?: { // Adiciona a propriedade de ícone opcional
+  icon?: {
+    // Adiciona a propriedade de ícone opcional
     name: keyof typeof Ionicons.glyphMap; // Garante que o nome do ícone é válido
     size: number;
     color: string;
   };
 }
 
-export default function InfoCard({ title, description, buttonText, linkTo, imageSource, icon }: InfoCardProps) {
+export default function InfoCard({
+  title,
+  description,
+  buttonText,
+  linkTo,
+  imageSource,
+  icon,
+}: InfoCardProps) {
   const router = useRouter();
 
   return (

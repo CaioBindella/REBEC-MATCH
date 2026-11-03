@@ -9,10 +9,7 @@ export default function RegisterPage() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.headerContainer}>
-        <Image 
-          source={require('@/assets/images/MatchLogo.png')}
-          style={styles.logo} 
-        />
+        <Image source={require('@/assets/images/MatchLogo.png')} style={styles.logo} />
       </View>
       <RegisterForm />
     </View>
@@ -26,11 +23,11 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     backgroundColor: '#FFFFFF',
-    paddingVertical: 45,   
-    paddingHorizontal: 20,  
+    paddingVertical: 45,
+    paddingHorizontal: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    
+
     // Sombra para iOS
     shadowColor: '#000',
     shadowOffset: {
@@ -39,7 +36,7 @@ const styles = StyleSheet.create({
     },
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
-    
+
     elevation: 5,
 
     borderBottomWidth: 1,

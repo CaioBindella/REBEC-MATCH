@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { estaRecrutando, statusRecrutamentoLabel } from '@/utils/formatters';
+import { AlertaExclusao } from '@/types/types';
 
 // Dados do estudo exibidos no card da lista
 export interface StudySummary {
@@ -12,7 +13,16 @@ export interface StudySummary {
   status: string; // rótulo ICTRP (ex.: "Recruiting")
   doencas?: string[];
   compativel?: boolean;
+  uf?: string | null;
+  mesmaUf?: boolean;
+  mesmaRegiao?: boolean;
+  alertas?: AlertaExclusao[];
 }
+
+const TEXTO_ALERTA: Record<AlertaExclusao, string> = {
+  GESTACAO: 'Os critérios de exclusão mencionam gestação.',
+  TABAGISMO: 'Os critérios de exclusão mencionam tabagismo.',
+};
 
 interface StudyCardProps {
   study: StudySummary;
@@ -22,9 +32,10 @@ interface StudyCardProps {
 export function StudyCard({ study, onPress }: StudyCardProps) {
   const recrutando = estaRecrutando(study.status);
 
-  const briefDescription = study.informacoesGerais.length > 100
-    ? `${study.informacoesGerais.substring(0, 100)}...`
-    : study.informacoesGerais;
+  const briefDescription =
+    study.informacoesGerais.length > 100
+      ? `${study.informacoesGerais.substring(0, 100)}...`
+      : study.informacoesGerais;
 
   return (
     <View style={styles.cardContainer}>
@@ -32,7 +43,9 @@ export function StudyCard({ study, onPress }: StudyCardProps) {
 
       <View style={styles.tagsRow}>
         <View style={[styles.tagBase, recrutando ? styles.tagRecruiting : styles.tagDefault]}>
-          <Text style={recrutando ? styles.tagTextRecruiting : styles.tagTextDefault}>{statusRecrutamentoLabel(study.status)}</Text>
+          <Text style={recrutando ? styles.tagTextRecruiting : styles.tagTextDefault}>
+            {statusRecrutamentoLabel(study.status)}
+          </Text>
         </View>
         {study.compativel && (
           <View style={[styles.tagBase, styles.tagCompatible]}>
@@ -40,7 +53,22 @@ export function StudyCard({ study, onPress }: StudyCardProps) {
             <Text style={styles.tagTextCompatible}>Compatível com seu perfil</Text>
           </View>
         )}
+        {(study.mesmaUf || study.mesmaRegiao) && (
+          <View style={[styles.tagBase, styles.tagLocation]}>
+            <Ionicons name="location" size={13} color="#6B3FA0" style={{ marginRight: 4 }} />
+            <Text style={styles.tagTextLocation}>
+              {study.mesmaUf ? `No seu estado (${study.uf})` : `Na sua região (${study.uf})`}
+            </Text>
+          </View>
+        )}
       </View>
+
+      {study.alertas?.map((alerta) => (
+        <View key={alerta} style={styles.alertRow}>
+          <Ionicons name="warning" size={15} color="#8A5300" style={{ marginRight: 6 }} />
+          <Text style={styles.alertText}>Atenção: {TEXTO_ALERTA[alerta]}</Text>
+        </View>
+      ))}
 
       <Text style={styles.cardDescription}>{briefDescription}</Text>
 
@@ -92,6 +120,18 @@ const styles = StyleSheet.create({
   tagTextRecruiting: { color: '#15715A', fontWeight: 'bold', fontSize: 12 },
   tagCompatible: { backgroundColor: '#DCEEFF' },
   tagTextCompatible: { color: '#004A7F', fontWeight: 'bold', fontSize: 12 },
+  tagLocation: { backgroundColor: '#EFE6FA' },
+  tagTextLocation: { color: '#6B3FA0', fontWeight: 'bold', fontSize: 12 },
+  alertRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF4E0',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+  },
+  alertText: { color: '#8A5300', fontSize: 13, flex: 1 },
   tagDefault: { backgroundColor: '#E9ECEF' },
   tagTextDefault: { color: '#495057', fontWeight: 'bold', fontSize: 12 },
   cardDescription: {

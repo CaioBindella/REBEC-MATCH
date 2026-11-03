@@ -1,7 +1,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
-  View, Text, StyleSheet, TextInput, TouchableOpacity,
-  FlatList, KeyboardAvoidingView, Platform, ActivityIndicator, Alert,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  TouchableOpacity,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -13,6 +20,7 @@ import { apiService, CHAT_URL, getErrorMessage } from '@/services/api/apiClient'
 import { storage, STORAGE_KEYS } from '@/services/storage';
 import { MensagemDTO } from '@/types/types';
 import { formatTime } from '@/utils/formatters';
+import { avisar } from '@/utils/feedback';
 
 // Intervalo da sondagem de reserva, usada apenas enquanto a conexão em tempo real estiver indisponível
 const INTERVALO_SONDAGEM_MS = 5000;
@@ -51,8 +59,9 @@ export default function ChatScreen() {
     try {
       setMessages(await apiService.mensagem.listar(estudoId, myId, contatoId));
     } catch (error) {
-      Alert.alert('Chat indisponível', getErrorMessage(error, 'Não foi possível carregar as mensagens.'));
-      router.back();
+      avisar('Chat indisponível', getErrorMessage(error, 'Não foi possível carregar as mensagens.'), () =>
+        router.back()
+      );
     } finally {
       setLoading(false);
     }
@@ -101,7 +110,7 @@ export default function ChatScreen() {
       adicionarMensagem(enviada);
       setInputText('');
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível enviar a mensagem.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível enviar a mensagem.'));
     } finally {
       setSending(false);
     }
@@ -113,7 +122,9 @@ export default function ChatScreen() {
       <View style={[styles.bubbleContainer, isMe ? styles.rightContainer : styles.leftContainer]}>
         <View style={[styles.bubble, isMe ? styles.rightBubble : styles.leftBubble]}>
           <Text style={[styles.msgText, isMe ? styles.rightText : styles.leftText]}>{item.conteudo}</Text>
-          <Text style={[styles.timeText, isMe ? { color: '#e0f2f1' } : { color: '#888' }]}>{formatTime(item.data_envio)}</Text>
+          <Text style={[styles.timeText, isMe ? { color: '#e0f2f1' } : { color: '#888' }]}>
+            {formatTime(item.data_envio)}
+          </Text>
         </View>
       </View>
     );
@@ -129,8 +140,12 @@ export default function ChatScreen() {
           <Ionicons name="person" size={20} color="#fff" />
         </View>
         <View style={styles.headerTextContainer}>
-          <Text style={styles.headerTitle} numberOfLines={1}>{nomeContato || 'Contato'}</Text>
-          <Text style={styles.headerSubtitle} numberOfLines={1}>{tituloEstudo || 'Chat do Estudo'}</Text>
+          <Text style={styles.headerTitle} numberOfLines={1}>
+            {nomeContato || 'Contato'}
+          </Text>
+          <Text style={styles.headerSubtitle} numberOfLines={1}>
+            {tituloEstudo || 'Chat do Estudo'}
+          </Text>
         </View>
         <View style={[styles.statusDot, { backgroundColor: conectado ? '#22c55e' : '#adb5bd' }]} />
       </View>
@@ -146,7 +161,9 @@ export default function ChatScreen() {
             renderItem={renderItem}
             contentContainerStyle={{ padding: 15 }}
             onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
-            ListEmptyComponent={<Text style={styles.emptyText}>Nenhuma mensagem ainda. Envie a primeira!</Text>}
+            ListEmptyComponent={
+              <Text style={styles.emptyText}>Nenhuma mensagem ainda. Envie a primeira!</Text>
+            }
           />
         )}
       </View>
@@ -161,8 +178,16 @@ export default function ChatScreen() {
             maxLength={2000}
             multiline
           />
-          <TouchableOpacity style={[styles.sendBtn, sending && { opacity: 0.7 }]} onPress={handleSend} disabled={sending}>
-            {sending ? <ActivityIndicator color="#fff" size="small" /> : <Ionicons name="send" size={20} color="#fff" />}
+          <TouchableOpacity
+            style={[styles.sendBtn, sending && { opacity: 0.7 }]}
+            onPress={handleSend}
+            disabled={sending}
+          >
+            {sending ? (
+              <ActivityIndicator color="#fff" size="small" />
+            ) : (
+              <Ionicons name="send" size={20} color="#fff" />
+            )}
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -205,7 +230,29 @@ const styles = StyleSheet.create({
   rightText: { color: '#fff' },
   leftText: { color: '#333' },
   timeText: { fontSize: 10, alignSelf: 'flex-end', marginTop: 4 },
-  inputContainer: { flexDirection: 'row', padding: 10, backgroundColor: '#fff', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#f0f0f0' },
-  input: { flex: 1, backgroundColor: '#f0f2f5', borderRadius: 20, paddingHorizontal: 15, paddingVertical: 10, maxHeight: 100, marginRight: 10 },
-  sendBtn: { backgroundColor: '#15715A', width: 45, height: 45, borderRadius: 23, justifyContent: 'center', alignItems: 'center' },
+  inputContainer: {
+    flexDirection: 'row',
+    padding: 10,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+  },
+  input: {
+    flex: 1,
+    backgroundColor: '#f0f2f5',
+    borderRadius: 20,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    maxHeight: 100,
+    marginRight: 10,
+  },
+  sendBtn: {
+    backgroundColor: '#15715A',
+    width: 45,
+    height: 45,
+    borderRadius: 23,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });

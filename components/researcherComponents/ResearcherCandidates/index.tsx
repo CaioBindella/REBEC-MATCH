@@ -9,7 +9,6 @@ import {
   Platform,
   UIManager,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -25,6 +24,7 @@ import { apiService, getErrorMessage, ID_FORMULARIO_PERFIL } from '@/services/ap
 import { useAuth } from '@/context/AuthContext';
 import { CandidatoDetalhadoDTO, RespostaResponseDTO } from '@/types/types';
 import { cepParaUf, parseOpcoes, sexoLabel, UFS } from '@/utils/formatters';
+import { avisar } from '@/utils/feedback';
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -56,7 +56,9 @@ export default function ResearcherCandidates() {
   const { user } = useAuth();
 
   const [allVolunteers, setAllVolunteers] = useState<VolunteerData[]>([]);
-  const [respostasPorVoluntario, setRespostasPorVoluntario] = useState<Record<number, RespostaResponseDTO[]>>({});
+  const [respostasPorVoluntario, setRespostasPorVoluntario] = useState<Record<number, RespostaResponseDTO[]>>(
+    {}
+  );
   const [opcoesGenero, setOpcoesGenero] = useState<string[]>([]);
   const [opcoesEscolaridade, setOpcoesEscolaridade] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -101,7 +103,7 @@ export default function ResearcherCandidates() {
           .reverse() // candidaturas mais recentes primeiro
       );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar a lista de candidatos.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível carregar a lista de candidatos.'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +141,7 @@ export default function ResearcherCandidates() {
 
   const handleExport = async () => {
     if (filteredVolunteers.length === 0) {
-      Alert.alert('Atenção', 'Nenhum candidato encontrado na lista atual para exportar.');
+      avisar('Atenção', 'Nenhum candidato encontrado na lista atual para exportar.');
       return;
     }
     setIsExporting(true);
@@ -163,7 +165,15 @@ export default function ResearcherCandidates() {
       }
 
       const ws = XLSX.utils.aoa_to_sheet(dataForSheet);
-      ws['!cols'] = [{ wch: 20 }, { wch: 30 }, { wch: 22 }, { wch: 6 }, { wch: 8 }, { wch: 14 }, { wch: 100 }];
+      ws['!cols'] = [
+        { wch: 20 },
+        { wch: 30 },
+        { wch: 22 },
+        { wch: 6 },
+        { wch: 8 },
+        { wch: 14 },
+        { wch: 100 },
+      ];
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, 'Candidatos');
 
@@ -172,12 +182,12 @@ export default function ResearcherCandidates() {
       await FileSystem.writeAsStringAsync(filename, base64, { encoding: FileSystem.EncodingType.Base64 });
 
       if (!(await Sharing.isAvailableAsync())) {
-        Alert.alert('Erro', 'O compartilhamento não está disponível neste dispositivo.');
+        avisar('Erro', 'O compartilhamento não está disponível neste dispositivo.');
         return;
       }
       await Sharing.shareAsync(filename);
     } catch {
-      Alert.alert('Erro', 'Ocorreu um erro ao gerar o arquivo.');
+      avisar('Erro', 'Ocorreu um erro ao gerar o arquivo.');
     } finally {
       setIsExporting(false);
     }
@@ -198,9 +208,12 @@ export default function ResearcherCandidates() {
         },
       });
     } else if (volunteer.status === 'ACEITO_PELO_PESQUISADOR') {
-      Alert.alert('Aguardando', 'Você já aprovou este candidato. Aguarde o voluntário confirmar a participação para iniciar o chat.');
+      avisar(
+        'Aguardando',
+        'Você já aprovou este candidato. Aguarde o voluntário confirmar a participação para iniciar o chat.'
+      );
     } else if (volunteer.status === 'RECUSADO') {
-      Alert.alert('Recusado', 'Esta candidatura foi recusada.');
+      avisar('Recusado', 'Esta candidatura foi recusada.');
     } else {
       router.push({
         pathname: '/(protected)/chat/[id]',
@@ -226,17 +239,31 @@ export default function ResearcherCandidates() {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <View style={styles.headerContainer}>
         <Text style={styles.title}>Gerenciar Candidatos</Text>
-        <TouchableOpacity style={[styles.exportButton, isExporting && { opacity: 0.7 }]} onPress={handleExport} disabled={isExporting}>
-          {isExporting ? <ActivityIndicator size="small" color="#15715A" /> : <Ionicons name="download-outline" size={18} color="#15715A" />}
+        <TouchableOpacity
+          style={[styles.exportButton, isExporting && { opacity: 0.7 }]}
+          onPress={handleExport}
+          disabled={isExporting}
+        >
+          {isExporting ? (
+            <ActivityIndicator size="small" color="#15715A" />
+          ) : (
+            <Ionicons name="download-outline" size={18} color="#15715A" />
+          )}
           <Text style={styles.exportButtonText}>Exportar</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.tabsContainer}>
-        <TouchableOpacity style={[styles.tabButton, activeTab === 'candidates' && styles.activeTabButton]} onPress={() => setActiveTab('candidates')}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'candidates' && styles.activeTabButton]}
+          onPress={() => setActiveTab('candidates')}
+        >
           <Text style={[styles.tabText, activeTab === 'candidates' && styles.activeTabText]}>Candidatos</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={[styles.tabButton, activeTab === 'approved' && styles.activeTabButton]} onPress={() => setActiveTab('approved')}>
+        <TouchableOpacity
+          style={[styles.tabButton, activeTab === 'approved' && styles.activeTabButton]}
+          onPress={() => setActiveTab('approved')}
+        >
           <Text style={[styles.tabText, activeTab === 'approved' && styles.activeTabText]}>Em Andamento</Text>
         </TouchableOpacity>
       </View>
@@ -244,8 +271,15 @@ export default function ResearcherCandidates() {
       {activeTab === 'candidates' && (
         <View style={styles.toggleContainer}>
           <TouchableOpacity style={styles.toggleButton} onPress={() => setHideRefused(!hideRefused)}>
-            <Ionicons name={hideRefused ? 'eye' : 'eye-off'} size={16} color="#6c757d" style={{ marginRight: 6 }} />
-            <Text style={styles.toggleButtonText}>{hideRefused ? 'Mostrar Recusados' : 'Ocultar Recusados'}</Text>
+            <Ionicons
+              name={hideRefused ? 'eye' : 'eye-off'}
+              size={16}
+              color="#6c757d"
+              style={{ marginRight: 6 }}
+            />
+            <Text style={styles.toggleButtonText}>
+              {hideRefused ? 'Mostrar Recusados' : 'Ocultar Recusados'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
@@ -256,7 +290,9 @@ export default function ResearcherCandidates() {
             <View style={styles.iconCircle}>
               <Ionicons name="options" size={20} color="#15715A" />
             </View>
-            <Text style={styles.mainFilterTitle}>Filtrar {activeTab === 'candidates' ? 'Candidatos' : 'Ativos'}</Text>
+            <Text style={styles.mainFilterTitle}>
+              Filtrar {activeTab === 'candidates' ? 'Candidatos' : 'Ativos'}
+            </Text>
           </View>
           <Ionicons name={filtersVisible ? 'chevron-up' : 'chevron-down'} size={22} color="#6c757d" />
         </TouchableOpacity>
@@ -264,16 +300,40 @@ export default function ResearcherCandidates() {
         {filtersVisible && (
           <View style={styles.filterContent}>
             <View style={styles.inputSpacing}>
-              <FilterPicker label="Região (UF)" value={selectedRegion} onValueChange={(v) => setSelectedRegion(v as string | null)} items={UFS} placeholder={{ label: 'Todas as regiões', value: null }} />
+              <FilterPicker
+                label="Região (UF)"
+                value={selectedRegion}
+                onValueChange={(v) => setSelectedRegion(v as string | null)}
+                items={UFS}
+                placeholder={{ label: 'Todas as regiões', value: null }}
+              />
             </View>
             <View style={styles.inputSpacing}>
-              <FilterPicker label="Sexo" value={selectedSex} onValueChange={(v) => setSelectedSex(v as string | null)} items={sexes} placeholder={{ label: 'Todos os sexos', value: null }} />
+              <FilterPicker
+                label="Sexo"
+                value={selectedSex}
+                onValueChange={(v) => setSelectedSex(v as string | null)}
+                items={sexes}
+                placeholder={{ label: 'Todos os sexos', value: null }}
+              />
             </View>
             <View style={styles.inputSpacing}>
-              <FilterPicker label="Identidade de Gênero" value={selectedGender} onValueChange={(v) => setSelectedGender(v as string | null)} items={opcoesGenero.map((o) => ({ label: o, value: o }))} placeholder={{ label: 'Todas as identidades', value: null }} />
+              <FilterPicker
+                label="Identidade de Gênero"
+                value={selectedGender}
+                onValueChange={(v) => setSelectedGender(v as string | null)}
+                items={opcoesGenero.map((o) => ({ label: o, value: o }))}
+                placeholder={{ label: 'Todas as identidades', value: null }}
+              />
             </View>
             <View style={styles.inputSpacing}>
-              <FilterPicker label="Escolaridade" value={selectedEducation} onValueChange={(v) => setSelectedEducation(v as string | null)} items={opcoesEscolaridade.map((o) => ({ label: o, value: o }))} placeholder={{ label: 'Todos os níveis', value: null }} />
+              <FilterPicker
+                label="Escolaridade"
+                value={selectedEducation}
+                onValueChange={(v) => setSelectedEducation(v as string | null)}
+                items={opcoesEscolaridade.map((o) => ({ label: o, value: o }))}
+                placeholder={{ label: 'Todos os níveis', value: null }}
+              />
             </View>
           </View>
         )}
@@ -293,9 +353,15 @@ export default function ResearcherCandidates() {
         ))
       ) : (
         <View style={styles.emptyState}>
-          <Ionicons name={activeTab === 'candidates' ? 'people-outline' : 'chatbubbles-outline'} size={48} color="#ccc" />
+          <Ionicons
+            name={activeTab === 'candidates' ? 'people-outline' : 'chatbubbles-outline'}
+            size={48}
+            color="#ccc"
+          />
           <Text style={styles.noResultsText}>
-            {activeTab === 'candidates' ? 'Nenhum candidato encontrado.' : 'Nenhum voluntário com participação confirmada.'}
+            {activeTab === 'candidates'
+              ? 'Nenhum candidato encontrado.'
+              : 'Nenhum voluntário com participação confirmada.'}
           </Text>
         </View>
       )}
@@ -304,144 +370,144 @@ export default function ResearcherCandidates() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      backgroundColor: '#f8f9fa',
-    },
-    contentContainer: {
-      padding: 20,
-      paddingBottom: 40,
-    },
-    headerContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    title: {
-      fontSize: 24,
-      fontWeight: 'bold',
-      color: '#212529',
-    },
-    exportButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      backgroundColor: '#E0F2F1',
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 20,
-    },
-    exportButtonText: {
-      marginLeft: 6,
-      fontSize: 14,
-      fontWeight: '600',
-      color: '#15715A',
-    },
-    tabsContainer: {
-        flexDirection: 'row',
-        backgroundColor: '#fff',
-        borderRadius: 8,
-        padding: 4,
-        marginBottom: 10, // Reduzi um pouco para caber o novo botão
-        borderWidth: 1,
-        borderColor: '#eee',
-    },
-    tabButton: {
-        flex: 1,
-        paddingVertical: 10,
-        alignItems: 'center',
-        borderRadius: 6,
-    },
-    activeTabButton: {
-        backgroundColor: '#E0F2F1', 
-    },
-    tabText: {
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#6c757d',
-    },
-    activeTabText: {
-        color: '#15715A',
-        fontWeight: 'bold',
-    },
-    
-    // Estilos do Botão Ocultar
-    toggleContainer: {
-        flexDirection: 'row',
-        justifyContent: 'flex-end',
-        marginBottom: 10,
-    },
-    toggleButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 4,
-        paddingHorizontal: 8,
-    },
-    toggleButtonText: {
-        fontSize: 13,
-        color: '#6c757d',
-        fontWeight: '500',
-    },
+  container: {
+    flex: 1,
+    width: '100%',
+    backgroundColor: '#f8f9fa',
+  },
+  contentContainer: {
+    padding: 20,
+    paddingBottom: 40,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#212529',
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E0F2F1',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+  },
+  exportButtonText: {
+    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#15715A',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 4,
+    marginBottom: 10, // Reduzi um pouco para caber o novo botão
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 6,
+  },
+  activeTabButton: {
+    backgroundColor: '#E0F2F1',
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6c757d',
+  },
+  activeTabText: {
+    color: '#15715A',
+    fontWeight: 'bold',
+  },
 
-    filtersWrapper: {
-      backgroundColor: '#fff',
-      borderRadius: 16,
-      marginBottom: 24,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.05,
-      shadowRadius: 10,
-      elevation: 3,
-      overflow: 'hidden',
-      borderWidth: 1,
-      borderColor: 'rgba(0,0,0,0.03)'
-    },
-    filterHeader: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: 16,
-      backgroundColor: '#fff',
-    },
-    filterTitleContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    iconCircle: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: '#F0FDF4',
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    mainFilterTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      color: '#343a40',
-    },
-    filterContent: {
-      paddingHorizontal: 16,
-      paddingBottom: 20,
-      borderTopWidth: 1,
-      borderTopColor: '#f0f0f0',
-      paddingTop: 16,
-    },
-    inputSpacing: {
-        marginBottom: 12,
-    },
-    emptyState: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 40,
-    },
-    noResultsText: {
-      textAlign: 'center',
-      marginTop: 12,
-      fontSize: 16,
-      color: '#6c757d',
-      maxWidth: '80%',
-    },
+  // Estilos do Botão Ocultar
+  toggleContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 10,
+  },
+  toggleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  toggleButtonText: {
+    fontSize: 13,
+    color: '#6c757d',
+    fontWeight: '500',
+  },
+
+  filtersWrapper: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  filterTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  iconCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F0FDF4',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  mainFilterTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#343a40',
+  },
+  filterContent: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#f0f0f0',
+    paddingTop: 16,
+  },
+  inputSpacing: {
+    marginBottom: 12,
+  },
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 40,
+  },
+  noResultsText: {
+    textAlign: 'center',
+    marginTop: 12,
+    fontSize: 16,
+    color: '#6c757d',
+    maxWidth: '80%',
+  },
 });

@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, ActivityIndicator, Alert } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  SafeAreaView,
+  ActivityIndicator,
+} from 'react-native';
 import { useLocalSearchParams, Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -15,6 +23,7 @@ import {
   statusCandidaturaLabel,
   statusRecrutamentoLabel,
 } from '@/utils/formatters';
+import { avisar, confirmar } from '@/utils/feedback';
 
 export default function StudyDetailScreen() {
   const router = useRouter();
@@ -38,8 +47,9 @@ export default function StudyDetailScreen() {
         setStudy(estudoData);
         setCandidatura(candidaturasData.find((c) => c.estudoId === Number(id)) ?? null);
       } catch (error) {
-        Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar os detalhes do estudo.'));
-        router.back();
+        avisar('Erro', getErrorMessage(error, 'Não foi possível carregar os detalhes do estudo.'), () =>
+          router.back()
+        );
       } finally {
         setLoading(false);
       }
@@ -47,30 +57,28 @@ export default function StudyDetailScreen() {
     fetchStudyDetails();
   }, [id, user?.perfilId, router]);
 
-  const handleCandidatura = () => {
+  // Enviada a candidatura, o voluntário volta à lista, onde o estudo passa para a aba "Já Inscritos"
+  const handleCandidatura = async () => {
     if (!study) return;
-    Alert.alert(
-      'Confirmar Candidatura',
-      `Deseja se candidatar para o estudo "${study.publicTitle}"? O pesquisador responsável terá acesso às respostas do seu formulário de perfil, identificadas apenas pelo seu nome fictício.`,
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Confirmar',
-          onPress: async () => {
-            try {
-              setSending(true);
-              const criada = await apiService.candidatura.criar({ estudoId: study.id });
-              setCandidatura(criada);
-              Alert.alert('Sucesso', 'Candidatura enviada! Você será notificado sobre o progresso.');
-            } catch (error) {
-              Alert.alert('Erro', getErrorMessage(error, 'Não foi possível realizar a candidatura.'));
-            } finally {
-              setSending(false);
-            }
-          },
-        },
-      ]
+    const confirmado = await confirmar(
+      'Confirmar candidatura',
+      `Deseja se candidatar para o estudo "${study.publicTitle}"? O pesquisador responsável terá acesso às respostas do seu formulário de perfil, identificadas apenas pelo seu nome fictício.`
     );
+    if (!confirmado) return;
+    try {
+      setSending(true);
+      const criada = await apiService.candidatura.criar({ estudoId: study.id });
+      setCandidatura(criada);
+      avisar(
+        'Candidatura enviada',
+        'O pesquisador foi notificado. Você pode acompanhar o estudo na aba "Já Inscritos" e será avisado quando ele analisar sua candidatura.',
+        () => router.replace('/(protected)/volunteer/available-research/page')
+      );
+    } catch (error) {
+      avisar('Erro', getErrorMessage(error, 'Não foi possível realizar a candidatura.'));
+    } finally {
+      setSending(false);
+    }
   };
 
   if (loading || !study) {
@@ -94,12 +102,16 @@ export default function StudyDetailScreen() {
         {candidatura && (
           <View style={styles.appliedTopBadge}>
             <Ionicons name="checkmark-circle" size={18} color="#856404" />
-            <Text style={styles.appliedTopText}>Sua candidatura: {statusCandidaturaLabel(candidatura.status)}.</Text>
+            <Text style={styles.appliedTopText}>
+              Sua candidatura: {statusCandidaturaLabel(candidatura.status)}.
+            </Text>
           </View>
         )}
 
         <Text style={styles.sectionTitle}>Informações Gerais</Text>
-        <Text style={styles.description}>{study.scientificTitle || 'Sem descrição científica disponível.'}</Text>
+        <Text style={styles.description}>
+          {study.scientificTitle || 'Sem descrição científica disponível.'}
+        </Text>
 
         {!!study.hcFreetext && (
           <View style={styles.interventionBox}>
@@ -120,7 +132,10 @@ export default function StudyDetailScreen() {
           <InfoRow label="Data de Registro" value={formatDate(study.dateRegistration)} />
           <InfoRow label="Aprovação Ética (CEP)" value={study.approvalDate || 'Não informada'} />
           <InfoRow label="Patrocinador" value={study.primarySponsor || 'Não informado'} />
-          <InfoRow label="Pesquisador Responsável" value={study.pesquisador?.nomeFicticio || 'Não informado'} />
+          <InfoRow
+            label="Pesquisador Responsável"
+            value={study.pesquisador?.nomeFicticio || 'Não informado'}
+          />
         </View>
 
         {criterioPrincipal && (
@@ -133,7 +148,9 @@ export default function StudyDetailScreen() {
               </View>
               <View style={styles.demographicItem}>
                 <Ionicons name="calendar" size={20} color="#15715A" />
-                <Text style={styles.demographicText}>{faixaEtaria(criterioPrincipal.agemin, criterioPrincipal.agemax)}</Text>
+                <Text style={styles.demographicText}>
+                  {faixaEtaria(criterioPrincipal.agemin, criterioPrincipal.agemax)}
+                </Text>
               </View>
             </View>
           </>
@@ -172,16 +189,28 @@ export default function StudyDetailScreen() {
         {candidatura ? (
           <View style={styles.appliedFooterWarning}>
             <Ionicons name="information-circle" size={24} color="#856404" />
-            <Text style={styles.appliedFooterText}>Candidatura já enviada. Acompanhe o status em "Meus Estudos".</Text>
+            <Text style={styles.appliedFooterText}>
+              Candidatura já enviada. Acompanhe o status em "Meus Estudos".
+            </Text>
           </View>
         ) : estaRecrutando(study.recruitmentStatus) ? (
-          <TouchableOpacity style={[styles.formButton, sending && { opacity: 0.7 }]} onPress={handleCandidatura} disabled={sending}>
-            {sending ? <ActivityIndicator color="#fff" /> : <Text style={styles.formButtonText}>Candidatar-se para o Estudo</Text>}
+          <TouchableOpacity
+            style={[styles.formButton, sending && { opacity: 0.7 }]}
+            onPress={handleCandidatura}
+            disabled={sending}
+          >
+            {sending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.formButtonText}>Candidatar-se para o Estudo</Text>
+            )}
           </TouchableOpacity>
         ) : (
           <View style={styles.appliedFooterWarning}>
             <Ionicons name="information-circle" size={24} color="#856404" />
-            <Text style={styles.appliedFooterText}>Este estudo não está recrutando voluntários no momento.</Text>
+            <Text style={styles.appliedFooterText}>
+              Este estudo não está recrutando voluntários no momento.
+            </Text>
           </View>
         )}
       </View>
@@ -200,23 +229,69 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#ffffff' },
   scrollContent: { padding: 20, paddingBottom: 100 },
   title: { fontSize: 24, fontWeight: 'bold', color: '#212529', marginBottom: 16 },
-  appliedTopBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff3cd', padding: 12, borderRadius: 8, borderWidth: 1, borderColor: '#ffeeba', marginBottom: 16 },
+  appliedTopBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3cd',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffeeba',
+    marginBottom: 16,
+  },
   appliedTopText: { marginLeft: 8, color: '#856404', fontSize: 14, fontWeight: '600', flex: 1 },
-  appliedFooterWarning: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff3cd', padding: 16, borderRadius: 8, borderWidth: 1, borderColor: '#ffeeba' },
+  appliedFooterWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3cd',
+    padding: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#ffeeba',
+  },
   appliedFooterText: { marginLeft: 12, color: '#856404', fontSize: 14, fontWeight: '600', flex: 1 },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', color: '#333', marginTop: 24, marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#eee', paddingBottom: 8 },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginTop: 24,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+    paddingBottom: 8,
+  },
   description: { fontSize: 16, color: '#555', lineHeight: 24 },
-  interventionBox: { marginTop: 16, padding: 12, backgroundColor: '#e3f2fd', borderRadius: 8, borderWidth: 1, borderColor: '#bbdefb' },
+  interventionBox: {
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: '#e3f2fd',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#bbdefb',
+  },
   interventionLabel: { fontSize: 14, fontWeight: 'bold', color: '#0d47a1', marginBottom: 4 },
   interventionText: { fontSize: 15, color: '#1565c0' },
   infoBox: { marginTop: 20, backgroundColor: '#f8f9fa', borderRadius: 8, padding: 16 },
   infoRow: { paddingVertical: 4, flexDirection: 'row', flexWrap: 'wrap' },
   infoLabel: { fontSize: 14, color: '#666', fontWeight: 'bold', marginRight: 5 },
   infoValue: { fontSize: 15, color: '#333', flex: 1 },
-  demographicContainer: { flexDirection: 'row', justifyContent: 'space-between', backgroundColor: '#E0F2F1', padding: 15, borderRadius: 8, marginTop: 10, gap: 8 },
+  demographicContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    backgroundColor: '#E0F2F1',
+    padding: 15,
+    borderRadius: 8,
+    marginTop: 10,
+    gap: 8,
+  },
   demographicItem: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   demographicText: { marginLeft: 8, fontSize: 15, color: '#333', fontWeight: '500', flexShrink: 1 },
-  criteriaContainer: { marginBottom: 16, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  criteriaContainer: {
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
   criteriaRow: { flexDirection: 'row', alignItems: 'flex-start' },
   criteriaText: { fontSize: 15, color: '#555', lineHeight: 22, marginLeft: 8, flex: 1 },
   footer: { padding: 20, borderTopWidth: 1, borderTopColor: '#eee', backgroundColor: '#ffffff' },

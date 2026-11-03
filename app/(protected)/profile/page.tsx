@@ -1,12 +1,5 @@
 import React from 'react';
-import {
-  SafeAreaView,
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator
-} from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -38,16 +31,16 @@ export default function ProfilePage() {
       <SafeAreaView style={styles.container}>
         <Header />
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#15715A" />
+          <ActivityIndicator size="large" color="#15715A" />
         </View>
       </SafeAreaView>
     );
   }
 
-  // Lógica ajustada: 
+  // Lógica ajustada:
   // 1. Usamos APENAS o nome fictício.
   const nomeExibicao = user.nomeFicticio || 'Usuário Sem Código';
-  
+
   // 2. As iniciais agora vêm do código (ex: PS1MG -> PS)
   const iniciais = nomeExibicao.substring(0, 2).toUpperCase();
 
@@ -56,7 +49,6 @@ export default function ProfilePage() {
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
       <ScrollView contentContainerStyle={styles.content}>
-        
         {/* Cabeçalho do Perfil */}
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
@@ -70,13 +62,12 @@ export default function ProfilePage() {
         {/* Seção de Dados da Conta */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Dados da Conta</Text>
-          
+
           {/* Removemos nome/sobrenome daqui também para garantir privacidade visual */}
           <InfoRow icon="at-outline" label="Login" value={user.login} />
           <InfoRow icon="mail-outline" label="E-mail" value={user.email} />
           <InfoRow icon="finger-print-outline" label="ID" value={user.id} />
         </View>
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -93,7 +84,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: '#15715A', 
+    backgroundColor: '#15715A',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
@@ -130,8 +121,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 20,
     marginBottom: 20,
-    elevation: 2, 
-    shadowColor: '#000', 
+    elevation: 2,
+    shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 3,
   },
@@ -153,12 +144,12 @@ const styles = StyleSheet.create({
   },
   icon: {
     marginRight: 15,
-    width: 24, 
+    width: 24,
   },
   label: {
     fontSize: 16,
     color: '#495057',
-    width: 70, 
+    width: 70,
     fontWeight: '500',
   },
   value: {
