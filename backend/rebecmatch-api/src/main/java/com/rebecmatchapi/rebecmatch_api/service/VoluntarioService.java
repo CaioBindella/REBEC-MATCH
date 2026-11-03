@@ -10,9 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * O perfil de voluntário é criado junto com a conta (UsuarioService) e removido junto com ela.
- */
+/** O perfil de voluntário é criado junto com a conta (UsuarioService) e removido junto com ela. */
 @Service
 @RequiredArgsConstructor
 public class VoluntarioService {
@@ -37,7 +35,8 @@ public class VoluntarioService {
     }
 
     private Voluntario buscar(Integer id) {
-        return voluntarioRepository.findById(id)
+        return voluntarioRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Voluntário não encontrado."));
     }
 }

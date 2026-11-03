@@ -2,17 +2,20 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 
 import com.rebecmatchapi.rebecmatch_api.entity.enums.StatusCandidatura;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
-
 @Data
 @Entity
-@Table(name = "candidatura",
-        uniqueConstraints = @UniqueConstraint(name = "uk_candidatura_voluntario_estudo", columnNames = {"voluntario_id", "estudo_id"}))
+@Table(
+        name = "candidatura",
+        uniqueConstraints =
+                @UniqueConstraint(
+                        name = "uk_candidatura_voluntario_estudo",
+                        columnNames = {"voluntario_id", "estudo_id"}))
 public class Candidatura {
 
     @Id
@@ -35,6 +38,5 @@ public class Candidatura {
     @Column(nullable = false)
     private StatusCandidatura status = StatusCandidatura.PENDENTE;
 
-    @CreationTimestamp
-    private LocalDateTime dataCandidatura;
+    @CreationTimestamp private LocalDateTime dataCandidatura;
 }

@@ -1,14 +1,13 @@
 package com.rebecmatchapi.rebecmatch_api.entity;
 
 import jakarta.persistence.*;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
 @Entity
@@ -80,8 +79,7 @@ public class Estudo {
     @JoinTable(
             name = "estudo_doenca",
             joinColumns = @JoinColumn(name = "estudo_id"),
-            inverseJoinColumns = @JoinColumn(name = "doenca_id")
-    )
+            inverseJoinColumns = @JoinColumn(name = "doenca_id"))
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Doenca> doencas = new HashSet<>();

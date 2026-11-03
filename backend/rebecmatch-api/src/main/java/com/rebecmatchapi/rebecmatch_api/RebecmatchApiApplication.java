@@ -10,13 +10,12 @@ import org.springframework.web.client.RestTemplate;
 @EnableScheduling
 public class RebecmatchApiApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(RebecmatchApiApplication.class, args);
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(RebecmatchApiApplication.class, args);
+    }
 
-	@Bean
-	public RestTemplate restTemplate() {
-		return new RestTemplate();
-	}
-
+    @Bean
+    public RestTemplate restTemplate() {
+        return new RestTemplate();
+    }
 }

@@ -3,10 +3,9 @@ package com.rebecmatchapi.rebecmatch_api.dto.Estudo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.rebecmatchapi.rebecmatch_api.dto.Criterio.CriterioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Pesquisador.PesquisadorResponseDTO;
-import lombok.Data;
-
 import java.time.LocalDate;
 import java.util.List;
+import lombok.Data;
 
 @Data
 public class EstudoResponseDTO {

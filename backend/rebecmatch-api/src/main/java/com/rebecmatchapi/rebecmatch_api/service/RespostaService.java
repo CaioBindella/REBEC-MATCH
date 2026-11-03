@@ -14,21 +14,20 @@ import com.rebecmatchapi.rebecmatch_api.repository.FormularioRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.QuestaoRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.RespostaRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.VoluntarioRepository;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 /**
- * Respostas dos formulários (dados de perfil e de saúde do voluntário). Cada voluntário grava apenas
- * as próprias respostas; a leitura é permitida ao titular e aos pesquisadores dos estudos aos quais
- * ele se candidatou (ver AcessoService).
+ * Respostas dos formulários (dados de perfil e de saúde do voluntário). Cada voluntário grava
+ * apenas as próprias respostas; a leitura é permitida ao titular e aos pesquisadores dos estudos
+ * aos quais ele se candidatou (ver AcessoService).
  */
 @Service
 @RequiredArgsConstructor
@@ -43,8 +42,15 @@ public class RespostaService {
     @Transactional
     public Resposta createResposta(RespostaCreateDTO dto, Usuario usuario) {
         Voluntario voluntario = acessoService.voluntarioDo(usuario);
-        Questao questao = questaoRepository.findById(dto.getQuestaoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Questão com ID " + dto.getQuestaoId() + " não encontrada."));
+        Questao questao =
+                questaoRepository
+                        .findById(dto.getQuestaoId())
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Questão com ID "
+                                                        + dto.getQuestaoId()
+                                                        + " não encontrada."));
 
         Resposta novaResposta = new Resposta();
         novaResposta.setConteudo(textoOuVazio(dto.getConteudo()));
@@ -62,17 +68,29 @@ public class RespostaService {
     public List<Resposta> createRespostasEmLote(RespostasBatchCreateDTO dto, Usuario usuario) {
         Voluntario voluntario = acessoService.voluntarioDo(usuario);
 
-        formularioRepository.findById(dto.getFormularioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Formulário com ID " + dto.getFormularioId() + " não encontrado."));
+        formularioRepository
+                .findById(dto.getFormularioId())
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Formulário com ID "
+                                                + dto.getFormularioId()
+                                                + " não encontrado."));
 
-        Map<Integer, Questao> questoesDoFormulario = questaoRepository.findByFormularioId(dto.getFormularioId()).stream()
-                .collect(Collectors.toMap(Questao::getId, Function.identity()));
+        Map<Integer, Questao> questoesDoFormulario =
+                questaoRepository.findByFormularioId(dto.getFormularioId()).stream()
+                        .collect(Collectors.toMap(Questao::getId, Function.identity()));
 
         List<Resposta> novasRespostas = new ArrayList<>();
         for (RespostasBatchCreateDTO.RespostaIndividualDTO respostaDto : dto.getRespostas()) {
             Questao questao = questoesDoFormulario.get(respostaDto.getQuestaoId());
             if (questao == null) {
-                throw new BadRequestException("A questão " + respostaDto.getQuestaoId() + " não pertence ao formulário " + dto.getFormularioId() + ".");
+                throw new BadRequestException(
+                        "A questão "
+                                + respostaDto.getQuestaoId()
+                                + " não pertence ao formulário "
+                                + dto.getFormularioId()
+                                + ".");
             }
             Resposta novaResposta = new Resposta();
             novaResposta.setConteudo(textoOuVazio(respostaDto.getConteudo()));
@@ -82,20 +100,26 @@ public class RespostaService {
             novasRespostas.add(novaResposta);
         }
 
-        Set<Integer> respondidas = novasRespostas.stream()
-                .filter(r -> !r.getConteudo().isBlank())
-                .map(r -> r.getQuestao().getId())
-                .collect(Collectors.toSet());
-        List<String> obrigatoriasSemResposta = questoesDoFormulario.values().stream()
-                .filter(Questao::isObrigatorio)
-                .filter(q -> !respondidas.contains(q.getId()))
-                .map(Questao::getTexto)
-                .toList();
+        Set<Integer> respondidas =
+                novasRespostas.stream()
+                        .filter(r -> !r.getConteudo().isBlank())
+                        .map(r -> r.getQuestao().getId())
+                        .collect(Collectors.toSet());
+        List<String> obrigatoriasSemResposta =
+                questoesDoFormulario.values().stream()
+                        .filter(Questao::isObrigatorio)
+                        .filter(q -> !respondidas.contains(q.getId()))
+                        .map(Questao::getTexto)
+                        .toList();
         if (!obrigatoriasSemResposta.isEmpty()) {
-            throw new BadRequestException("Responda às questões obrigatórias: " + String.join("; ", obrigatoriasSemResposta));
+            throw new BadRequestException(
+                    "Responda às questões obrigatórias: "
+                            + String.join("; ", obrigatoriasSemResposta));
         }
 
-        respostaRepository.deleteAll(respostaRepository.findByVoluntarioIdAndQuestaoFormularioId(voluntario.getId(), dto.getFormularioId()));
+        respostaRepository.deleteAll(
+                respostaRepository.findByVoluntarioIdAndQuestaoFormularioId(
+                        voluntario.getId(), dto.getFormularioId()));
         respostaRepository.flush();
         return respostaRepository.saveAll(novasRespostas);
     }
@@ -109,13 +133,23 @@ public class RespostaService {
 
     @Transactional(readOnly = true)
     public List<Resposta> getRespostasByVoluntarioId(Integer voluntarioId, Usuario usuario) {
-        Voluntario voluntario = voluntarioRepository.findById(voluntarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Voluntário com ID " + voluntarioId + " não encontrado."));
+        Voluntario voluntario =
+                voluntarioRepository
+                        .findById(voluntarioId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Voluntário com ID "
+                                                        + voluntarioId
+                                                        + " não encontrado."));
         acessoService.exigirAcessoAoVoluntario(usuario, voluntario);
         return respostaRepository.findByVoluntarioId(voluntarioId);
     }
 
-    /** Respostas a partir do id de usuário do voluntário (lista vazia se o usuário não for voluntário). */
+    /**
+     * Respostas a partir do id de usuário do voluntário (lista vazia se o usuário não for
+     * voluntário).
+     */
     @Transactional(readOnly = true)
     public List<Resposta> listarPorUsuario(Integer usuarioId, Usuario usuario) {
         Voluntario voluntario = voluntarioRepository.findByUsuarioId(usuarioId).orElse(null);
@@ -151,8 +185,12 @@ public class RespostaService {
     }
 
     private Resposta buscar(Integer id) {
-        return respostaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Resposta com ID " + id + " não encontrada."));
+        return respostaRepository
+                .findById(id)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Resposta com ID " + id + " não encontrada."));
     }
 
     private static String textoOuVazio(String texto) {

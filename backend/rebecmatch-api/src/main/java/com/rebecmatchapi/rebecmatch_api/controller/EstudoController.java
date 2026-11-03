@@ -8,13 +8,12 @@ import com.rebecmatchapi.rebecmatch_api.entity.Estudo;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import com.rebecmatchapi.rebecmatch_api.service.EstudoService;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/estudos")
@@ -25,8 +24,8 @@ public class EstudoController {
 
     // O estudo é vinculado ao pesquisador autenticado
     @PostMapping
-    public ResponseEntity<EstudoResponseDTO> createEstudo(@Valid @RequestBody EstudoCreateDTO dto,
-                                                          @AuthenticationPrincipal Usuario usuario) {
+    public ResponseEntity<EstudoResponseDTO> createEstudo(
+            @Valid @RequestBody EstudoCreateDTO dto, @AuthenticationPrincipal Usuario usuario) {
         Estudo novoEstudo = estudoService.createEstudo(dto, usuario);
         return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toEstudo(novoEstudo));
     }
@@ -48,7 +47,8 @@ public class EstudoController {
     }
 
     @GetMapping("/pesquisador/{pesquisadorId}")
-    public ResponseEntity<List<EstudoResponseDTO>> getEstudosByPesquisador(@PathVariable Integer pesquisadorId) {
+    public ResponseEntity<List<EstudoResponseDTO>> getEstudosByPesquisador(
+            @PathVariable Integer pesquisadorId) {
         return ResponseEntity.ok(toDTOs(estudoService.getEstudosByPesquisadorId(pesquisadorId)));
     }
 
@@ -58,13 +58,16 @@ public class EstudoController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EstudoResponseDTO> updateEstudo(@PathVariable Integer id, @Valid @RequestBody EstudoUpdateDTO dto,
-                                                          @AuthenticationPrincipal Usuario usuario) {
+    public ResponseEntity<EstudoResponseDTO> updateEstudo(
+            @PathVariable Integer id,
+            @Valid @RequestBody EstudoUpdateDTO dto,
+            @AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.ok(DtoMapper.toEstudo(estudoService.updateEstudo(id, dto, usuario)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteEstudo(@PathVariable Integer id, @AuthenticationPrincipal Usuario usuario) {
+    public ResponseEntity<Void> deleteEstudo(
+            @PathVariable Integer id, @AuthenticationPrincipal Usuario usuario) {
         estudoService.deleteEstudo(id, usuario);
         return ResponseEntity.noContent().build();
     }

@@ -8,6 +8,7 @@ import lombok.Data;
 public class QuestaoCreateDTO {
     @JsonProperty("formulario_id")
     private Integer formularioId;
+
     private String texto;
     private TipoQuestao tipo;
     private String opcoes; // Recebe o JSON como uma String

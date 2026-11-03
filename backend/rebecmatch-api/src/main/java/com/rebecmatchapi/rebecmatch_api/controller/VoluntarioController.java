@@ -12,8 +12,8 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * Perfil pseudonimizado do voluntário. O perfil é criado junto com a conta e só é visível ao titular
- * e aos pesquisadores dos estudos aos quais ele se candidatou.
+ * Perfil pseudonimizado do voluntário. O perfil é criado junto com a conta e só é visível ao
+ * titular e aos pesquisadores dos estudos aos quais ele se candidatou.
  */
 @RestController
 @RequestMapping("/api/v1/voluntarios")
@@ -23,13 +23,17 @@ public class VoluntarioController {
     private final VoluntarioService voluntarioService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<VoluntarioResponseDTO> getById(@PathVariable Integer id, @AuthenticationPrincipal Usuario usuario) {
+    public ResponseEntity<VoluntarioResponseDTO> getById(
+            @PathVariable Integer id, @AuthenticationPrincipal Usuario usuario) {
         return ResponseEntity.ok(DtoMapper.toVoluntario(voluntarioService.getById(id, usuario)));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<VoluntarioResponseDTO> updateVoluntario(@PathVariable Integer id, @Valid @RequestBody VoluntarioUpdateDTO dto,
-                                                                  @AuthenticationPrincipal Usuario usuario) {
-        return ResponseEntity.ok(DtoMapper.toVoluntario(voluntarioService.updateVoluntario(id, dto, usuario)));
+    public ResponseEntity<VoluntarioResponseDTO> updateVoluntario(
+            @PathVariable Integer id,
+            @Valid @RequestBody VoluntarioUpdateDTO dto,
+            @AuthenticationPrincipal Usuario usuario) {
+        return ResponseEntity.ok(
+                DtoMapper.toVoluntario(voluntarioService.updateVoluntario(id, dto, usuario)));
     }
 }

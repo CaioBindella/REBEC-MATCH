@@ -41,11 +41,14 @@ Com Docker (MySQL 8, API e phpMyAdmin), a partir da pasta raiz do repositório:
 docker compose --env-file rebecmatch-api/.env up --build
 ```
 
-## Testes
+## Testes e formatação
 
 ```bash
-./mvnw test
+./mvnw test              # testes automatizados
+./mvnw spotless:apply    # formata o código (google-java-format, estilo AOSP)
+./mvnw spotless:check    # verifica a formatação sem alterar os arquivos
 ```
 
-Testes unitários (elegibilidade, normalizações, CEP, JWT) e de integração sobre a API completa
-(fluxo de candidatura e match, regras de acesso, importação do XML), executados em banco H2 em memória.
+Testes unitários (elegibilidade, alertas de exclusão, normalizações, CEP e regiões, JWT) e de
+integração sobre a API completa (fluxo de candidatura e match, afinidade por estado e região, regras
+de acesso, importação do XML), executados em banco H2 em memória.

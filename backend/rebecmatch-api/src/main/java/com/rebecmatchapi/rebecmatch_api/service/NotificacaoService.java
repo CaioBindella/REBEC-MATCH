@@ -6,6 +6,7 @@ import com.rebecmatchapi.rebecmatch_api.exception.ForbiddenException;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.NotificacaoRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.UsuarioRepository;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,8 +16,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import java.util.List;
 
 @Service
 public class NotificacaoService {
@@ -30,12 +29,15 @@ public class NotificacaoService {
     private final UsuarioRepository usuarioRepository;
     private final TransactionTemplate transacaoPropria;
 
-    public NotificacaoService(NotificacaoRepository repository, UsuarioRepository usuarioRepository,
-                              PlatformTransactionManager transactionManager) {
+    public NotificacaoService(
+            NotificacaoRepository repository,
+            UsuarioRepository usuarioRepository,
+            PlatformTransactionManager transactionManager) {
         this.repository = repository;
         this.usuarioRepository = usuarioRepository;
         this.transacaoPropria = new TransactionTemplate(transactionManager);
-        this.transacaoPropria.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        this.transacaoPropria.setPropagationBehavior(
+                TransactionDefinition.PROPAGATION_REQUIRES_NEW);
     }
 
     /**
@@ -45,28 +47,39 @@ public class NotificacaoService {
      * desfazer a operação principal (por exemplo, o registro de uma candidatura).
      */
     public void notificar(Integer usuarioId, String titulo, String tipo, String mensagem) {
-        Runnable envio = () -> {
-            try {
-                transacaoPropria.executeWithoutResult(status -> criarNotificacao(usuarioId, titulo, tipo, mensagem));
-            } catch (RuntimeException e) {
-                logger.warn("Falha ao registrar notificação para o usuário {}: {}", usuarioId, e.getMessage());
-            }
-        };
+        Runnable envio =
+                () -> {
+                    try {
+                        transacaoPropria.executeWithoutResult(
+                                status -> criarNotificacao(usuarioId, titulo, tipo, mensagem));
+                    } catch (RuntimeException e) {
+                        logger.warn(
+                                "Falha ao registrar notificação para o usuário {}: {}",
+                                usuarioId,
+                                e.getMessage());
+                    }
+                };
         if (TransactionSynchronizationManager.isSynchronizationActive()) {
-            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-                @Override
-                public void afterCommit() {
-                    envio.run();
-                }
-            });
+            TransactionSynchronizationManager.registerSynchronization(
+                    new TransactionSynchronization() {
+                        @Override
+                        public void afterCommit() {
+                            envio.run();
+                        }
+                    });
         } else {
             envio.run();
         }
     }
 
     private void criarNotificacao(Integer usuarioId, String titulo, String tipo, String mensagem) {
-        Usuario usuario = usuarioRepository.findById(usuarioId)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário " + usuarioId + " não encontrado."));
+        Usuario usuario =
+                usuarioRepository
+                        .findById(usuarioId)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Usuário " + usuarioId + " não encontrado."));
         Notificacao notif = new Notificacao();
         notif.setUsuario(usuario);
         notif.setTitulo(titulo);
@@ -82,8 +95,13 @@ public class NotificacaoService {
 
     @Transactional
     public void marcarComoLida(Integer id, Usuario usuarioLogado) {
-        Notificacao n = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Notificação com ID " + id + " não encontrada."));
+        Notificacao n =
+                repository
+                        .findById(id)
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Notificação com ID " + id + " não encontrada."));
         exigirTitular(n.getUsuario().getId(), usuarioLogado);
         n.setLida(true);
         repository.save(n);

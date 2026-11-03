@@ -9,12 +9,11 @@ import com.rebecmatchapi.rebecmatch_api.exception.ForbiddenException;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.EstudoRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.FormularioRepository;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.LocalDate;
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -26,8 +25,15 @@ public class FormularioService {
 
     @Transactional
     public Formulario createFormulario(FormularioCreateDTO dto, Usuario usuario) {
-        Estudo estudo = estudoRepository.findById(dto.getEstudoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Estudo com ID " + dto.getEstudoId() + " não encontrado."));
+        Estudo estudo =
+                estudoRepository
+                        .findById(dto.getEstudoId())
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Estudo com ID "
+                                                        + dto.getEstudoId()
+                                                        + " não encontrado."));
         acessoService.exigirDonoDoEstudo(usuario, estudo);
 
         Formulario novoFormulario = new Formulario();
@@ -40,8 +46,12 @@ public class FormularioService {
 
     @Transactional(readOnly = true)
     public Formulario getFormularioById(Integer id) {
-        return formularioRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Formulário com ID " + id + " não encontrado."));
+        return formularioRepository
+                .findById(id)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Formulário com ID " + id + " não encontrado."));
     }
 
     @Transactional(readOnly = true)
@@ -67,11 +77,13 @@ public class FormularioService {
 
     /**
      * Formulários globais (sem estudo, como o formulário de perfil inicial) são definidos pelas
-     * migrações do banco; formulários de estudo só podem ser alterados pelo pesquisador responsável.
+     * migrações do banco; formulários de estudo só podem ser alterados pelo pesquisador
+     * responsável.
      */
     void exigirEdicaoPermitida(Formulario formulario, Usuario usuario) {
         if (formulario.getEstudo() == null) {
-            throw new ForbiddenException("O formulário global de perfil não pode ser alterado pela API.");
+            throw new ForbiddenException(
+                    "O formulário global de perfil não pode ser alterado pela API.");
         }
         acessoService.exigirDonoDoEstudo(usuario, formulario.getEstudo());
     }

@@ -24,35 +24,41 @@ public class UsuarioController {
 
     // Cadastro público de conta; o perfil (voluntário ou pesquisador) é criado automaticamente
     @PostMapping
-    public ResponseEntity<UsuarioResponseDTO> createUser(@Valid @RequestBody UsuarioCreateDTO usuarioDTO) {
+    public ResponseEntity<UsuarioResponseDTO> createUser(
+            @Valid @RequestBody UsuarioCreateDTO usuarioDTO) {
         Usuario newUser = usuarioService.createUser(usuarioDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(DtoMapper.toUsuario(newUser));
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> getUserById(@PathVariable Integer id,
-                                                          @AuthenticationPrincipal Usuario usuarioLogado) {
+    public ResponseEntity<UsuarioResponseDTO> getUserById(
+            @PathVariable Integer id, @AuthenticationPrincipal Usuario usuarioLogado) {
         exigirDono(id, usuarioLogado);
         return ResponseEntity.ok(DtoMapper.toUsuario(usuarioService.getUserById(id)));
     }
 
     @PutMapping("/{id}/senha")
-    public ResponseEntity<Void> alterarSenha(@PathVariable Integer id, @Valid @RequestBody ChangePasswordDTO dto,
-                                             @AuthenticationPrincipal Usuario usuarioLogado) {
+    public ResponseEntity<Void> alterarSenha(
+            @PathVariable Integer id,
+            @Valid @RequestBody ChangePasswordDTO dto,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
         exigirDono(id, usuarioLogado);
         usuarioService.alterarSenha(id, dto.getSenhaAtual(), dto.getNovaSenha());
         return ResponseEntity.noContent().build();
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<UsuarioResponseDTO> updateUser(@PathVariable Integer id, @Valid @RequestBody UsuarioUpdateDTO usuarioDTO,
-                                                         @AuthenticationPrincipal Usuario usuarioLogado) {
+    public ResponseEntity<UsuarioResponseDTO> updateUser(
+            @PathVariable Integer id,
+            @Valid @RequestBody UsuarioUpdateDTO usuarioDTO,
+            @AuthenticationPrincipal Usuario usuarioLogado) {
         exigirDono(id, usuarioLogado);
         return ResponseEntity.ok(DtoMapper.toUsuario(usuarioService.updateUser(id, usuarioDTO)));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteUser(@PathVariable Integer id, @AuthenticationPrincipal Usuario usuarioLogado) {
+    public ResponseEntity<Void> deleteUser(
+            @PathVariable Integer id, @AuthenticationPrincipal Usuario usuarioLogado) {
         exigirDono(id, usuarioLogado);
         usuarioService.deleteUser(id);
         return ResponseEntity.noContent().build();

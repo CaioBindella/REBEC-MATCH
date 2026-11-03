@@ -1,13 +1,13 @@
 package com.rebecmatchapi.rebecmatch_api.service;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class TokenServiceTest {
 
@@ -17,7 +17,8 @@ class TokenServiceTest {
     @NullAndEmptySource
     @ValueSource(strings = {"asdfghjkl"})
     void naoIniciaSemSegredoForte(String segredo) {
-        assertThatThrownBy(() -> new TokenService(segredo, 1)).isInstanceOf(IllegalStateException.class);
+        assertThatThrownBy(() -> new TokenService(segredo, 1))
+                .isInstanceOf(IllegalStateException.class);
     }
 
     @Test
@@ -35,7 +36,9 @@ class TokenServiceTest {
     void rejeitaTokenAssinadoComOutroSegredoOuAdulterado() {
         Usuario usuario = new Usuario();
         usuario.setLogin("maria");
-        String token = new TokenService("outro-segredo-qualquer-com-mais-de-32-caracteres", 1).generateToken(usuario);
+        String token =
+                new TokenService("outro-segredo-qualquer-com-mais-de-32-caracteres", 1)
+                        .generateToken(usuario);
 
         TokenService service = new TokenService(SEGREDO, 1);
         assertThat(service.validateToken(token)).isNull();

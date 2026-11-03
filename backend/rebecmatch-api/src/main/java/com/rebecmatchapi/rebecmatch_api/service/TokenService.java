@@ -5,11 +5,10 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.time.Duration;
 import java.time.Instant;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
 
 @Service
 public class TokenService {
@@ -22,14 +21,17 @@ public class TokenService {
 
     /**
      * O segredo é lido exclusivamente da variável de ambiente API_SECURITY_TOKEN_SECRET (via
-     * application.properties). Não há valor padrão no código: sem um segredo forte a aplicação
-     * não inicia.
+     * application.properties). Não há valor padrão no código: sem um segredo forte a aplicação não
+     * inicia.
      */
-    public TokenService(@Value("${api.security.token.secret}") String secret,
-                        @Value("${api.security.token.expiration-hours:1}") long horasDeValidade) {
+    public TokenService(
+            @Value("${api.security.token.secret}") String secret,
+            @Value("${api.security.token.expiration-hours:1}") long horasDeValidade) {
         if (secret == null || secret.isBlank() || secret.length() < TAMANHO_MINIMO_SEGREDO) {
-            throw new IllegalStateException("A variável API_SECURITY_TOKEN_SECRET deve ser definida com pelo menos "
-                    + TAMANHO_MINIMO_SEGREDO + " caracteres.");
+            throw new IllegalStateException(
+                    "A variável API_SECURITY_TOKEN_SECRET deve ser definida com pelo menos "
+                            + TAMANHO_MINIMO_SEGREDO
+                            + " caracteres.");
         }
         this.algorithm = Algorithm.HMAC256(secret);
         this.validade = Duration.ofHours(horasDeValidade);
@@ -56,11 +58,7 @@ public class TokenService {
      */
     public String validateToken(String token) {
         try {
-            return JWT.require(algorithm)
-                    .withIssuer(ISSUER)
-                    .build()
-                    .verify(token)
-                    .getSubject();
+            return JWT.require(algorithm).withIssuer(ISSUER).build().verify(token).getSubject();
         } catch (JWTVerificationException exception) {
             return null;
         }

@@ -2,16 +2,12 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoQuestao;
 import jakarta.persistence.*;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.util.List;
-
-
-/**
- * Entidade que representa uma Questão dentro de um Formulário.
- */
+/** Entidade que representa uma Questão dentro de um Formulário. */
 @Data
 @Entity
 @Table(name = "questao")

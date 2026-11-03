@@ -27,8 +27,8 @@ public class UsuarioService {
     private final CepService cepService;
 
     /**
-     * Cria a conta e, na mesma transação, o perfil correspondente (Voluntario ou Pesquisador)
-     * com o nome fictício gerado pelo sistema.
+     * Cria a conta e, na mesma transação, o perfil correspondente (Voluntario ou Pesquisador) com o
+     * nome fictício gerado pelo sistema.
      */
     @Transactional
     public Usuario createUser(UsuarioCreateDTO usuarioDTO) {
@@ -41,7 +41,8 @@ public class UsuarioService {
         // Idade e sexo são os atributos usados pela filtragem automática de compatibilidade
         if (usuarioDTO.getTipoEspecifico() == TipoEspecifico.VOLUNTARIO
                 && (usuarioDTO.getDataNascimento() == null || usuarioDTO.getSexo() == null)) {
-            throw new BadRequestException("Data de nascimento e sexo são obrigatórios para o cadastro de voluntários.");
+            throw new BadRequestException(
+                    "Data de nascimento e sexo são obrigatórios para o cadastro de voluntários.");
         }
 
         Usuario novoUsuario = new Usuario();
@@ -95,8 +96,8 @@ public class UsuarioService {
     }
 
     /**
-     * Gera um nome fictício com base no tipo de usuário, ID e CEP, no formato
-     * PREFIXO + ID + SIGLA_ESTADO (ex.: VOL243RJ, PS12SP).
+     * Gera um nome fictício com base no tipo de usuário, ID e CEP, no formato PREFIXO + ID +
+     * SIGLA_ESTADO (ex.: VOL243RJ, PS12SP).
      */
     String gerarNomeFicticio(Usuario usuario) {
         String prefix = usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR ? "PS" : "VOL";
@@ -132,7 +133,8 @@ public class UsuarioService {
 
     @Transactional(readOnly = true)
     public Usuario getUserById(Integer id) {
-        return usuarioRepository.findById(id)
+        return usuarioRepository
+                .findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário não encontrado."));
     }
 

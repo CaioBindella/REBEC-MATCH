@@ -37,14 +37,17 @@ public class AuthenticationController {
 
         Integer perfilId = null;
         String nomeFicticio = null;
-        if (usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR && usuario.getPesquisador() != null) {
+        if (usuario.getTipoEspecifico() == TipoEspecifico.PESQUISADOR
+                && usuario.getPesquisador() != null) {
             perfilId = usuario.getPesquisador().getId();
             nomeFicticio = usuario.getPesquisador().getNomeFicticio();
-        } else if (usuario.getTipoEspecifico() == TipoEspecifico.VOLUNTARIO && usuario.getVoluntario() != null) {
+        } else if (usuario.getTipoEspecifico() == TipoEspecifico.VOLUNTARIO
+                && usuario.getVoluntario() != null) {
             perfilId = usuario.getVoluntario().getId();
             nomeFicticio = usuario.getVoluntario().getNomeFicticio();
         }
 
-        return ResponseEntity.ok(new LoginResponseDTO(token, DtoMapper.toUsuario(usuario), nomeFicticio, perfilId));
+        return ResponseEntity.ok(
+                new LoginResponseDTO(token, DtoMapper.toUsuario(usuario), nomeFicticio, perfilId));
     }
 }

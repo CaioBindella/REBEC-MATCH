@@ -7,7 +7,8 @@ Java 21 com Spring Boot 3.5.4. Ela cuida de:
 - autenticação com JWT;
 - cadastro de usuários, estudos, critérios e formulários;
 - fluxo de candidatura com confirmação mútua (*match*);
-- compatibilidade automática por idade e sexo;
+- compatibilidade automática por idade e sexo, com proximidade por estado e região
+  (`GET /api/v1/match/afinidade`) e alertas de possível exclusão a partir do formulário de perfil;
 - notificações;
 - importação automatizada do extrato ReBEC/ICTRP.
 
@@ -51,5 +52,5 @@ Ou, com Docker, a partir desta pasta:
 docker compose --env-file rebecmatch-api/.env up --build
 ```
 
-Os testes rodam com `./mvnw test`, dentro de `rebecmatch-api/`. A documentação completa da API,
+Os testes rodam com `./mvnw test` e a formatação do código com `./mvnw spotless:apply`, dentro de `rebecmatch-api/`. A documentação completa da API,
 com as variáveis de ambiente e as migrações, está em [`rebecmatch-api/README.md`](rebecmatch-api/README.md).

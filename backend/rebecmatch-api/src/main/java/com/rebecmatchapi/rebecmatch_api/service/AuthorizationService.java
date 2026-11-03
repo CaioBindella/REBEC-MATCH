@@ -8,8 +8,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
- * Implementação de UserDetailsService usada pelo AuthenticationManager no login:
- * localiza o usuário pelo campo login.
+ * Implementação de UserDetailsService usada pelo AuthenticationManager no login: localiza o usuário
+ * pelo campo login.
  */
 @Service
 @RequiredArgsConstructor
