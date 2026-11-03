@@ -12,7 +12,7 @@ import { TermsModal } from '@/components/reusable/TermsModal';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { user, isReady } = useAuth(); 
+  const { user, isReady } = useAuth();
 
   // Estados de Navegação
   const [modalVisible, setModalVisible] = useState(false);
@@ -69,7 +69,9 @@ export default function HomeScreen() {
     try {
       await storage.setItem(STORAGE_KEYS.LGPD, 'true'); // Salva
       setLgpdAccepted(true); // Atualiza estado
-    } catch (e) { console.log(e); }
+    } catch (e) {
+      console.log(e);
+    }
 
     setModalVisible(false);
     if (navigationPath) {
@@ -94,20 +96,20 @@ export default function HomeScreen() {
   };
 
   if (!isReady || checkingConfigs) {
-      return (
-        <ImageBackground
-          source={require('../assets/images/BackgroundLogin.png')}
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-        >
-           <ActivityIndicator size="large" color="#166865" />
-        </ImageBackground>
-      );
+    return (
+      <ImageBackground
+        source={require('../assets/images/BackgroundLogin.png')}
+        style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+      >
+        <ActivityIndicator size="large" color="#166865" />
+      </ImageBackground>
+    );
   }
 
   return (
     <ImageBackground
       source={require('../assets/images/BackgroundLogin.png')}
-      style={{ flex: 1, height: '100%'}}
+      style={{ flex: 1, height: '100%' }}
     >
       <View style={styles.container}>
         <Image source={require('../assets/images/MatchLogo.png')} style={{ marginBottom: 20 }} />
@@ -115,38 +117,29 @@ export default function HomeScreen() {
 
         <Text style={styles.title}>Pesquisa clínica perto de você</Text>
         <Text style={styles.text}>
-          Encontre estudos clínicos registrados no ReBEC que estão recrutando voluntários, candidate-se
-          com segurança e converse com o pesquisador responsável após a confirmação mútua de interesse.
+          Encontre estudos clínicos registrados no ReBEC que estão recrutando voluntários, candidate-se com
+          segurança e converse com o pesquisador responsável após a confirmação mútua de interesse.
         </Text>
 
-        <InitialButton 
-          text="Crie sua conta" 
-          color='#166865'
+        <InitialButton
+          text="Crie sua conta"
+          color="#166865"
           onPress={() => handlePress('/(auth)/voluntaryRegister')}
         />
 
         <Text style={styles.text}>- - - - - - - ou - - - - - - -</Text>
 
-        <InitialButton 
-          text="Fazer login" 
-          color='#15715A'
-          onPress={() => handlePress('/(auth)/login')}
-         />
+        <InitialButton text="Fazer login" color="#15715A" onPress={() => handlePress('/(auth)/login')} />
 
-         {/* Modal de Navegação (Só aparece se lgpdAccepted for false) */}
-         <TermsModal
+        {/* Modal de Navegação (Só aparece se lgpdAccepted for false) */}
+        <TermsModal
           visible={modalVisible}
           onClose={handleCloseNavigation}
           onAccept={handleAcceptNavigation}
         />
 
         {/* Modal Inicial (Só aparece se lgpdAccepted for false ao abrir o app) */}
-        <TermsModal
-          visible={showLGPD}
-          onClose={() => setShowLGPD(false)}
-          onAccept={handleAcceptLGPD}
-        />
-
+        <TermsModal visible={showLGPD} onClose={() => setShowLGPD(false)} onAccept={handleAcceptLGPD} />
       </View>
     </ImageBackground>
   );
@@ -158,22 +151,22 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     padding: 20,
-    marginBottom: 30
+    marginBottom: 30,
   },
   text: {
-    color: '#776D6D', 
-    fontSize: 14, 
-    fontFamily: 'Inter', 
-    fontWeight: '300', 
-    lineHeight: 17, 
-    margin: 20
+    color: '#776D6D',
+    fontSize: 14,
+    fontFamily: 'Inter',
+    fontWeight: '300',
+    lineHeight: 17,
+    margin: 20,
   },
   title: {
-    color: '#1A514D', 
-    fontSize: 38.36, 
-    fontFamily: 'Inter', 
-    fontWeight: '800', 
-    lineHeight: 37, 
+    color: '#1A514D',
+    fontSize: 38.36,
+    fontFamily: 'Inter',
+    fontWeight: '800',
+    lineHeight: 37,
     textAlign: 'center',
   },
 });

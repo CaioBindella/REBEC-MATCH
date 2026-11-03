@@ -10,6 +10,7 @@ import {
   CriterioResponseDTO,
   CriterioUpdateDTO,
   DoencaResponseDTO,
+  EstudoAfinidadeDTO,
   EstudoCreateDTO,
   EstudoResponseDTO,
   EstudoUpdateDTO,
@@ -72,7 +73,10 @@ for (const instancia of [api, chatApi]) {
 }
 
 /** Extrai a mensagem de erro padronizada pela API (RestExceptionHandler) para exibição ao usuário. */
-export const getErrorMessage = (error: unknown, fallback = 'Ocorreu um erro inesperado. Tente novamente.') => {
+export const getErrorMessage = (
+  error: unknown,
+  fallback = 'Ocorreu um erro inesperado. Tente novamente.'
+) => {
   if (axios.isAxiosError(error)) {
     const data = error.response?.data as Partial<ApiErrorDTO> | undefined;
     if (data?.message) return data.message;
@@ -94,8 +98,7 @@ export const apiService = {
   usuario: {
     create: async (data: UsuarioCreateDTO) =>
       (await api.post<UsuarioResponseDTO>('/api/v1/usuarios', data)).data,
-    getById: async (id: number) =>
-      (await api.get<UsuarioResponseDTO>(`/api/v1/usuarios/${id}`)).data,
+    getById: async (id: number) => (await api.get<UsuarioResponseDTO>(`/api/v1/usuarios/${id}`)).data,
     updatePassword: async (id: number, data: ChangePasswordDTO) => {
       await api.put(`/api/v1/usuarios/${id}/senha`, data);
     },
@@ -111,15 +114,13 @@ export const apiService = {
 
   // --- ESTUDOS ---
   estudo: {
-    getById: async (id: number) =>
-      (await api.get<EstudoResponseDTO>(`/api/v1/estudos/${id}`)).data,
+    getById: async (id: number) => (await api.get<EstudoResponseDTO>(`/api/v1/estudos/${id}`)).data,
     // Estudos em recrutamento por nome popular/científico de doença ou condição de saúde
     searchByDoenca: async (termo: string) =>
       (await api.get<EstudoResponseDTO[]>('/api/v1/estudos/busca', { params: { termo } })).data,
     getByPesquisador: async (pesquisadorId: number) =>
       (await api.get<EstudoResponseDTO[]>(`/api/v1/estudos/pesquisador/${pesquisadorId}`)).data,
-    listRecruiting: async () =>
-      (await api.get<EstudoResponseDTO[]>('/api/v1/estudos/recrutando')).data,
+    listRecruiting: async () => (await api.get<EstudoResponseDTO[]>('/api/v1/estudos/recrutando')).data,
     create: async (data: EstudoCreateDTO) =>
       (await api.post<EstudoResponseDTO>('/api/v1/estudos', data)).data,
     update: async (id: number, data: EstudoUpdateDTO) =>
@@ -144,9 +145,10 @@ export const apiService = {
     // Estudos em recrutamento compatíveis com a idade e o sexo do voluntário autenticado
     estudosCompativeis: async () =>
       (await api.get<EstudoResponseDTO[]>('/api/v1/match/estudos-compativeis')).data,
+    // Compatibilidade, proximidade (mesma UF/região) e alertas de exclusão de cada estudo em recrutamento
+    afinidade: async () => (await api.get<EstudoAfinidadeDTO[]>('/api/v1/match/afinidade')).data,
     // Matches do usuário autenticado (voluntário ou pesquisador responsável)
-    listar: async () =>
-      (await api.get<MatchResultResponseDTO[]>('/api/v1/match')).data,
+    listar: async () => (await api.get<MatchResultResponseDTO[]>('/api/v1/match')).data,
   },
 
   // --- CANDIDATURAS (confirmação em duas etapas) ---
@@ -156,10 +158,12 @@ export const apiService = {
       (await api.post<CandidaturaResponseDTO>('/api/v1/candidaturas', data)).data,
     // Pesquisador aprova/recusa (o booleano vai direto no corpo)
     analisePesquisador: async (id: number, aprovado: boolean) =>
-      (await api.patch<CandidaturaResponseDTO>(`/api/v1/candidaturas/${id}/analise-pesquisador`, aprovado)).data,
+      (await api.patch<CandidaturaResponseDTO>(`/api/v1/candidaturas/${id}/analise-pesquisador`, aprovado))
+        .data,
     // Voluntário confirma/recusa a participação (a confirmação gera o match)
     confirmacaoVoluntario: async (id: number, aceito: boolean) =>
-      (await api.patch<CandidaturaResponseDTO>(`/api/v1/candidaturas/${id}/confirmacao-voluntario`, aceito)).data,
+      (await api.patch<CandidaturaResponseDTO>(`/api/v1/candidaturas/${id}/confirmacao-voluntario`, aceito))
+        .data,
     listarPorPesquisador: async (pesquisadorId: number) =>
       (await api.get<CandidatoDetalhadoDTO[]>(`/api/v1/candidaturas/pesquisador/${pesquisadorId}`)).data,
     listarPorVoluntario: async (voluntarioId: number) =>
@@ -195,8 +199,7 @@ export const apiService = {
   mensagem: {
     listar: async (estudoId: number, usuarioId: number, contatoId: number) =>
       (await chatApi.get<MensagemDTO[]>(`/mensagens/${estudoId}/${usuarioId}/${contatoId}`)).data,
-    enviar: async (data: MensagemCreateDTO) =>
-      (await chatApi.post<MensagemDTO>('/mensagens', data)).data,
+    enviar: async (data: MensagemCreateDTO) => (await chatApi.post<MensagemDTO>('/mensagens', data)).data,
   },
 };
 

@@ -10,7 +10,7 @@ import { useAuth } from '@/context/AuthContext';
 
 // Components
 import ResearcherDashboard from '@/components/researcherComponents/ResearcherDashboard';
-import Header from "@/components/reusable/Header";
+import Header from '@/components/reusable/Header';
 import VolunteerDashboard from '@/components/volunteerComponents/VolunteerDashboard';
 
 const checkVolunteerFormStatus = async (voluntarioId: number): Promise<boolean> => {
@@ -19,7 +19,7 @@ const checkVolunteerFormStatus = async (voluntarioId: number): Promise<boolean> 
     const respostas = await apiService.resposta.getByVoluntario(voluntarioId);
     return respostas.length > 0;
   } catch (error) {
-    console.error("Erro ao verificar status do formulário:", error);
+    console.error('Erro ao verificar status do formulário:', error);
     return false;
   }
 };
@@ -48,7 +48,7 @@ export default function HomePage() {
           setHasCompletedForm(status);
         })
         .catch((err) => {
-          console.error("Erro na verificação do formulário", err);
+          console.error('Erro na verificação do formulário', err);
           setHasCompletedForm(false); // Em caso de erro, assume que não preencheu (segurança)
         })
         .finally(() => {
@@ -67,9 +67,7 @@ export default function HomePage() {
         <Header />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#15715A" />
-          <Text style={styles.loadingText}>
-            {isReady ? "Verificando perfil..." : "Carregando sessão..."}
-          </Text>
+          <Text style={styles.loadingText}>{isReady ? 'Verificando perfil...' : 'Carregando sessão...'}</Text>
         </View>
       </SafeAreaView>
     );
@@ -79,7 +77,6 @@ export default function HomePage() {
     <SafeAreaView style={styles.safeArea}>
       <Header />
       <ScrollView contentContainerStyle={styles.container}>
-        
         {/* --- Lógica do PESQUISADOR --- */}
         {isResearcher && <ResearcherDashboard />}
 
@@ -93,20 +90,20 @@ export default function HomePage() {
             {hasCompletedForm === false && (
               <View style={styles.blockedContainer}>
                 <View style={styles.iconCircle}>
-                    <Ionicons name="document-text" size={50} color="#15715A" />
+                  <Ionicons name="document-text" size={50} color="#15715A" />
                 </View>
                 <Text style={styles.blockedTitle}>Finalize seu Cadastro</Text>
                 <Text style={styles.blockedText}>
-                  Para participar das pesquisas e ter acesso ao painel completo, 
-                  precisamos que você preencha o formulário de perfil inicial.
+                  Para participar das pesquisas e ter acesso ao painel completo, precisamos que você preencha
+                  o formulário de perfil inicial.
                 </Text>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => router.push('/(protected)/volunteer/form-study/page')}
                 >
                   <Text style={styles.actionButtonText}>Preencher Agora</Text>
-                  <Ionicons name="arrow-forward" size={20} color="#fff" style={{marginLeft: 8}} />
+                  <Ionicons name="arrow-forward" size={20} color="#fff" style={{ marginLeft: 8 }} />
                 </TouchableOpacity>
               </View>
             )}
@@ -119,7 +116,6 @@ export default function HomePage() {
             <Text style={{ color: 'red' }}>Tipo de usuário desconhecido: {user.tipoEspecifico}</Text>
           </View>
         )}
-
       </ScrollView>
     </SafeAreaView>
   );
@@ -141,16 +137,16 @@ const styles = StyleSheet.create({
     paddingVertical: 100,
   },
   loadingText: {
-    marginTop: 15, 
-    color: '#666', 
-    fontSize: 16 
+    marginTop: 15,
+    color: '#666',
+    fontSize: 16,
   },
   centered: {
     flex: 1,
     justifyContent: 'center',
-    alignItems: 'center'
+    alignItems: 'center',
   },
-  
+
   // Estilos da Tela de Bloqueio
   blockedContainer: {
     alignItems: 'center',
@@ -194,7 +190,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     // Sombra
-    shadowColor: "#15715A",
+    shadowColor: '#15715A',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

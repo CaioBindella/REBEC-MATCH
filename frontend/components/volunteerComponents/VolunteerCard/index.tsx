@@ -11,41 +11,44 @@ interface VolunteerCardProps {
   onAnalyze: () => void;
 }
 
-export default function VolunteerCard({ 
-  id, 
-  location, 
-  description, 
-  studyApplied, 
-  status, 
-  onAnalyze 
+export default function VolunteerCard({
+  id,
+  location,
+  description,
+  studyApplied,
+  status,
+  onAnalyze,
 }: VolunteerCardProps) {
-
   const isRefused = status === 'RECUSADO';
   const isWaiting = status === 'ACEITO_PELO_PESQUISADOR';
   const isConcluded = status === 'CONCLUIDO';
 
   return (
-    <View style={[
-        styles.card, 
+    <View
+      style={[
+        styles.card,
         isRefused && styles.cardRefusedOpacity,
-        isWaiting && styles.cardWaitingOpacity // Opcional: destaca levemente se estiver aguardando
-    ]}>
+        isWaiting && styles.cardWaitingOpacity, // Opcional: destaca levemente se estiver aguardando
+      ]}
+    >
       {/* Cabeçalho do Card */}
       <View style={styles.header}>
         <View style={styles.idContainer}>
-            <Ionicons name="person-circle-outline" size={24} color="#15715A" />
-            <Text style={styles.idText}>{id}</Text>
+          <Ionicons name="person-circle-outline" size={24} color="#15715A" />
+          <Text style={styles.idText}>{id}</Text>
         </View>
         <View style={styles.badge}>
-            <Text style={styles.badgeText}>{location}</Text>
+          <Text style={styles.badgeText}>{location}</Text>
         </View>
       </View>
 
       {/* Conteúdo */}
       <View style={styles.content}>
         <Text style={styles.label}>Estudo:</Text>
-        <Text style={styles.studyText} numberOfLines={1}>{studyApplied}</Text>
-        
+        <Text style={styles.studyText} numberOfLines={1}>
+          {studyApplied}
+        </Text>
+
         <Text style={[styles.label, { marginTop: 8 }]}>Perfil:</Text>
         <Text style={styles.descriptionText} numberOfLines={2}>
           {description}
@@ -54,7 +57,6 @@ export default function VolunteerCard({
 
       {/* Rodapé: Muda de acordo com o STATUS */}
       <View style={styles.footer}>
-        
         {/* CASO 1: RECUSADO (Caixa Vermelha) */}
         {isRefused && (
           <View style={styles.statusContainerRefused}>
@@ -73,8 +75,8 @@ export default function VolunteerCard({
 
         {/* CASO 3: CONCLUÍDO (Botão Azul de Chat) */}
         {isConcluded && (
-          <TouchableOpacity 
-            style={[styles.button, styles.buttonChat]} 
+          <TouchableOpacity
+            style={[styles.button, styles.buttonChat]}
             onPress={onAnalyze}
             activeOpacity={0.8}
           >
@@ -85,8 +87,8 @@ export default function VolunteerCard({
 
         {/* CASO 4: PADRÃO / PENDENTE (Botão Verde de Analisar) */}
         {!isRefused && !isWaiting && !isConcluded && (
-          <TouchableOpacity 
-            style={[styles.button, styles.buttonAnalyze]} 
+          <TouchableOpacity
+            style={[styles.button, styles.buttonAnalyze]}
             onPress={onAnalyze}
             activeOpacity={0.8}
           >
@@ -94,7 +96,6 @@ export default function VolunteerCard({
             <Ionicons name="arrow-forward" size={18} color="#fff" />
           </TouchableOpacity>
         )}
-
       </View>
     </View>
   );
@@ -189,12 +190,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     marginRight: 8,
   },
-  
+
   // Variação: Analisar (Verde)
   buttonAnalyze: {
     backgroundColor: '#15715A',
   },
-  
+
   // Variação: Chat (Azul)
   buttonChat: {
     backgroundColor: '#007bff',

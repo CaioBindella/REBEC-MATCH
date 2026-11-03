@@ -29,7 +29,10 @@ export default function LoginPage() {
 
           <LoginCredentials />
 
-          <TouchableOpacity style={styles.registerLink} onPress={() => router.replace('/(auth)/voluntaryRegister')}>
+          <TouchableOpacity
+            style={styles.registerLink}
+            onPress={() => router.replace('/(auth)/voluntaryRegister')}
+          >
             <Text style={styles.registerText}>
               Ainda não tem conta? <Text style={styles.registerTextBold}>Cadastre-se</Text>
             </Text>

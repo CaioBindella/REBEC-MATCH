@@ -21,7 +21,14 @@ const Label = ({ label, required }: { label: string; required?: boolean }) => (
 );
 
 // --- Componente para Respostas de Texto ---
-export const TextInputQuestion: React.FC<QuestionProps & TextInputProps> = ({ label, value, onValueChange, required, error, ...props }) => (
+export const TextInputQuestion: React.FC<QuestionProps & TextInputProps> = ({
+  label,
+  value,
+  onValueChange,
+  required,
+  error,
+  ...props
+}) => (
   <View style={styles.questionContainer}>
     <Label label={label} required={required} />
     <TextInput
@@ -37,7 +44,14 @@ export const TextInputQuestion: React.FC<QuestionProps & TextInputProps> = ({ la
 );
 
 // --- Componente para Respostas de Escolha Única (Rádio) ---
-export const RadioQuestion: React.FC<QuestionProps & { options: string[] }> = ({ label, options, value, onValueChange, required, error }) => (
+export const RadioQuestion: React.FC<QuestionProps & { options: string[] }> = ({
+  label,
+  options,
+  value,
+  onValueChange,
+  required,
+  error,
+}) => (
   <View style={styles.questionContainer}>
     <Label label={label} required={required} />
     <View>

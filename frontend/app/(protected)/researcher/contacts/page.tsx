@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, FlatList, SafeAreaView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Stack, useFocusEffect, useRouter } from 'expo-router';
 
 import Header from '@/components/reusable/Header';
@@ -7,6 +7,7 @@ import { AccessChat } from '@/components/researcherComponents/AccessChat';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { MatchResultResponseDTO } from '@/types/types';
 import { formatDate } from '@/utils/formatters';
+import { avisar } from '@/utils/feedback';
 
 /**
  * Voluntários com participação confirmada (match) nos estudos do pesquisador autenticado,
@@ -23,7 +24,7 @@ export default function ResearcherContactsPage() {
       apiService.match
         .listar()
         .then(setMatches)
-        .catch((error) => Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar seus contatos.')))
+        .catch((error) => avisar('Erro', getErrorMessage(error, 'Não foi possível carregar seus contatos.')))
         .finally(() => setLoading(false));
     }, [])
   );
@@ -32,7 +33,9 @@ export default function ResearcherContactsPage() {
     const termo = searchTerm.trim().toLowerCase();
     if (!termo) return matches;
     return matches.filter(
-      (m) => m.voluntarioNomeFicticio.toLowerCase().includes(termo) || m.estudoPublicTitle.toLowerCase().includes(termo)
+      (m) =>
+        m.voluntarioNomeFicticio.toLowerCase().includes(termo) ||
+        m.estudoPublicTitle.toLowerCase().includes(termo)
     );
   }, [matches, searchTerm]);
 

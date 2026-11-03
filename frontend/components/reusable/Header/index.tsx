@@ -53,20 +53,14 @@ export default function Header() {
       </View>
 
       <View style={styles.centerContainer}>
-        <Image
-          source={require('@/assets/images/MatchLogo.png')}
-          style={styles.logo}
-        />
+        <Image source={require('@/assets/images/MatchLogo.png')} style={styles.logo} />
       </View>
 
       <View style={styles.rightContainer}>
         <Menu>
           <MenuTrigger>
             <View>
-              <Image
-                source={require('@/assets/images/HeaderMenu.png')}
-                style={styles.menuIcon}
-              />
+              <Image source={require('@/assets/images/HeaderMenu.png')} style={styles.menuIcon} />
               {naoLidas > 0 && (
                 <View style={styles.badge}>
                   <Text style={styles.badgeText}>{naoLidas > 9 ? '9+' : naoLidas}</Text>
@@ -74,7 +68,7 @@ export default function Header() {
               )}
             </View>
           </MenuTrigger>
-          
+
           <MenuOptions customStyles={optionsStyles}>
             <MenuOption onSelect={() => router.push('/(protected)/profile/page')}>
               <Text style={styles.menuOptionText}>Meu Perfil</Text>

@@ -1,6 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { 
-  SafeAreaView, View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, Alert 
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
 } from 'react-native';
 import { Stack, useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,6 +14,7 @@ import Header from '@/components/reusable/Header';
 import { useAuth } from '@/context/AuthContext';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { formatDateTime } from '@/utils/formatters';
+import { avisar } from '@/utils/feedback';
 
 // Notificação exibida na central (a partir do NotificacaoResponseDTO da API)
 interface NotificationItem {
@@ -39,7 +46,7 @@ export default function NotificationsPage() {
         }))
       );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar as notificações.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível carregar as notificações.'));
     } finally {
       setLoading(false);
     }
@@ -58,7 +65,7 @@ export default function NotificationsPage() {
       await apiService.notificacao.marcarTodasLidas(user.id);
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error));
+      avisar('Erro', getErrorMessage(error));
     }
   };
 
@@ -68,7 +75,7 @@ export default function NotificationsPage() {
       await apiService.notificacao.marcarLida(item.id);
       setNotifications((prev) => prev.map((n) => (n.id === item.id ? { ...n, read: true } : n)));
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error));
+      avisar('Erro', getErrorMessage(error));
     }
   };
 
@@ -90,7 +97,10 @@ export default function NotificationsPage() {
     }
 
     return (
-      <TouchableOpacity style={[styles.card, !item.read && styles.unreadCard]} onPress={() => markAsRead(item)}>
+      <TouchableOpacity
+        style={[styles.card, !item.read && styles.unreadCard]}
+        onPress={() => markAsRead(item)}
+      >
         <View style={[styles.iconContainer, { backgroundColor: bgColor }]}>
           <Ionicons name={iconName} size={24} color={iconColor} />
         </View>
@@ -99,7 +109,9 @@ export default function NotificationsPage() {
             <Text style={styles.cardTitle}>{item.title}</Text>
             <Text style={styles.timeText}>{item.time}</Text>
           </View>
-          <Text style={styles.cardDesc} numberOfLines={3}>{item.description}</Text>
+          <Text style={styles.cardDesc} numberOfLines={3}>
+            {item.description}
+          </Text>
         </View>
         {!item.read && <View style={styles.dot} />}
       </TouchableOpacity>
@@ -110,7 +122,7 @@ export default function NotificationsPage() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
-      
+
       <View style={styles.content}>
         <View style={styles.pageHeader}>
           <Text style={styles.pageTitle}>Notificações</Text>
@@ -120,20 +132,20 @@ export default function NotificationsPage() {
         </View>
 
         {loading ? (
-            <ActivityIndicator size="large" color="#15715A" style={{ marginTop: 50 }} />
+          <ActivityIndicator size="large" color="#15715A" style={{ marginTop: 50 }} />
         ) : (
-            <FlatList
+          <FlatList
             data={notifications}
-            keyExtractor={item => String(item.id)}
+            keyExtractor={(item) => String(item.id)}
             renderItem={renderNotification}
             contentContainerStyle={{ paddingBottom: 20 }}
             ListEmptyComponent={
-                <View style={styles.emptyContainer}>
+              <View style={styles.emptyContainer}>
                 <Ionicons name="notifications-off-outline" size={60} color="#ccc" />
                 <Text style={styles.emptyText}>Você não tem novas notificações.</Text>
-                </View>
+              </View>
             }
-            />
+          />
         )}
       </View>
     </SafeAreaView>
@@ -143,7 +155,7 @@ export default function NotificationsPage() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
   content: { flex: 1, padding: 20 },
-  
+
   pageHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',

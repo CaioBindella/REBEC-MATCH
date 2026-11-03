@@ -1,5 +1,13 @@
 import React from 'react';
-import { SafeAreaView, View, Text, StyleSheet, ScrollView, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 
 import Header from '@/components/reusable/Header';
@@ -7,6 +15,7 @@ import StudyForm, { StudyFormValues } from '@/components/researcherComponents/St
 import { useAuth } from '@/context/AuthContext';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { toCriterioPayload, toEstudoPayload } from '@/utils/studyPayload';
+import { avisar } from '@/utils/feedback';
 
 /** Cadastro de um novo estudo pelo pesquisador autenticado, com seu critério de elegibilidade. */
 export default function CreateStudyPage() {
@@ -19,11 +28,11 @@ export default function CreateStudyPage() {
       const estudo = await apiService.estudo.create(toEstudoPayload(values));
       await apiService.criterio.create({ estudo_id: estudo.id, ...toCriterioPayload(values) });
 
-      Alert.alert('Sucesso', 'Estudo registrado com sucesso!', [
-        { text: 'OK', onPress: () => router.replace('/(protected)/researcher/manage-studies/page') },
-      ]);
+      avisar('Estudo registrado', 'O estudo foi cadastrado e já aparece na lista dos seus estudos.', () =>
+        router.replace('/(protected)/researcher/manage-studies/page')
+      );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível registrar o estudo.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível registrar o estudo.'));
     }
   };
 

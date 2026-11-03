@@ -1,13 +1,5 @@
 import React from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  SafeAreaView,
-  StatusBar
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView, StatusBar } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -17,51 +9,55 @@ export default function TermsOfScienceScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#fff" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#15715A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Termos de Ciência e Uso</Text>
-        <View style={{ width: 24 }} /> 
+        <View style={{ width: 24 }} />
       </View>
 
       <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
         <Text style={styles.intro}>
-          Bem-vindo ao <Text style={styles.bold}>RebecMatch</Text>. Ao utilizar nossa plataforma para se voluntariar ou conduzir pesquisas, você concorda com os termos descritos abaixo.
+          Bem-vindo ao <Text style={styles.bold}>RebecMatch</Text>. Ao utilizar nossa plataforma para se
+          voluntariar ou conduzir pesquisas, você concorda com os termos descritos abaixo.
         </Text>
 
         {/* Seção 1 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>1. Propósito da Plataforma</Text>
           <Text style={styles.paragraph}>
-            O RebecMatch é uma ferramenta tecnológica desenvolvida para facilitar a conexão entre pesquisadores acadêmicos/científicos e voluntários dispostos a participar de estudos clínicos e sociais.
+            O RebecMatch é uma ferramenta tecnológica desenvolvida para facilitar a conexão entre
+            pesquisadores acadêmicos/científicos e voluntários dispostos a participar de estudos clínicos e
+            sociais.
           </Text>
           <Text style={[styles.paragraph, { marginTop: 10 }]}>
-            <Text style={styles.bold}>Não somos uma clínica médica.</Text> O aplicativo não fornece diagnósticos, tratamentos ou aconselhamento médico direto.
+            <Text style={styles.bold}>Não somos uma clínica médica.</Text> O aplicativo não fornece
+            diagnósticos, tratamentos ou aconselhamento médico direto.
           </Text>
         </View>
 
         {/* Seção 2 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>2. Veracidade das Informações</Text>
-          <Text style={styles.paragraph}>
-            A integridade científica depende da honestidade dos dados:
-          </Text>
-          
+          <Text style={styles.paragraph}>A integridade científica depende da honestidade dos dados:</Text>
+
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.text}>
-              <Text style={styles.bold}>Voluntários:</Text> Comprometem-se a fornecer informações verdadeiras sobre seu estado de saúde, histórico médico e dados demográficos. A criação de perfis com dados falsos para obter vantagens ou prejudicar estudos é estritamente proibida.
+              <Text style={styles.bold}>Voluntários:</Text> Comprometem-se a fornecer informações verdadeiras
+              sobre seu estado de saúde, histórico médico e dados demográficos. A criação de perfis com dados
+              falsos para obter vantagens ou prejudicar estudos é estritamente proibida.
             </Text>
           </View>
-          
+
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
             <Text style={styles.text}>
-              <Text style={styles.bold}>Pesquisadores:</Text> Devem representar instituições legítimas e possuir as devidas aprovações éticas (CEP/CONEP) para seus estudos.
+              <Text style={styles.bold}>Pesquisadores:</Text> Devem representar instituições legítimas e
+              possuir as devidas aprovações éticas (CEP/CONEP) para seus estudos.
             </Text>
           </View>
         </View>
@@ -69,11 +65,14 @@ export default function TermsOfScienceScreen() {
         {/* Seção 3 */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>3. Proteção de Dados e Privacidade</Text>
-          <Text style={styles.paragraph}>
-            Levamos a LGPD (Lei Geral de Proteção de Dados) a sério.
-          </Text>
+          <Text style={styles.paragraph}>Levamos a LGPD (Lei Geral de Proteção de Dados) a sério.</Text>
           <Text style={[styles.paragraph, { marginTop: 10 }]}>
-            Seus dados sensíveis são armazenados de forma segura e você é identificado na plataforma por um nome fictício. Ao se candidatar a um estudo, suas respostas do formulário de perfil, sua idade, seu sexo e sua região tornam-se visíveis apenas ao pesquisador responsável por aquele estudo; o canal de conversa só é liberado após o "Match" (aceite mútuo). É proibido aos pesquisadores compartilhar dados dos voluntários com terceiros sem consentimento explícito. Você pode excluir sua conta e seus dados a qualquer momento em Configurações.
+            Seus dados sensíveis são armazenados de forma segura e você é identificado na plataforma por um
+            nome fictício. Ao se candidatar a um estudo, suas respostas do formulário de perfil, sua idade,
+            seu sexo e sua região tornam-se visíveis apenas ao pesquisador responsável por aquele estudo; o
+            canal de conversa só é liberado após o "Match" (aceite mútuo). É proibido aos pesquisadores
+            compartilhar dados dos voluntários com terceiros sem consentimento explícito. Você pode excluir
+            sua conta e seus dados a qualquer momento em Configurações.
           </Text>
         </View>
 
@@ -85,7 +84,9 @@ export default function TermsOfScienceScreen() {
           </Text>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
-            <Text style={styles.text}>Uso de scripts, robôs ou "scrapers" para coletar dados da plataforma.</Text>
+            <Text style={styles.text}>
+              Uso de scripts, robôs ou "scrapers" para coletar dados da plataforma.
+            </Text>
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
@@ -93,7 +94,9 @@ export default function TermsOfScienceScreen() {
           </View>
           <View style={styles.bulletPoint}>
             <Text style={styles.bullet}>•</Text>
-            <Text style={styles.text}>Tentativa de vender produtos ou serviços através do sistema de mensagens.</Text>
+            <Text style={styles.text}>
+              Tentativa de vender produtos ou serviços através do sistema de mensagens.
+            </Text>
           </View>
         </View>
 
@@ -120,10 +123,10 @@ export default function TermsOfScienceScreen() {
         {/* Texto Final */}
         <View style={styles.lastSection}>
           <Text style={styles.paragraph}>
-            Ao clicar em "Aceito", você confirma que leu e compreendeu estes termos e concorda em agir com ética e transparência dentro da comunidade científica do RebecMatch.
+            Ao clicar em "Aceito", você confirma que leu e compreendeu estes termos e concorda em agir com
+            ética e transparência dentro da comunidade científica do RebecMatch.
           </Text>
         </View>
-
       </ScrollView>
 
       {/* Footer */}
@@ -227,7 +230,7 @@ const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 50,
     alignItems: 'center',
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,

@@ -8,23 +8,24 @@ interface TermsModalProps {
 }
 
 export const TermsModal: React.FC<TermsModalProps> = ({ visible, onClose, onAccept }) => (
-  <Modal
-    animationType="fade"
-    transparent={true}
-    visible={visible}
-    onRequestClose={onClose}
-  >
+  <Modal animationType="fade" transparent={true} visible={visible} onRequestClose={onClose}>
     <View style={styles.modalOverlay}>
       <View style={styles.modalContainer}>
         <Text style={styles.modalTitle}>Termos de Uso e LGPD</Text>
         <ScrollView style={styles.modalScrollView}>
           <Text style={styles.modalText}>
             Ao continuar, você concorda com nossos Termos de Uso e Política de Privacidade.
-            {"\n\n"}
-            Seus dados pessoais, como informações de contato e perfil de saúde, serão coletados e armazenados de forma segura em nossa plataforma. Estes dados serão utilizados exclusivamente para conectar você a estudos e pesquisas científicas compatíveis com seu perfil.
-            {"\n\n"}
-            Seu nome civil, e-mail, telefone e documento nunca são exibidos a pesquisadores: você é identificado por um nome fictício. Ao se candidatar a um estudo, apenas o pesquisador responsável por ele passa a ver suas respostas do formulário de perfil, sua idade, seu sexo e sua região. O chat só é liberado após a confirmação mútua de interesse (match). O tratamento dos dados segue a Lei Geral de Proteção de Dados (LGPD).
-            {"\n\n"}
+            {'\n\n'}
+            Seus dados pessoais, como informações de contato e perfil de saúde, serão coletados e armazenados
+            de forma segura em nossa plataforma. Estes dados serão utilizados exclusivamente para conectar
+            você a estudos e pesquisas científicas compatíveis com seu perfil.
+            {'\n\n'}
+            Seu nome civil, e-mail, telefone e documento nunca são exibidos a pesquisadores: você é
+            identificado por um nome fictício. Ao se candidatar a um estudo, apenas o pesquisador responsável
+            por ele passa a ver suas respostas do formulário de perfil, sua idade, seu sexo e sua região. O
+            chat só é liberado após a confirmação mútua de interesse (match). O tratamento dos dados segue a
+            Lei Geral de Proteção de Dados (LGPD).
+            {'\n\n'}
             Você pode excluir sua conta e todos os seus dados a qualquer momento em Configurações.
           </Text>
         </ScrollView>

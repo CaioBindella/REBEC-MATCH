@@ -19,7 +19,9 @@ export function AccessChat({ tituloEstudo, nomeContato, detalhe, onChatPress }: 
         </View>
         <View style={styles.infoContainer}>
           <Text style={styles.name}>{nomeContato}</Text>
-          <Text style={styles.title} numberOfLines={2}>{tituloEstudo}</Text>
+          <Text style={styles.title} numberOfLines={2}>
+            {tituloEstudo}
+          </Text>
           {!!detalhe && <Text style={styles.detail}>{detalhe}</Text>}
         </View>
       </View>

@@ -1,13 +1,12 @@
 import React, { useState, useCallback } from 'react';
-import { 
-  SafeAreaView, 
-  View, 
-  Text, 
-  FlatList, 
-  StyleSheet, 
-  ActivityIndicator, 
+import {
+  SafeAreaView,
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  ActivityIndicator,
   TouchableOpacity,
-  Alert
 } from 'react-native';
 import { useRouter, Stack, useFocusEffect } from 'expo-router';
 import Header from '@/components/reusable/Header';
@@ -16,6 +15,7 @@ import ManageStudyCard, { StudySummary } from '@/components/researcherComponents
 // Imports de Lógica
 import { useAuth } from '@/context/AuthContext';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
+import { avisar } from '@/utils/feedback';
 
 export default function ManageStudiesPage() {
   const router = useRouter();
@@ -40,7 +40,7 @@ export default function ManageStudiesPage() {
 
       setStudies(formattedData);
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar seus estudos.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível carregar seus estudos.'));
     } finally {
       setIsLoading(false);
     }
@@ -60,7 +60,7 @@ export default function ManageStudiesPage() {
       </View>
     );
   }
-  
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -68,14 +68,15 @@ export default function ManageStudiesPage() {
       <View style={styles.content}>
         <View style={styles.profileTag}>
           {/* Exibe o nome fictício do pesquisador se disponível */}
-          <Text style={styles.profileTagText}>
-             {user?.nomeFicticio ? user.nomeFicticio : 'Pesquisador'}
-          </Text>
+          <Text style={styles.profileTagText}>{user?.nomeFicticio ? user.nomeFicticio : 'Pesquisador'}</Text>
         </View>
-        
+
         <View style={styles.titleRow}>
           <Text style={styles.pageTitle}>Gerenciar Meus Estudos</Text>
-          <TouchableOpacity style={styles.newButton} onPress={() => router.push('/(protected)/researcher/create-study/page')}>
+          <TouchableOpacity
+            style={styles.newButton}
+            onPress={() => router.push('/(protected)/researcher/create-study/page')}
+          >
             <Text style={styles.newButtonText}>+ Novo</Text>
           </TouchableOpacity>
         </View>
@@ -89,7 +90,7 @@ export default function ManageStudiesPage() {
                 study={item}
                 onEdit={() =>
                   router.push({
-                    pathname: "/(protected)/researcher/manage-studies/edit/[id]",
+                    pathname: '/(protected)/researcher/manage-studies/edit/[id]',
                     params: { id: item.id },
                   })
                 }
@@ -102,8 +103,8 @@ export default function ManageStudiesPage() {
         ) : (
           <View style={styles.centered}>
             <Text style={styles.emptyText}>Você ainda não registrou nenhum estudo.</Text>
-            <TouchableOpacity 
-              style={styles.createButton} 
+            <TouchableOpacity
+              style={styles.createButton}
               onPress={() => router.push('/(protected)/researcher/create-study/page')}
             >
               <Text style={styles.createButtonText}>Criar Primeiro Estudo</Text>

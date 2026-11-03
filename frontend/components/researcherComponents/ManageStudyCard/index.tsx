@@ -21,7 +21,9 @@ export default function ManageStudyCard({ study, onEdit }: ManageStudyCardProps)
   return (
     <TouchableOpacity style={styles.cardContainer} onPress={onEdit}>
       <View style={styles.infoContainer}>
-        <Text style={styles.title} numberOfLines={2}>{study.titulo}</Text>
+        <Text style={styles.title} numberOfLines={2}>
+          {study.titulo}
+        </Text>
         <View style={[styles.statusBadge, isRecruiting ? styles.recruiting : styles.ongoing]}>
           <Text style={styles.statusText}>{statusRecrutamentoLabel(study.status)}</Text>
         </View>

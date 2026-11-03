@@ -1,16 +1,15 @@
 import React, { useState } from 'react';
-import { 
-  View, 
-  Text, 
-  TextInput, 
-  StyleSheet, 
-  TouchableOpacity, 
-  SafeAreaView, 
-  ActivityIndicator, 
-  Alert,
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  SafeAreaView,
+  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  ScrollView
+  ScrollView,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,6 +19,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 
 import { useAuth } from '@/context/AuthContext';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
+import { avisar } from '@/utils/feedback';
 
 const schema = Yup.object().shape({
   senhaAtual: Yup.string().required('A senha atual é obrigatória'),
@@ -37,17 +37,22 @@ export default function ChangePasswordScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
-  
+
   const [showCurrent, setShowCurrent] = useState(false);
   const [showNew, setShowNew] = useState(false);
 
-  const { control, handleSubmit, formState: { errors }, reset } = useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm<FormData>({
     resolver: yupResolver(schema),
   });
 
   const onSubmit = async (data: FormData) => {
     if (!user?.id) {
-      Alert.alert("Erro", "Usuário não identificado.");
+      avisar('Erro', 'Usuário não identificado.');
       return;
     }
 
@@ -55,16 +60,17 @@ export default function ChangePasswordScreen() {
     try {
       await apiService.usuario.updatePassword(user.id, {
         senhaAtual: data.senhaAtual,
-        novaSenha: data.novaSenha
+        novaSenha: data.novaSenha,
       });
-      
-      Alert.alert("Sucesso", "Sua senha foi alterada com sucesso!", [
-        { text: "OK", onPress: () => router.back() }
-      ]);
-      reset();
 
+      reset();
+      avisar(
+        'Senha alterada',
+        'Sua senha foi alterada com sucesso. Use a nova senha no próximo acesso.',
+        () => (router.canGoBack() ? router.back() : router.replace('/(protected)/settings/page'))
+      );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível alterar a senha. Verifique sua senha atual.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível alterar a senha. Verifique sua senha atual.'));
     } finally {
       setLoading(false);
     }
@@ -73,7 +79,7 @@ export default function ChangePasswordScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ title: 'Segurança', headerShown: false }} />
-      
+
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color="#333" />
@@ -82,19 +88,13 @@ export default function ChangePasswordScreen() {
         <View style={{ width: 24 }} />
       </View>
 
-      <KeyboardAvoidingView 
-        style={{ flex: 1 }} 
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          
           <View style={styles.iconContainer}>
             <View style={styles.circleIcon}>
               <Ionicons name="lock-closed" size={40} color="#15715A" />
             </View>
-            <Text style={styles.instructionText}>
-              Crie uma nova senha forte para proteger sua conta.
-            </Text>
+            <Text style={styles.instructionText}>Crie uma nova senha forte para proteger sua conta.</Text>
           </View>
 
           <Text style={styles.label}>Senha Atual</Text>
@@ -114,7 +114,7 @@ export default function ChangePasswordScreen() {
               )}
             />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowCurrent(!showCurrent)}>
-              <Ionicons name={showCurrent ? "eye-off" : "eye"} size={20} color="#666" />
+              <Ionicons name={showCurrent ? 'eye-off' : 'eye'} size={20} color="#666" />
             </TouchableOpacity>
           </View>
           {errors.senhaAtual && <Text style={styles.errorText}>{errors.senhaAtual.message}</Text>}
@@ -136,7 +136,7 @@ export default function ChangePasswordScreen() {
               )}
             />
             <TouchableOpacity style={styles.eyeIcon} onPress={() => setShowNew(!showNew)}>
-              <Ionicons name={showNew ? "eye-off" : "eye"} size={20} color="#666" />
+              <Ionicons name={showNew ? 'eye-off' : 'eye'} size={20} color="#666" />
             </TouchableOpacity>
           </View>
           {errors.novaSenha && <Text style={styles.errorText}>{errors.novaSenha.message}</Text>}
@@ -158,10 +158,12 @@ export default function ChangePasswordScreen() {
               )}
             />
           </View>
-          {errors.confirmarNovaSenha && <Text style={styles.errorText}>{errors.confirmarNovaSenha.message}</Text>}
+          {errors.confirmarNovaSenha && (
+            <Text style={styles.errorText}>{errors.confirmarNovaSenha.message}</Text>
+          )}
 
-          <TouchableOpacity 
-            style={[styles.button, loading && { opacity: 0.7 }]} 
+          <TouchableOpacity
+            style={[styles.button, loading && { opacity: 0.7 }]}
             onPress={handleSubmit(onSubmit)}
             disabled={loading}
           >
@@ -171,7 +173,6 @@ export default function ChangePasswordScreen() {
               <Text style={styles.buttonText}>Salvar Nova Senha</Text>
             )}
           </TouchableOpacity>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

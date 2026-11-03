@@ -1,7 +1,12 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, StyleSheet, TouchableOpacity,
-  ScrollView, Alert, ActivityIndicator
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
 import * as Yup from 'yup';
@@ -11,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { dataBrParaIso } from '@/utils/formatters';
+import { avisar } from '@/utils/feedback';
 
 type FormData = {
   nome: string;
@@ -33,7 +39,11 @@ const schema: Yup.ObjectSchema<FormData> = Yup.object({
   nome: Yup.string().trim().max(50, 'Máximo de 50 caracteres.').required('Informe o seu nome.'),
   sobrenome: Yup.string().trim().max(50, 'Máximo de 50 caracteres.').required('Informe o seu sobrenome.'),
   login: Yup.string().trim().max(50, 'Máximo de 50 caracteres.').required('Crie um nome de usuário.'),
-  email: Yup.string().trim().email('Informe um e-mail válido.').max(100, 'Máximo de 100 caracteres.').required('Informe o seu e-mail.'),
+  email: Yup.string()
+    .trim()
+    .email('Informe um e-mail válido.')
+    .max(100, 'Máximo de 100 caracteres.')
+    .required('Informe o seu e-mail.'),
   senha: Yup.string().min(6, 'A senha deve ter ao menos 6 caracteres.').required('Crie uma senha.'),
   confirmarSenha: Yup.string()
     .oneOf([Yup.ref('senha')], 'As senhas não coincidem.')
@@ -49,7 +59,9 @@ const schema: Yup.ObjectSchema<FormData> = Yup.object({
       return !!iso && new Date(iso) < new Date();
     }),
   telefone: Yup.string().trim().max(25, 'Máximo de 25 caracteres.').required('Informe o telefone.'),
-  cep: Yup.string().matches(/^\d{8}$/, 'O CEP deve conter 8 dígitos.').required('Informe o CEP.'),
+  cep: Yup.string()
+    .matches(/^\d{8}$/, 'O CEP deve conter 8 dígitos.')
+    .required('Informe o CEP.'),
   endereco: Yup.string().trim().max(255, 'Máximo de 255 caracteres.').required('Informe o endereço.'),
   tipo_especifico: Yup.mixed<'VOLUNTARIO'>().optional(),
   documento: Yup.string().nullable().optional(),
@@ -60,8 +72,11 @@ export default function RegisterForm() {
   const [aceitoTermos, setAceitoTermos] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } =
-  useForm<FormData>({
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormData>({
     resolver: yupResolver(schema),
     defaultValues: {
       sexo: '',
@@ -69,10 +84,9 @@ export default function RegisterForm() {
     },
   });
 
-
   const onSubmit = async (data: FormData) => {
     if (!aceitoTermos) {
-      Alert.alert('Atenção', 'Você precisa aceitar os termos para continuar.');
+      avisar('Atenção', 'Você precisa aceitar os termos para continuar.');
       return;
     }
 
@@ -97,12 +111,11 @@ export default function RegisterForm() {
 
       await apiService.usuario.create(payload);
 
-      Alert.alert('Sucesso', 'Cadastro realizado com sucesso!', [
-        { text: 'OK', onPress: () => router.replace('/(auth)/login') }
-      ]);
-
+      avisar('Cadastro realizado', 'Sua conta foi criada. Entre com seu login e senha para continuar.', () =>
+        router.replace('/(auth)/login')
+      );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Ocorreu um erro ao realizar o cadastro.'));
+      avisar('Erro', getErrorMessage(error, 'Ocorreu um erro ao realizar o cadastro.'));
     } finally {
       setLoading(false);
     }
@@ -227,7 +240,7 @@ export default function RegisterForm() {
         render={({ field: { onChange, value } }) => (
           <View style={styles.pickerContainer}>
             <Picker selectedValue={value} onValueChange={onChange} style={styles.picker}>
-              <Picker.Item label="Escolha o sexo" value="" color="#999"/>
+              <Picker.Item label="Escolha o sexo" value="" color="#999" />
               <Picker.Item label="Feminino" value="FEMININO" />
               <Picker.Item label="Masculino" value="MASCULINO" />
               <Picker.Item label="Outro" value="OUTRO" />
@@ -311,8 +324,8 @@ export default function RegisterForm() {
       {errors.endereco && <Text style={styles.errorText}>{errors.endereco.message}</Text>}
 
       {/* Termos de Uso */}
-      <TouchableOpacity 
-        style={styles.termosContainer} 
+      <TouchableOpacity
+        style={styles.termosContainer}
         onPress={() => setAceitoTermos(!aceitoTermos)} // Clicar na linha toda marca/desmarca
         activeOpacity={0.8}
       >
@@ -320,45 +333,42 @@ export default function RegisterForm() {
           {aceitoTermos && <Ionicons name="checkmark" size={18} color="#fff" />}
         </View>
         <Text style={styles.termosText}>
-            Eu aceito os{' '}
-            <Text 
-              style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#166865' }}
-              onPress={(e) => {
-                e.stopPropagation(); 
-                router.push('/(public)/terms/page');
-              }}
-            >
-              Termos de Ciência
-            </Text>
+          Eu aceito os{' '}
+          <Text
+            style={{ textDecorationLine: 'underline', fontWeight: 'bold', color: '#166865' }}
+            onPress={(e) => {
+              e.stopPropagation();
+              router.push('/(public)/terms/page');
+            }}
+          >
+            Termos de Ciência
+          </Text>
         </Text>
       </TouchableOpacity>
 
       {/* Botão de Envio */}
-      <TouchableOpacity 
-        style={[styles.button, (!aceitoTermos || loading) && { opacity: 0.5 }]} 
+      <TouchableOpacity
+        style={[styles.button, (!aceitoTermos || loading) && { opacity: 0.5 }]}
         onPress={handleSubmit(onSubmit)}
         disabled={!aceitoTermos || loading}
       >
-        {loading ? (
-            <ActivityIndicator color="#fff" />
-        ) : (
-            <Text style={styles.buttonText}>Cadastrar</Text>
-        )}
+        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.buttonText}>Cadastrar</Text>}
       </TouchableOpacity>
-      
+
       {/* Botão Voltar */}
-      <TouchableOpacity 
-        style={styles.backButton} 
-        onPress={() => router.back()}
-      >
-         <Ionicons name="arrow-back" size={20} color="#166865" style={{ marginRight: 8 }} />
-         <Text style={styles.backButtonText}>Voltar</Text>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Ionicons name="arrow-back" size={20} color="#166865" style={{ marginRight: 8 }} />
+        <Text style={styles.backButtonText}>Voltar</Text>
       </TouchableOpacity>
 
       <View style={{ marginTop: 20, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={styles.termosText}>Já tem uma conta? 
-          <TouchableOpacity onPress={() => router.push("/(auth)/login")}>
-            <Text style={{ color: '#166865', fontWeight: 'bold', textDecorationLine: 'underline', top: 3 }}> Acesse</Text>
+        <Text style={styles.termosText}>
+          Já tem uma conta?
+          <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+            <Text style={{ color: '#166865', fontWeight: 'bold', textDecorationLine: 'underline', top: 3 }}>
+              {' '}
+              Acesse
+            </Text>
           </TouchableOpacity>
         </Text>
       </View>
@@ -414,7 +424,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
     alignItems: 'center',
     marginTop: 10,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -452,7 +462,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 20,
-    gap: 12,    
+    gap: 12,
   },
   checkboxBase: {
     width: 24,

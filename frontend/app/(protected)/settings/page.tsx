@@ -1,20 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { 
-  SafeAreaView, 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  Switch, 
-  Alert 
-} from 'react-native';
+import { SafeAreaView, View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import Header from '@/components/reusable/Header';
 import { useAuth } from '@/context/AuthContext';
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { preferencias } from '@/services/preferences';
+import { avisar, confirmar } from '@/utils/feedback';
 
 export default function SettingsPage() {
   const router = useRouter();
@@ -32,43 +24,31 @@ export default function SettingsPage() {
 
   // Direito de exclusão dos dados (LGPD): remove a conta e, em cascata, perfil, respostas,
   // candidaturas, matches, notificações e mensagens
-  const handleDeleteAccount = () => {
-    Alert.alert(
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    const confirmado = await confirmar(
       'Excluir conta',
       'Esta ação é permanente: sua conta e todos os seus dados (perfil, respostas, candidaturas e mensagens) serão removidos. Deseja continuar?',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Excluir',
-          style: 'destructive',
-          onPress: async () => {
-            if (!user) return;
-            try {
-              await apiService.usuario.delete(user.id);
-              Alert.alert('Conta excluída', 'Seus dados foram removidos da plataforma.');
-              await logOut();
-            } catch (error) {
-              Alert.alert('Erro', getErrorMessage(error, 'Não foi possível excluir a conta.'));
-            }
-          },
-        },
-      ]
+      { textoConfirmar: 'Excluir', destrutivo: true }
     );
+    if (!confirmado) return;
+    try {
+      await apiService.usuario.delete(user.id);
+      avisar('Conta excluída', 'Seus dados foram removidos da plataforma.', logOut);
+    } catch (error) {
+      avisar('Erro', getErrorMessage(error, 'Não foi possível excluir a conta.'));
+    }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      "Sair",
-      "Tem certeza que deseja sair da sua conta?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Sair", 
-          style: "destructive", 
-          onPress: logOut
-        }
-      ]
-    );
+  const handleLogout = async () => {
+    if (
+      await confirmar('Sair', 'Tem certeza que deseja sair da sua conta?', {
+        textoConfirmar: 'Sair',
+        destrutivo: true,
+      })
+    ) {
+      await logOut();
+    }
   };
 
   // Componente auxiliar para item de menu
@@ -96,9 +76,9 @@ export default function SettingsPage() {
         </View>
         <Text style={[styles.itemTitle, { flexShrink: 1 }]}>{title}</Text>
       </View>
-      <Switch 
-        trackColor={{ false: "#767577", true: "#a7f3d0" }}
-        thumbColor={value ? "#15715A" : "#f4f3f4"}
+      <Switch
+        trackColor={{ false: '#767577', true: '#a7f3d0' }}
+        thumbColor={value ? '#15715A' : '#f4f3f4'}
         onValueChange={onValueChange}
         value={value}
       />
@@ -109,24 +89,24 @@ export default function SettingsPage() {
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <Header />
-      
+
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <Text style={styles.pageTitle}>Configurações</Text>
 
         {/* Seção de Conta */}
         <Text style={styles.sectionHeader}>Conta</Text>
         <View style={styles.sectionContainer}>
-          <SettingItem 
-            icon="person-outline" 
-            title="Dados Pessoais" 
+          <SettingItem
+            icon="person-outline"
+            title="Dados Pessoais"
             subtitle="Nome fictício, login e e-mail"
-            onPress={() => router.push('/(protected)/profile/page')} 
+            onPress={() => router.push('/(protected)/profile/page')}
           />
-          <SettingItem 
-            icon="lock-closed-outline" 
-            title="Segurança" 
+          <SettingItem
+            icon="lock-closed-outline"
+            title="Segurança"
             subtitle="Alterar senha"
-            onPress={() => router.push('/(protected)/settings/change-password')} 
+            onPress={() => router.push('/(protected)/settings/change-password')}
           />
         </View>
 
@@ -144,16 +124,18 @@ export default function SettingsPage() {
         {/* Seção de Suporte */}
         <Text style={styles.sectionHeader}>Suporte</Text>
         <View style={styles.sectionContainer}>
-          <SettingItem 
-            icon="document-text-outline" 
-            title="Termos de Uso" 
-            onPress={() => { router.push('/(public)/terms/page')}} 
+          <SettingItem
+            icon="document-text-outline"
+            title="Termos de Uso"
+            onPress={() => {
+              router.push('/(public)/terms/page');
+            }}
           />
-          <SettingItem 
-            icon="information-circle-outline" 
-            title="Sobre o App" 
-            subtitle="Versão 1.0.0" 
-            onPress={() => {}} 
+          <SettingItem
+            icon="information-circle-outline"
+            title="Sobre o App"
+            subtitle="Versão 1.0.0"
+            onPress={() => {}}
             showArrow={false}
           />
         </View>
@@ -176,15 +158,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f0f2f5' },
   scrollContent: { padding: 20, paddingBottom: 40 },
   pageTitle: { fontSize: 28, fontWeight: 'bold', color: '#212529', marginBottom: 20 },
-  
-  sectionHeader: { 
-    fontSize: 14, 
-    fontWeight: '600', 
-    color: '#6c757d', 
-    marginBottom: 8, 
+
+  sectionHeader: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6c757d',
+    marginBottom: 8,
     marginTop: 10,
     textTransform: 'uppercase',
-    letterSpacing: 0.5
+    letterSpacing: 0.5,
   },
   sectionContainer: {
     backgroundColor: '#fff',
@@ -225,7 +207,7 @@ const styles = StyleSheet.create({
     color: '#999',
     marginTop: 2,
   },
-  
+
   logoutButton: {
     marginTop: 20,
     backgroundColor: '#fee2e2',

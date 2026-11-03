@@ -1,5 +1,14 @@
 import React, { useEffect, useState } from 'react';
-import { SafeAreaView, ScrollView, Text, Alert, StyleSheet, View, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  SafeAreaView,
+  ScrollView,
+  Text,
+  StyleSheet,
+  View,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 
 import Header from '@/components/reusable/Header';
@@ -7,6 +16,7 @@ import StudyForm, { StudyFormValues } from '@/components/researcherComponents/St
 import { apiService, getErrorMessage } from '@/services/api/apiClient';
 import { EstudoResponseDTO } from '@/types/types';
 import { fromEstudo, toCriterioPayload, toEstudoPayload } from '@/utils/studyPayload';
+import { avisar } from '@/utils/feedback';
 
 /** Edição dos dados, do status de recrutamento e dos critérios de um estudo do pesquisador. */
 export default function EditStudyPage() {
@@ -20,8 +30,9 @@ export default function EditStudyPage() {
       .getById(Number(id))
       .then(setEstudo)
       .catch((error) => {
-        Alert.alert('Erro', getErrorMessage(error, 'Não foi possível carregar os detalhes do estudo.'));
-        router.back();
+        avisar('Erro', getErrorMessage(error, 'Não foi possível carregar os detalhes do estudo.'), () =>
+          router.back()
+        );
       });
   }, [id, router]);
 
@@ -35,9 +46,11 @@ export default function EditStudyPage() {
       } else {
         await apiService.criterio.create({ estudo_id: estudo.id, ...criterio });
       }
-      Alert.alert('Sucesso', 'As informações do estudo foram atualizadas!', [{ text: 'OK', onPress: () => router.back() }]);
+      avisar('Estudo atualizado', 'As informações do estudo foram salvas.', () =>
+        router.canGoBack() ? router.back() : router.replace('/(protected)/researcher/manage-studies/page')
+      );
     } catch (error) {
-      Alert.alert('Erro', getErrorMessage(error, 'Não foi possível salvar as alterações.'));
+      avisar('Erro', getErrorMessage(error, 'Não foi possível salvar as alterações.'));
     }
   };
 
@@ -56,7 +69,11 @@ export default function EditStudyPage() {
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
           <Text style={styles.pageTitle}>Editar Estudo</Text>
-          <StudyForm initialValues={fromEstudo(estudo)} submitLabel="Salvar Alterações" onSubmit={handleUpdate} />
+          <StudyForm
+            initialValues={fromEstudo(estudo)}
+            submitLabel="Salvar Alterações"
+            onSubmit={handleUpdate}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
