@@ -10,7 +10,7 @@ migrações Flyway definem a tabela `mensagem`.
   e o mesmo emissor, e o usuário é identificado pelo seu login.
 - **Autoria:** o autor da mensagem é sempre o usuário autenticado.
 - **Acesso:** a conversa só é liberada entre o voluntário e o pesquisador responsável por um estudo
-  cuja candidatura foi concluída, ou seja, com *match* confirmado pelas duas partes.
+  cuja candidatura foi concluída, ou seja, com _match_ confirmado pelas duas partes.
 - **Tempo real:** cada mensagem é entregue via Socket.IO aos dois participantes. O token é validado
   na conexão e cada usuário entra na própria sala.
 - **Leitura e notificação:** a data de leitura é registrada quando o destinatário abre a conversa,
@@ -18,11 +18,11 @@ migrações Flyway definem a tabela `mensagem`.
 
 ## Endpoints
 
-| Método | Rota | Descrição |
-|---|---|---|
-| `POST` | `/mensagens` | Envia uma mensagem: `{ leitorId, estudoId, conteudo }` |
-| `GET` | `/mensagens/:estudoId/:usuario1/:usuario2` | Histórico da conversa no estudo |
-| Socket.IO | evento `nova-mensagem` | Mensagem entregue em tempo real |
+| Método    | Rota                                       | Descrição                                              |
+| --------- | ------------------------------------------ | ------------------------------------------------------ |
+| `POST`    | `/mensagens`                               | Envia uma mensagem: `{ leitorId, estudoId, conteudo }` |
+| `GET`     | `/mensagens/:estudoId/:usuario1/:usuario2` | Histórico da conversa no estudo                        |
+| Socket.IO | evento `nova-mensagem`                     | Mensagem entregue em tempo real                        |
 
 ## Configuração e execução
 
@@ -31,4 +31,10 @@ npm install
 cp .env.example .env      # JWT_SECRET deve ser igual a API_SECURITY_TOKEN_SECRET da API
 npm run dev               # desenvolvimento (ts-node-dev)
 npm run build && npm start   # produção
+npm test                  # testes automatizados (Jest), sem necessidade de banco de dados
+npm run format:check      # formatação (Prettier); npm run format corrige
 ```
+
+Os testes ficam em `tests/` e cobrem a validação do token JWT, a validação das mensagens, a exigência
+de _match_ confirmado, a entrega em tempo real, a notificação ao destinatário e o registro de leitura.
+O acesso ao banco de dados é simulado.

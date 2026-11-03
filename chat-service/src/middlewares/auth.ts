@@ -28,10 +28,9 @@ export async function autenticarToken(token: string | undefined): Promise<Usuari
     if (!payload.sub) {
       return null;
     }
-    const [rows]: any = await pool.query(
-      'SELECT id, tipo_especifico FROM usuario WHERE login = ?',
-      [payload.sub]
-    );
+    const [rows]: any = await pool.query('SELECT id, tipo_especifico FROM usuario WHERE login = ?', [
+      payload.sub,
+    ]);
     if (rows.length === 0) {
       return null;
     }
