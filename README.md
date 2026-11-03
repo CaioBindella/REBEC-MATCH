@@ -11,7 +11,9 @@ Trabalho de Conclusão de Curso de Engenharia de Computação — Instituto Poli
 - **Importação automatizada** dos ensaios do ReBEC no formato da ICTRP, com classificação pelo
   vocabulário controlado DeCS/CID-10.
 - **Busca de estudos por doença**, pelo nome popular ou científico.
-- **Compatibilidade automática** por regras sobre os critérios estruturados (idade e sexo).
+- **Compatibilidade automática** por regras sobre os critérios estruturados (idade e sexo), com
+  os estudos do mesmo estado e da mesma região do voluntário primeiro e alertas de possível
+  exclusão (gestação e tabagismo) a partir do formulário de perfil.
 - **Candidatura com confirmação mútua (*match*):** o pesquisador aprova e o voluntário confirma.
   Só então o chat é liberado.
 - **Privacidade (LGPD):** pseudonimização por nome fictício, compartilhamento dos dados de perfil
@@ -67,9 +69,14 @@ App (React Native/Expo)
 
 Cada pasta tem o próprio README, com os detalhes de configuração.
 
-## Testes
+## Testes e formatação
 
 ```bash
 cd backend/rebecmatch-api && ./mvnw test        # testes unitários e de integração da API
+cd frontend && npm test                         # testes do aplicativo (Jest + Testing Library)
 cd frontend && npx tsc --noEmit && npx expo lint
+cd chat-service && npm test                     # testes do serviço de chat (Jest)
 ```
+
+O código é formatado com `./mvnw spotless:apply` na API e com `npm run format` no aplicativo e no
+serviço de chat.
