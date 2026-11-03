@@ -6,9 +6,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import lombok.Data;
-
 import java.time.LocalDate;
+import lombok.Data;
 
 /**
  * Atualização dos dados cadastrais. A senha possui endpoint próprio (com validação da senha atual)

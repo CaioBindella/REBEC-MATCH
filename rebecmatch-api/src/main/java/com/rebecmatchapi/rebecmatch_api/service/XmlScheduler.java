@@ -1,5 +1,7 @@
 package com.rebecmatchapi.rebecmatch_api.service;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -8,13 +10,10 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
-
 /**
- * Agenda a importação dos ensaios do ReBEC/ICTRP: semanalmente (por padrão, todo domingo à meia-noite)
- * e, opcionalmente, uma vez logo após a inicialização da aplicação, para que um banco recém-criado
- * não precise aguardar o primeiro domingo. Execuções simultâneas são evitadas.
+ * Agenda a importação dos ensaios do ReBEC/ICTRP: semanalmente (por padrão, todo domingo à
+ * meia-noite) e, opcionalmente, uma vez logo após a inicialização da aplicação, para que um banco
+ * recém-criado não precise aguardar o primeiro domingo. Execuções simultâneas são evitadas.
  */
 @Component
 public class XmlScheduler {
@@ -26,9 +25,10 @@ public class XmlScheduler {
     private final boolean importarAoIniciar;
     private final AtomicBoolean emExecucao = new AtomicBoolean(false);
 
-    public XmlScheduler(XmlProcessingService xmlProcessingService,
-                        @Value("${rebecmatch.import.xml-url}") String xmlUrl,
-                        @Value("${rebecmatch.import.on-startup:true}") boolean importarAoIniciar) {
+    public XmlScheduler(
+            XmlProcessingService xmlProcessingService,
+            @Value("${rebecmatch.import.xml-url}") String xmlUrl,
+            @Value("${rebecmatch.import.on-startup:true}") boolean importarAoIniciar) {
         this.xmlProcessingService = xmlProcessingService;
         this.xmlUrl = xmlUrl;
         this.importarAoIniciar = importarAoIniciar;

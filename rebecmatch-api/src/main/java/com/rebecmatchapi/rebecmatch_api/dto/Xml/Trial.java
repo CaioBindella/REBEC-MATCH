@@ -3,9 +3,8 @@ package com.rebecmatchapi.rebecmatch_api.dto.Xml;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlElementWrapper;
 import com.fasterxml.jackson.dataformat.xml.annotation.JacksonXmlProperty;
-import lombok.Data;
-
 import java.util.List;
+import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -46,26 +45,37 @@ public class Trial {
     public static class Main {
         @JacksonXmlProperty(localName = "trial_id")
         private String trialId;
+
         @JacksonXmlProperty(localName = "public_title")
         private String publicTitle;
+
         @JacksonXmlProperty(localName = "scientific_title")
         private String scientificTitle;
+
         @JacksonXmlProperty(localName = "recruitment_status")
         private String recruitmentStatus;
+
         @JacksonXmlProperty(localName = "study_type")
         private String studyType;
+
         @JacksonXmlProperty(localName = "phase")
         private String phase;
+
         @JacksonXmlProperty(localName = "url")
         private String url;
+
         @JacksonXmlProperty(localName = "primary_sponsor")
         private String primarySponsor;
+
         @JacksonXmlProperty(localName = "hc_freetext")
         private String hcFreeText;
+
         @JacksonXmlProperty(localName = "i_freetext")
         private String iFreeText;
+
         @JacksonXmlProperty(localName = "date_registration")
         private String dateRegistration;
+
         @JacksonXmlProperty(localName = "date_enrolment")
         private String dateEnrolment;
     }
@@ -93,18 +103,25 @@ public class Trial {
     public static class Contact {
         @JacksonXmlProperty(localName = "type")
         private String type;
+
         @JacksonXmlProperty(localName = "firstname")
         private String firstname;
+
         @JacksonXmlProperty(localName = "lastname")
         private String lastname;
+
         @JacksonXmlProperty(localName = "address")
         private String address;
+
         @JacksonXmlProperty(localName = "city")
         private String city;
+
         @JacksonXmlProperty(localName = "zip")
         private String zip;
+
         @JacksonXmlProperty(localName = "telephone")
         private String telephone;
+
         @JacksonXmlProperty(localName = "email")
         private String email;
     }
@@ -114,12 +131,16 @@ public class Trial {
     public static class Criteria {
         @JacksonXmlProperty(localName = "inclusion_criteria")
         private String inclusionCriteria;
+
         @JacksonXmlProperty(localName = "agemin")
         private String ageMin;
+
         @JacksonXmlProperty(localName = "agemax")
         private String ageMax;
+
         @JacksonXmlProperty(localName = "gender")
         private String gender;
+
         @JacksonXmlProperty(localName = "exclusion_criteria")
         private String exclusionCriteria;
     }

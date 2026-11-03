@@ -1,5 +1,8 @@
 package com.rebecmatchapi.rebecmatch_api.integration;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rebecmatchapi.rebecmatch_api.entity.Formulario;
@@ -7,6 +10,9 @@ import com.rebecmatchapi.rebecmatch_api.entity.Questao;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoQuestao;
 import com.rebecmatchapi.rebecmatch_api.repository.FormularioRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.QuestaoRepository;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -17,13 +23,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.UUID;
-
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 /**
  * Base dos testes de integração: sobe a aplicação completa (segurança, serviços, JPA) sobre H2 e
  * exercita a API por HTTP com tokens reais.
@@ -33,30 +32,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 abstract class ApiTestSupport {
 
-    @Autowired
-    protected MockMvc mvc;
-    @Autowired
-    protected ObjectMapper json;
-    @Autowired
-    protected JdbcTemplate jdbc;
-    @Autowired
-    protected FormularioRepository formularioRepository;
-    @Autowired
-    protected QuestaoRepository questaoRepository;
+    @Autowired protected MockMvc mvc;
+    @Autowired protected ObjectMapper json;
+    @Autowired protected JdbcTemplate jdbc;
+    @Autowired protected FormularioRepository formularioRepository;
+    @Autowired protected QuestaoRepository questaoRepository;
 
-    protected record Sessao(String token, int usuarioId, int perfilId, String login, String email) {
-    }
+    protected record Sessao(
+            String token, int usuarioId, int perfilId, String login, String email) {}
 
-    /** Garante o formulário global de perfil (id 1) com uma questão obrigatória, como na migração V8. */
+    /**
+     * Garante o formulário global de perfil (id 1) com uma questão obrigatória, como na migração
+     * V8.
+     */
     @BeforeEach
     void garantirFormularioDePerfil() {
         if (!formularioRepository.existsById(Formulario.ID_FORMULARIO_PERFIL)) {
-            jdbc.update("INSERT INTO formulario (id, titulo, data_criacao) VALUES (?, 'Formulário de Perfil Inicial', CURRENT_DATE)",
+            jdbc.update(
+                    "INSERT INTO formulario (id, titulo, data_criacao) VALUES (?, 'Formulário de Perfil Inicial', CURRENT_DATE)",
                     Formulario.ID_FORMULARIO_PERFIL);
         }
         if (questaoRepository.findByFormularioId(Formulario.ID_FORMULARIO_PERFIL).isEmpty()) {
             Questao questao = new Questao();
-            questao.setFormulario(formularioRepository.getReferenceById(Formulario.ID_FORMULARIO_PERFIL));
+            questao.setFormulario(
+                    formularioRepository.getReferenceById(Formulario.ID_FORMULARIO_PERFIL));
             questao.setTexto("Data de nascimento");
             questao.setTipo(TipoQuestao.TEXTO);
             questao.setObrigatorio(true);
@@ -76,7 +75,8 @@ abstract class ApiTestSupport {
         return cadastrarELogar("PESQUISADOR", null, null, "20040002");
     }
 
-    protected Sessao cadastrarELogar(String tipo, String sexo, String nascimento, String cep) throws Exception {
+    protected Sessao cadastrarELogar(String tipo, String sexo, String nascimento, String cep)
+            throws Exception {
         String sufixo = UUID.randomUUID().toString().substring(0, 8);
         String login = tipo.toLowerCase() + "_" + sufixo;
         String email = login + "@example.org";
@@ -93,16 +93,35 @@ abstract class ApiTestSupport {
         corpo.put("cep", cep);
         corpo.put("documento", "123.456.789-00");
 
-        mvc.perform(post("/api/v1/usuarios").contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpo)))
+        mvc.perform(
+                        post("/api/v1/usuarios")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json.writeValueAsString(corpo)))
                 .andExpect(status().isCreated());
 
-        JsonNode resposta = json.readTree(mvc.perform(post("/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content(json.writeValueAsString(Map.of("login", login, "senha", "senha123"))))
-                .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString());
+        JsonNode resposta =
+                json.readTree(
+                        mvc.perform(
+                                        post("/auth/login")
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(
+                                                        json.writeValueAsString(
+                                                                Map.of(
+                                                                        "login",
+                                                                        login,
+                                                                        "senha",
+                                                                        "senha123"))))
+                                .andExpect(status().isOk())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString());
 
-        return new Sessao(resposta.get("token").asText(), resposta.get("usuario").get("id").asInt(),
-                resposta.get("perfilId").asInt(), login, email);
+        return new Sessao(
+                resposta.get("token").asText(),
+                resposta.get("usuario").get("id").asInt(),
+                resposta.get("perfilId").asInt(),
+                login,
+                email);
     }
 
     protected int criarEstudo(Sessao pesquisador, String status, String condicao) throws Exception {
@@ -117,14 +136,22 @@ abstract class ApiTestSupport {
         corpo.put("iFreetext", "Intervenção de teste");
         corpo.put("trialId", "RBR-" + UUID.randomUUID().toString().substring(0, 6));
 
-        JsonNode estudo = json.readTree(mvc.perform(autenticado(post("/api/v1/estudos"), pesquisador)
-                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpo)))
-                .andExpect(status().isCreated())
-                .andReturn().getResponse().getContentAsString());
+        JsonNode estudo =
+                json.readTree(
+                        mvc.perform(
+                                        autenticado(post("/api/v1/estudos"), pesquisador)
+                                                .contentType(MediaType.APPLICATION_JSON)
+                                                .content(json.writeValueAsString(corpo)))
+                                .andExpect(status().isCreated())
+                                .andReturn()
+                                .getResponse()
+                                .getContentAsString());
         return estudo.get("id").asInt();
     }
 
-    protected void criarCriterio(Sessao pesquisador, int estudoId, String idadeMin, String idadeMax, String genero) throws Exception {
+    protected void criarCriterio(
+            Sessao pesquisador, int estudoId, String idadeMin, String idadeMax, String genero)
+            throws Exception {
         Map<String, Object> corpo = new LinkedHashMap<>();
         corpo.put("estudo_id", estudoId);
         corpo.put("inclusion_criteria", "Critérios de inclusão");
@@ -132,20 +159,35 @@ abstract class ApiTestSupport {
         corpo.put("agemin", idadeMin);
         corpo.put("agemax", idadeMax);
         corpo.put("gender", genero);
-        mvc.perform(autenticado(post("/api/v1/criterios"), pesquisador)
-                        .contentType(MediaType.APPLICATION_JSON).content(json.writeValueAsString(corpo)))
+        mvc.perform(
+                        autenticado(post("/api/v1/criterios"), pesquisador)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(json.writeValueAsString(corpo)))
                 .andExpect(status().isCreated());
     }
 
     protected void preencherPerfil(Sessao voluntario) throws Exception {
-        String corpo = json.writeValueAsString(Map.of("formulario_id", Formulario.ID_FORMULARIO_PERFIL,
-                "respostas", java.util.List.of(Map.of("questao_id", questaoDoPerfil(), "conteudo", "01/05/1990"))));
-        mvc.perform(autenticado(post("/api/v1/respostas/batch"), voluntario)
-                        .contentType(MediaType.APPLICATION_JSON).content(corpo))
+        String corpo =
+                json.writeValueAsString(
+                        Map.of(
+                                "formulario_id",
+                                Formulario.ID_FORMULARIO_PERFIL,
+                                "respostas",
+                                java.util.List.of(
+                                        Map.of(
+                                                "questao_id",
+                                                questaoDoPerfil(),
+                                                "conteudo",
+                                                "01/05/1990"))));
+        mvc.perform(
+                        autenticado(post("/api/v1/respostas/batch"), voluntario)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(corpo))
                 .andExpect(status().isCreated());
     }
 
-    protected static MockHttpServletRequestBuilder autenticado(MockHttpServletRequestBuilder request, Sessao sessao) {
+    protected static MockHttpServletRequestBuilder autenticado(
+            MockHttpServletRequestBuilder request, Sessao sessao) {
         return request.header("Authorization", "Bearer " + sessao.token());
     }
 }

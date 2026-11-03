@@ -3,13 +3,10 @@ package com.rebecmatchapi.rebecmatch_api.dto.Estudo;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import java.time.LocalDate;
 import lombok.Data;
 
-import java.time.LocalDate;
-
-/**
- * Cadastro manual de estudo. O pesquisador responsável é o usuário autenticado.
- */
+/** Cadastro manual de estudo. O pesquisador responsável é o usuário autenticado. */
 @Data
 public class EstudoCreateDTO {
     @NotBlank(message = "o título público é obrigatório")

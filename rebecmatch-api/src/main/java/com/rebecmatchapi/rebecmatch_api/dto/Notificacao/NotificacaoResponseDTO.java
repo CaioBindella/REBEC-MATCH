@@ -1,7 +1,7 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Notificacao;
 
-import lombok.Data;
 import java.time.LocalDateTime;
+import lombok.Data;
 
 @Data
 public class NotificacaoResponseDTO {

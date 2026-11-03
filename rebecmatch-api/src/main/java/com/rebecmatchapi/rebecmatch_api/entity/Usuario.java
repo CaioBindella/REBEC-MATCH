@@ -3,16 +3,15 @@ package com.rebecmatchapi.rebecmatch_api.entity;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.Sexo;
 import com.rebecmatchapi.rebecmatch_api.entity.enums.TipoEspecifico;
 import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-
-import java.time.LocalDate;
-import java.util.Collection;
-import java.util.List;
 
 @Data
 @Entity
@@ -83,10 +82,12 @@ public class Usuario implements UserDetails {
         }
         return List.of(new SimpleGrantedAuthority("ROLE_" + tipoEspecifico.name()));
     }
+
     @Override
     public String getPassword() {
         return senha;
     }
+
     @Override
     public String getUsername() {
         return login;

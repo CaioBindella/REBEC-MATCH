@@ -4,13 +4,15 @@ import java.text.Normalizer;
 
 /**
  * Sexo aceito por um critério de elegibilidade, no mesmo domínio de valores do enum {@link Sexo}.
- * <p>
- * O extrato da ICTRP usa códigos de uma letra ("F", "M") e duas grafias para "sem restrição"
+ *
+ * <p>O extrato da ICTRP usa códigos de uma letra ("F", "M") e duas grafias para "sem restrição"
  * ("-" e "B", de <i>both</i>). Todos são convertidos para este enum no momento da importação ou do
  * cadastro, de modo que o banco armazena uma única representação.
  */
 public enum GeneroElegivel {
-    MASCULINO, FEMININO, AMBOS;
+    MASCULINO,
+    FEMININO,
+    AMBOS;
 
     /**
      * Converte qualquer grafia aceita (ICTRP, inglês ou português) para o domínio da aplicação.
@@ -20,9 +22,10 @@ public enum GeneroElegivel {
         if (valor == null) {
             return AMBOS;
         }
-        String texto = Normalizer.normalize(valor.trim(), Normalizer.Form.NFD)
-                .replaceAll("\\p{M}", "")
-                .toUpperCase();
+        String texto =
+                Normalizer.normalize(valor.trim(), Normalizer.Form.NFD)
+                        .replaceAll("\\p{M}", "")
+                        .toUpperCase();
         return switch (texto) {
             case "F", "FEMALE", "FEMININO", "MULHER", "MULHERES" -> FEMININO;
             case "M", "MALE", "MASCULINO", "HOMEM", "HOMENS" -> MASCULINO;

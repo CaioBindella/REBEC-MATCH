@@ -1,11 +1,10 @@
 package com.rebecmatchapi.rebecmatch_api.entity;
 
 import jakarta.persistence.*;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import java.util.List;
 
 @Data
 @Entity
@@ -31,5 +30,4 @@ public class Pesquisador {
     @EqualsAndHashCode.Exclude
     @OneToMany(mappedBy = "pesquisador", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Estudo> estudos;
-
 }

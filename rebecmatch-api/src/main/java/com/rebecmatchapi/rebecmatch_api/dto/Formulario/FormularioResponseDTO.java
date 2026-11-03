@@ -1,8 +1,7 @@
 package com.rebecmatchapi.rebecmatch_api.dto.Formulario;
 
-import lombok.Data;
-
 import java.time.LocalDate;
+import lombok.Data;
 
 @Data
 public class FormularioResponseDTO {

@@ -13,21 +13,20 @@ import com.rebecmatchapi.rebecmatch_api.dto.Resposta.RespostaResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Usuario.UsuarioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.dto.Voluntario.VoluntarioResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.entity.*;
-
 import java.util.Comparator;
 import java.util.List;
 
 /**
  * Conversões centralizadas entre entidades JPA e DTOs de resposta.
- * <p>
- * Regra de privacidade: dados civis (nome, sobrenome, e-mail, telefone, documento) só aparecem em
- * {@link #toUsuario(Usuario)}, devolvido exclusivamente ao titular da conta. Sempre que um perfil é
- * exibido ao outro lado da plataforma, apenas o nome fictício e identificadores são expostos.
+ *
+ * <p>Regra de privacidade: dados civis (nome, sobrenome, e-mail, telefone, documento) só aparecem
+ * em {@link #toUsuario(Usuario)}, devolvido exclusivamente ao titular da conta. Sempre que um
+ * perfil é exibido ao outro lado da plataforma, apenas o nome fictício e identificadores são
+ * expostos.
  */
 public final class DtoMapper {
 
-    private DtoMapper() {
-    }
+    private DtoMapper() {}
 
     public static UsuarioResponseDTO toUsuario(Usuario usuario) {
         if (usuario == null) return null;
@@ -88,13 +87,17 @@ public final class DtoMapper {
             dto.setPesquisadorId(estudo.getPesquisador().getId());
             dto.setPesquisador(toPesquisador(estudo.getPesquisador()));
         }
-        dto.setCriterios(estudo.getCriterios() == null ? List.of()
-                : estudo.getCriterios().stream().map(DtoMapper::toCriterio).toList());
-        dto.setNomesDoencas(estudo.getDoencas() == null ? List.of()
-                : estudo.getDoencas().stream()
-                .map(Doenca::getNomePopular)
-                .sorted(Comparator.nullsLast(Comparator.naturalOrder()))
-                .toList());
+        dto.setCriterios(
+                estudo.getCriterios() == null
+                        ? List.of()
+                        : estudo.getCriterios().stream().map(DtoMapper::toCriterio).toList());
+        dto.setNomesDoencas(
+                estudo.getDoencas() == null
+                        ? List.of()
+                        : estudo.getDoencas().stream()
+                                .map(Doenca::getNomePopular)
+                                .sorted(Comparator.nullsLast(Comparator.naturalOrder()))
+                                .toList());
         return dto;
     }
 

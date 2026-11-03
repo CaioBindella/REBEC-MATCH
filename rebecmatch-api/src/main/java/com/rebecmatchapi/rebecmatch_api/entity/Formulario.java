@@ -1,16 +1,15 @@
 package com.rebecmatchapi.rebecmatch_api.entity;
 
 import jakarta.persistence.*;
+import java.time.LocalDate;
+import java.util.List;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 
-import java.time.LocalDate;
-import java.util.List;
-
 /**
- * Entidade que representa um Formulário. Pode pertencer a um Estudo ou ser global
- * (estudo nulo), como o formulário de perfil inicial preenchido por todo voluntário.
+ * Entidade que representa um Formulário. Pode pertencer a um Estudo ou ser global (estudo nulo),
+ * como o formulário de perfil inicial preenchido por todo voluntário.
  */
 @Data
 @Entity

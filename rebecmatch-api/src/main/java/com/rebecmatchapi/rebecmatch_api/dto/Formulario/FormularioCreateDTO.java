@@ -5,9 +5,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 
-/**
- * Formulário específico de um estudo. O formulário global de perfil é criado pela migração V8.
- */
+/** Formulário específico de um estudo. O formulário global de perfil é criado pela migração V8. */
 @Data
 public class FormularioCreateDTO {
     @NotNull(message = "o estudo é obrigatório")

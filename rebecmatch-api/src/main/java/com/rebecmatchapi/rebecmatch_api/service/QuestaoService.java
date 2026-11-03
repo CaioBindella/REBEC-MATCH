@@ -8,11 +8,10 @@ import com.rebecmatchapi.rebecmatch_api.entity.Usuario;
 import com.rebecmatchapi.rebecmatch_api.exception.ResourceNotFoundException;
 import com.rebecmatchapi.rebecmatch_api.repository.FormularioRepository;
 import com.rebecmatchapi.rebecmatch_api.repository.QuestaoRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,8 +23,15 @@ public class QuestaoService {
 
     @Transactional
     public Questao createQuestao(QuestaoCreateDTO dto, Usuario usuario) {
-        Formulario formulario = formularioRepository.findById(dto.getFormularioId())
-                .orElseThrow(() -> new ResourceNotFoundException("Formulário com ID " + dto.getFormularioId() + " não encontrado."));
+        Formulario formulario =
+                formularioRepository
+                        .findById(dto.getFormularioId())
+                        .orElseThrow(
+                                () ->
+                                        new ResourceNotFoundException(
+                                                "Formulário com ID "
+                                                        + dto.getFormularioId()
+                                                        + " não encontrado."));
         formularioService.exigirEdicaoPermitida(formulario, usuario);
 
         Questao novaQuestao = new Questao();
@@ -40,13 +46,19 @@ public class QuestaoService {
 
     @Transactional(readOnly = true)
     public Questao getQuestaoById(Integer id) {
-        return questaoRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Questão com ID " + id + " não encontrada."));
+        return questaoRepository
+                .findById(id)
+                .orElseThrow(
+                        () ->
+                                new ResourceNotFoundException(
+                                        "Questão com ID " + id + " não encontrada."));
     }
 
     @Transactional(readOnly = true)
     public List<Questao> getQuestoes(Integer formularioId) {
-        return formularioId == null ? questaoRepository.findAll() : questaoRepository.findByFormularioIdOrderByIdAsc(formularioId);
+        return formularioId == null
+                ? questaoRepository.findAll()
+                : questaoRepository.findByFormularioIdOrderByIdAsc(formularioId);
     }
 
     @Transactional

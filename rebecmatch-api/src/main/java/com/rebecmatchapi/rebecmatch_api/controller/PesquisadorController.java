@@ -3,6 +3,7 @@ package com.rebecmatchapi.rebecmatch_api.controller;
 import com.rebecmatchapi.rebecmatch_api.dto.DtoMapper;
 import com.rebecmatchapi.rebecmatch_api.dto.Pesquisador.PesquisadorResponseDTO;
 import com.rebecmatchapi.rebecmatch_api.service.PesquisadorService;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -10,10 +11,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 /**
- * Consulta do perfil público (pseudonimizado) dos pesquisadores. O perfil é criado junto com a conta.
+ * Consulta do perfil público (pseudonimizado) dos pesquisadores. O perfil é criado junto com a
+ * conta.
  */
 @RestController
 @RequestMapping("/api/v1/pesquisadores")
@@ -29,6 +29,7 @@ public class PesquisadorController {
 
     @GetMapping
     public ResponseEntity<List<PesquisadorResponseDTO>> listAll() {
-        return ResponseEntity.ok(pesquisadorService.listAll().stream().map(DtoMapper::toPesquisador).toList());
+        return ResponseEntity.ok(
+                pesquisadorService.listAll().stream().map(DtoMapper::toPesquisador).toList());
     }
 }

@@ -1,13 +1,12 @@
 package com.rebecmatchapi.rebecmatch_api.entity.enums;
 
 import com.rebecmatchapi.rebecmatch_api.exception.BusinessException;
-
 import java.util.Arrays;
 
 /**
- * Status de recrutamento de um estudo, com os rótulos do padrão ICTRP gravados na coluna
- * {@code estudo.recruitment_status}. O extrato do ReBEC mistura maiúsculas e minúsculas
- * ("Recruiting" e "recruiting"); a normalização garante uma grafia única no banco.
+ * Status de recrutamento de um estudo, com os rótulos do padrão ICTRP gravados na coluna {@code
+ * estudo.recruitment_status}. O extrato do ReBEC mistura maiúsculas e minúsculas ("Recruiting" e
+ * "recruiting"); a normalização garante uma grafia única no banco.
  */
 public enum StatusRecrutamento {
     RECRUTANDO("Recruiting"),
@@ -38,11 +37,21 @@ public enum StatusRecrutamento {
         return Arrays.stream(values())
                 .filter(s -> s.rotulo.equalsIgnoreCase(valor) || s.name().equalsIgnoreCase(valor))
                 .findFirst()
-                .orElseThrow(() -> new BusinessException("Status de recrutamento inválido: " + texto
-                        + ". Valores aceitos: " + Arrays.toString(Arrays.stream(values()).map(s -> s.rotulo).toArray())));
+                .orElseThrow(
+                        () ->
+                                new BusinessException(
+                                        "Status de recrutamento inválido: "
+                                                + texto
+                                                + ". Valores aceitos: "
+                                                + Arrays.toString(
+                                                        Arrays.stream(values())
+                                                                .map(s -> s.rotulo)
+                                                                .toArray())));
     }
 
-    /** Versão tolerante usada na importação: valores fora do padrão são registrados como "Other". */
+    /**
+     * Versão tolerante usada na importação: valores fora do padrão são registrados como "Other".
+     */
     public static StatusRecrutamento deTextoOuOutro(String texto) {
         try {
             return deTexto(texto);
